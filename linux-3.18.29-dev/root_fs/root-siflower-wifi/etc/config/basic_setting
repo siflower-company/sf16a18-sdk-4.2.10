@@ -1,0 +1,5 @@
+config setting 'qos'
+
+config setting 'wifi_filter'
+
+config setting 'wan_type'

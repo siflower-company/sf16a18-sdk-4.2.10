@@ -1,0 +1,148 @@
+--- a/main.c
++++ b/main.c
+@@ -30,6 +30,7 @@
+ #include "includes.h"
+ #include "ubus.h"
+ #include "iptables.h"
++#include "utils.h"
+ 
+ 
+ static enum fw3_family print_family = FW3_FAMILY_ANY;
+@@ -68,7 +69,7 @@ build_state(bool runtime)
+ 		{
+ 			uci_free_context(state->uci);
+ 			free(state);
+-
++			info("not load /var/run/fw3.state\n");
+ 			return false;
+ 		}
+ 
+@@ -390,7 +391,6 @@ start:
+ 	if (!rv)
+ 	{
+ 		fw3_flush_conntrack(run_state);
+-
+ 		fw3_set_defaults(cfg_state);
+ 		fw3_run_includes(cfg_state, true);
+ 		fw3_hotplug_zones(cfg_state, true);
+@@ -518,6 +518,13 @@ int main(int argc, char **argv)
+ 	int ch, rv = 1;
+ 	enum fw3_family family = FW3_FAMILY_ANY;
+ 	struct fw3_defaults *defs = NULL;
++#ifdef DEBUG_FIREWALL
++	int i = 0;
++	info("args is ");
++	for(;i < argc; i++){
++		info("%s ", argv[i]);
++	}
++#endif
+ 
+ 	while ((ch = getopt(argc, argv, "46dqh")) != -1)
+ 	{
+--- a/utils.h
++++ b/utils.h
+@@ -36,9 +36,10 @@
+ 
+ 
+ #define FW3_STATEFILE	"/var/run/fw3.state"
++#define TEST_FILE	    "/etc/test_fw_error"
+ #define FW3_LOCKFILE	"/var/run/fw3.lock"
+ #define FW3_HOTPLUG     "/sbin/hotplug-call"
+-
++// #define  DEBUG_FIREWALL 1
+ extern bool fw3_pr_debug;
+ 
+ void warn_elem(struct uci_element *e, const char *format, ...);
+--- a/utils.c
++++ b/utils.c
+@@ -28,8 +28,14 @@ static int lock_fd = -1;
+ static pid_t pipe_pid = -1;
+ static FILE *pipe_fd = NULL;
+ 
++
++#ifdef DEBUG_FIREWALL
++bool fw3_pr_debug = true;
++#else
+ bool fw3_pr_debug = false;
++#endif
+ 
++void print_log_to_file(const char* format, va_list argptr);
+ 
+ static void
+ warn_elem_section_name(struct uci_section *s, bool find_name)
+@@ -99,6 +105,19 @@ warn_elem(struct uci_element *e, const c
+ 	fprintf(stderr, "\n");
+ }
+ 
++#ifdef DEBUG_FIREWALL
++void print_log_to_file(const char* format, va_list argptr){
++	FILE * debug_file = fopen(TEST_FILE, "a");
++	if(debug_file != NULL){
++		vfprintf(debug_file, format, argptr);
++		fprintf(debug_file, "\n");
++		fclose(debug_file);
++	}
++	return;
++
++}
++#endif
++
+ void
+ warn(const char* format, ...)
+ {
+@@ -106,6 +125,9 @@ warn(const char* format, ...)
+     va_list argptr;
+     va_start(argptr, format);
+     vfprintf(stderr, format, argptr);
++#ifdef DEBUG_FIREWALL
++	print_log_to_file(format, argptr);
++#endif
+     va_end(argptr);
+ 	fprintf(stderr, "\n");
+ }
+@@ -117,6 +139,9 @@ error(const char* format, ...)
+     va_list argptr;
+     va_start(argptr, format);
+     vfprintf(stderr, format, argptr);
++#ifdef DEBUG_FIREWALL
++	print_log_to_file(format, argptr);
++#endif
+     va_end(argptr);
+ 	fprintf(stderr, "\n");
+ 
+@@ -129,6 +154,9 @@ info(const char* format, ...)
+ 	va_list argptr;
+     va_start(argptr, format);
+     vfprintf(stderr, format, argptr);
++#ifdef DEBUG_FIREWALL
++	print_log_to_file(format, argptr);
++#endif
+     va_end(argptr);
+ 	fprintf(stderr, "\n");
+ }
+--- a/defaults.c
++++ b/defaults.c
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "defaults.h"
++#include "utils.h"
+ 
+ 
+ #define C(f, tbl, def, fmt) \
+@@ -346,7 +347,15 @@ void
+ fw3_flush_rules(struct fw3_ipt_handle *handle, struct fw3_state *state,
+                 bool reload)
+ {
++
++#ifdef DEBUG_FIREWALL
++	info("would config default rules accept flag here");
++	enum fw3_flag policy = FW3_FLAG_ACCEPT;
++#else
++	info("would config default rules drop flag here");
+ 	enum fw3_flag policy = reload ? FW3_FLAG_DROP : FW3_FLAG_ACCEPT;
++#endif
++
+ 	struct fw3_defaults *defs = &state->defaults;
+ 	const struct fw3_chain_spec *c;
+ 

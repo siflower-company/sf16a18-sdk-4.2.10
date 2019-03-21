@@ -1,0 +1,12 @@
+Index: fstools-2016-01-10/libfstools/overlay.c
+===================================================================
+--- fstools-2016-01-10.orig/libfstools/overlay.c	2018-12-21 16:28:35.141591739 +0800
++++ fstools-2016-01-10/libfstools/overlay.c	2018-12-21 16:33:19.909603689 +0800
+@@ -223,6 +223,7 @@
+ 			ULOG_INFO("performing overlay whiteout\n");
+ 			umount2("/tmp/root", MNT_DETACH);
+ 			foreachdir("/overlay/", handle_whiteout);
++			system("if [ -f /etc/hotplug.d/block/10-mount ];then sh /etc/hotplug.d/block/10-mount mount_all;fi");
+ 		}
+ 		break;
+ 

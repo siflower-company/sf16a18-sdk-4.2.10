@@ -1,0 +1,622 @@
+--- a/src/forward.c
++++ b/src/forward.c
+@@ -17,6 +17,7 @@
+ #include "dnsmasq.h"
+ 
+ #ifdef URL_LIST
++#include <linux/rtnetlink.h>
+ extern struct mac_node * gpmac_list_hdr;
+ #endif
+ static struct frec *lookup_frec(unsigned short id, void *hash);
+@@ -1087,6 +1088,105 @@ void reply_query(int fd, int family, tim
+ }
+ 
+ #ifdef URL_LIST
++
++#ifdef HAVE_IPV6
++int get_mac_ipv6( struct in6_addr* pipv6_src, unsigned char * pmac)
++{
++    int fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
++    int status;
++//send request via netlink, the message is in req
++    struct {
++        struct nlmsghdr n;
++        struct ndmsg r;
++    } req;
++
++	char ipv6_str[INET6_ADDRSTRLEN] = {'\0'};
++	inet_ntop(AF_INET6, pipv6_src, ipv6_str, INET6_ADDRSTRLEN);
++	// my_syslog(LOG_WARNING, _("ipv6 src is: %s \n"),ipv6_str);
++    memset(&req, 0, sizeof(req));
++    // fill in the netlink message header
++    req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
++    req.n.nlmsg_type = RTM_GETNEIGH;
++    req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
++    // fill in the netlink message GETNEIGH
++    req.r.ndm_family = AF_INET6;
++
++    status = send(fd, &req, req.n.nlmsg_len, 0);
++    if (status < 0){
++		close(fd);
++		my_syslog(LOG_WARNING, _("rtl send failed\n"));
++		return -1;
++	}
++
++    //receive data and put it in buf
++    char buf[4096];
++    char *p;
++    struct nlmsghdr *nlp;
++    memset(buf, 0, sizeof(buf));
++    p = buf;
++    int nll = 0;
++    struct ndmsg *ndp;
++    struct rtattr *ndap;
++    int ndl;
++
++    while(1)
++    {
++            status = recv(fd, p, sizeof(buf) - nll, 0);
++            if (status < 0){
++				my_syslog(LOG_WARNING, _("receive msg failed\n"));
++				close(fd);
++				return -2;
++			}
++
++            nlp = (struct nlmsghdr *) p;
++            if(nlp->nlmsg_type == NLMSG_DONE) {
++				my_syslog(LOG_WARNING, _("get all message\n"));
++				break;
++            }
++            while(1)
++            {
++                    ndp = (struct ndmsg *) NLMSG_DATA(nlp);     // get RTNETLINK message header
++                    ndap = (struct rtattr *) RTM_RTA(ndp);      // get start of attributes
++                    ndl = RTM_PAYLOAD(nlp);
++                    while(1) {
++                        if (ndap->rta_type == NDA_DST) {
++							memset(ipv6_str, '\0', INET6_ADDRSTRLEN);
++							struct in6_addr *pipv6_get = RTA_DATA(ndap);
++							if(pipv6_get->s6_addr[0] !=  0xFF){
++								inet_ntop(AF_INET6, pipv6_get,ipv6_str, INET6_ADDRSTRLEN);
++								// my_syslog(LOG_WARNING, _("ipv6 is: %s \n"),ipv6_str);
++								if (memcmp(pipv6_get->s6_addr, pipv6_src->s6_addr, 16) == 0) {
++									ndap = RTA_NEXT(ndap, ndl);
++									memcpy(pmac,RTA_DATA(ndap),6);
++									close(fd);
++									return 2;
++								}
++							}
++							else
++							  break;
++						}
++						ndap = RTA_NEXT(ndap, ndl);
++						if (RTA_OK(ndap, ndl) != 1)
++						{
++							break;
++						}
++
++					}
++					p += status;
++					nll += status;
++					nlp = NLMSG_NEXT(nlp, nll);
++					if (NLMSG_OK(nlp, nll) != 1)
++					{
++						break;
++					}
++			}
++	}
++	close(fd);
++
++	return 0;
++}
++#endif
++
+ int get_mac_by_ip(unsigned char* mac,  struct sockaddr *sa){
+ 	int sock_fd = 0, ret = 0;
+ 	struct arpreq req;
+@@ -1113,139 +1213,157 @@ int get_mac_by_ip(unsigned char* mac,  s
+ 	return 0;
+ }
+ 
+-int filter_by_mac(struct sockaddr *sa, struct mac_node **ppmac_node){
++int filter_by_mac(void *sa, struct mac_node **ppmac_node, char is_ipv6){
+ 	unsigned char mac[6] = {0};
+-	struct sockaddr_in sin;
+-	memcpy(&sin, sa, sizeof(sin));
+-	my_syslog(LOG_ERR, _("addr:%s, port:%d\n"), inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+-	if(get_mac_by_ip(mac, sa) < 0){
+-		my_syslog(LOG_WARNING, _("cannot find mac for ip"));
+-		return -1;
++	struct sockaddr_in * psin;
++#ifdef HAVE_IPV6
++	if (is_ipv6){
++		if(get_mac_ipv6(sa,mac) != 2){
++			// my_syslog(LOG_WARNING, _("cannot find mac for ipv6"));
++			return -1;
++		}
++		else{
++			// my_syslog(LOG_WARNING, _("mac is %02x:%02x:%02x:%02x:%02x:%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++		}
+ 	}
+ 	else{
+-		my_syslog(LOG_WARNING, _("mac is %02x:%02x:%02x:%02x:%02x:%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++#endif
++		// memcpy(&sin, sa, sizeof(sin));
++		psin = sa;
++		if(psin->sin_addr.s_addr == inet_addr("127.0.0.1"))
++		  return 0;
++		// my_syslog(LOG_ERR, _("addr:%s, port:%d\n"), inet_ntoa(psin->sin_addr), ntohs(psin->sin_port));
++
++		if(get_mac_by_ip(mac, sa) < 0){
++			// my_syslog(LOG_WARNING, _("cannot find mac for ip"));
++			return -1;
++		}
++		else{
++			// my_syslog(LOG_WARNING, _("mac is %02x:%02x:%02x:%02x:%02x:%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++		}
++#ifdef HAVE_IPV6
+ 	}
++#endif
+ 
+ 	if((*ppmac_node = find_mac_node(mac, gpmac_list_hdr)) == NULL) {
+-		my_syslog(LOG_WARNING, _("get null"));
++		// my_syslog(LOG_WARNING, _("get null"));
+ 		return -2;
+ 	}
+-
+ 	return 0;
+ }
+ #endif
+ 
+ void receive_query(struct listener *listen, time_t now)
+ {
+-  struct dns_header *header = (struct dns_header *)daemon->packet;
+-  union mysockaddr source_addr;
+-  unsigned short type;
+-  struct all_addr dst_addr;
+-  struct in_addr netmask, dst_addr_4;
+-  size_t m;
+-  ssize_t n;
+-  int if_index = 0, auth_dns = 0;
++	struct dns_header *header = (struct dns_header *)daemon->packet;
++	union mysockaddr source_addr;
++	unsigned short type;
++	struct all_addr dst_addr;
++	struct in_addr netmask, dst_addr_4;
++	size_t m;
++	ssize_t n;
++	int if_index = 0, auth_dns = 0;
+ #ifdef HAVE_AUTH
+-  int local_auth = 0;
++	int local_auth = 0;
+ #endif
+-  struct iovec iov[1];
+-  struct msghdr msg;
+-  struct cmsghdr *cmptr;
+-  union {
+-    struct cmsghdr align; /* this ensures alignment */
++	struct iovec iov[1];
++	struct msghdr msg;
++	struct cmsghdr *cmptr;
++	union {
++		struct cmsghdr align; /* this ensures alignment */
+ #ifdef HAVE_IPV6
+-    char control6[CMSG_SPACE(sizeof(struct in6_pktinfo))];
++		char control6[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+ #endif
+ #if defined(HAVE_LINUX_NETWORK)
+-    char control[CMSG_SPACE(sizeof(struct in_pktinfo))];
++		char control[CMSG_SPACE(sizeof(struct in_pktinfo))];
+ #elif defined(IP_RECVDSTADDR) && defined(HAVE_SOLARIS_NETWORK)
+-    char control[CMSG_SPACE(sizeof(struct in_addr)) +
+-		 CMSG_SPACE(sizeof(unsigned int))];
++		char control[CMSG_SPACE(sizeof(struct in_addr)) +
++			CMSG_SPACE(sizeof(unsigned int))];
+ #elif defined(IP_RECVDSTADDR)
+-    char control[CMSG_SPACE(sizeof(struct in_addr)) +
+-		 CMSG_SPACE(sizeof(struct sockaddr_dl))];
++		char control[CMSG_SPACE(sizeof(struct in_addr)) +
++			CMSG_SPACE(sizeof(struct sockaddr_dl))];
+ #endif
+-  } control_u;
++	} control_u;
+ #ifdef HAVE_IPV6
+-   /* Can always get recvd interface for IPv6 */
+-  int check_dst = !option_bool(OPT_NOWILD) || listen->family == AF_INET6;
++	/* Can always get recvd interface for IPv6 */
++	int check_dst = !option_bool(OPT_NOWILD) || listen->family == AF_INET6;
+ #else
+-  int check_dst = !option_bool(OPT_NOWILD);
++	int check_dst = !option_bool(OPT_NOWILD);
+ #endif
+ 
+-  /* packet buffer overwritten */
+-  daemon->srv_save = NULL;
++	/* packet buffer overwritten */
++	daemon->srv_save = NULL;
+ 
+-  dst_addr_4.s_addr = dst_addr.addr.addr4.s_addr = 0;
+-  netmask.s_addr = 0;
++	dst_addr_4.s_addr = dst_addr.addr.addr4.s_addr = 0;
++	netmask.s_addr = 0;
+ 
+-  if (option_bool(OPT_NOWILD) && listen->iface)
+-    {
+-      auth_dns = listen->iface->dns_auth;
+-
+-      if (listen->family == AF_INET)
++	if (option_bool(OPT_NOWILD) && listen->iface)
+ 	{
+-	  dst_addr_4 = dst_addr.addr.addr4 = listen->iface->addr.in.sin_addr;
+-	  netmask = listen->iface->netmask;
+-	}
+-    }
++		auth_dns = listen->iface->dns_auth;
+ 
+-  iov[0].iov_base = daemon->packet;
+-  iov[0].iov_len = daemon->edns_pktsz;
++		if (listen->family == AF_INET)
++		{
++			dst_addr_4 = dst_addr.addr.addr4 = listen->iface->addr.in.sin_addr;
++			netmask = listen->iface->netmask;
++		}
++	}
+ 
+-  msg.msg_control = control_u.control;
+-  msg.msg_controllen = sizeof(control_u);
+-  msg.msg_flags = 0;
+-  msg.msg_name = &source_addr;
+-  msg.msg_namelen = sizeof(source_addr);
+-  msg.msg_iov = iov;
+-  msg.msg_iovlen = 1;
++	iov[0].iov_base = daemon->packet;
++	iov[0].iov_len = daemon->edns_pktsz;
+ 
+-  if ((n = recvmsg(listen->fd, &msg, 0)) == -1)
+-    return;
++	msg.msg_control = control_u.control;
++	msg.msg_controllen = sizeof(control_u);
++	msg.msg_flags = 0;
++	msg.msg_name = &source_addr;
++	msg.msg_namelen = sizeof(source_addr);
++	msg.msg_iov = iov;
++	msg.msg_iovlen = 1;
+ 
+-  if (n < (int)sizeof(struct dns_header) ||
+-      (msg.msg_flags & MSG_TRUNC) ||
+-      (header->hb3 & HB3_QR))
+-    return;
++	if ((n = recvmsg(listen->fd, &msg, 0)) == -1)
++	  return;
+ 
+-  source_addr.sa.sa_family = listen->family;
++	if (n < (int)sizeof(struct dns_header) ||
++				(msg.msg_flags & MSG_TRUNC) ||
++				(header->hb3 & HB3_QR))
++	  return;
+ 
+-  if (listen->family == AF_INET)
+-    {
+-       /* Source-port == 0 is an error, we can't send back to that.
+-	  http://www.ietf.org/mail-archive/web/dnsop/current/msg11441.html */
+-      if (source_addr.in.sin_port == 0)
+-	return;
+-    }
+-#ifdef HAVE_IPV6
+-  else
+-    {
+-      /* Source-port == 0 is an error, we can't send back to that. */
+-      if (source_addr.in6.sin6_port == 0)
+-	return;
+-      source_addr.in6.sin6_flowinfo = 0;
+-    }
+-#endif
++	source_addr.sa.sa_family = listen->family;
+ 
+-  /* We can be configured to only accept queries from at-most-one-hop-away addresses. */
+-  if (option_bool(OPT_LOCAL_SERVICE))
+-    {
+-      struct addrlist *addr;
++	if (listen->family == AF_INET)
++	{
++		/* Source-port == 0 is an error, we can't send back to that.
++http://www.ietf.org/mail-archive/web/dnsop/current/msg11441.html */
++		if (source_addr.in.sin_port == 0)
++		  return;
++	}
+ #ifdef HAVE_IPV6
+-      if (listen->family == AF_INET6)
++	else
+ 	{
+-	  for (addr = daemon->interface_addrs; addr; addr = addr->next)
+-	    if ((addr->flags & ADDRLIST_IPV6) &&
+-		is_same_net6(&addr->addr.addr.addr6, &source_addr.in6.sin6_addr, addr->prefixlen))
+-	      break;
++		/* Source-port == 0 is an error, we can't send back to that. */
++		if (source_addr.in6.sin6_port == 0)
++		  return;
++		source_addr.in6.sin6_flowinfo = 0;
+ 	}
+-      else
+ #endif
++
++	/* We can be configured to only accept queries from at-most-one-hop-away addresses. */
++	if (option_bool(OPT_LOCAL_SERVICE))
+ 	{
+-	  struct in_addr netmask;
+-	  for (addr = daemon->interface_addrs; addr; addr = addr->next)
+-	    {
++		struct addrlist *addr;
++#ifdef HAVE_IPV6
++		if (listen->family == AF_INET6)
++		{
++			for (addr = daemon->interface_addrs; addr; addr = addr->next)
++			  if ((addr->flags & ADDRLIST_IPV6) &&
++						  is_same_net6(&addr->addr.addr.addr6, &source_addr.in6.sin6_addr, addr->prefixlen))
++				break;
++		}
++		else
++#endif
++		{
++			struct in_addr netmask;
++			for (addr = daemon->interface_addrs; addr; addr = addr->next)
++			{
+ 	      netmask.s_addr = htonl(~(in_addr_t)0 << (32 - addr->prefixlen));
+ 	      if (!(addr->flags & ADDRLIST_IPV6) &&
+ 		  is_same_net(addr->addr.addr.addr4, source_addr.in.sin_addr, netmask))
+@@ -1265,7 +1383,13 @@ void receive_query(struct listener *list
+     }
+ #ifdef URL_LIST
+ 	struct mac_node *pmac_node = NULL;
+-	filter_by_mac( &source_addr.sa, &pmac_node);
++#ifdef HAVE_IPV6
++	if(listen->family == AF_INET6) filter_by_mac( &source_addr.in6.sin6_addr, &pmac_node, 1);
++//hsockaddr_in6
++	else
++#endif
++	  filter_by_mac( &source_addr.sa, &pmac_node , 0);
++
+ #endif
+ 
+   if (check_dst)
+@@ -1383,7 +1507,7 @@ void receive_query(struct listener *list
+   if (extract_request(header, (size_t)n, daemon->namebuff, &type))
+     {
+ 
+-		my_syslog(LOG_ERR, _("get here %s"),daemon->namebuff);
++		// my_syslog(LOG_ERR, _("get here %s"),daemon->namebuff);
+ #ifdef HAVE_AUTH
+       struct auth_zone *zone;
+ #endif
+@@ -1399,7 +1523,7 @@ void receive_query(struct listener *list
+ #endif
+ #ifdef URL_LIST
+ 	  if(pmac_node != NULL){
+-		  my_syslog(LOG_ERR, _("in mac node request %s"),daemon->namebuff);
++		  // my_syslog(LOG_ERR, _("in mac node request %s"),daemon->namebuff);
+ 		  char block = 1;
+ 		  if(pmac_node->list_type){
+ 			  block = 0;
+@@ -1413,7 +1537,7 @@ void receive_query(struct listener *list
+ 			  ptmp = ptmp->pnext;
+ 		  }
+ 		  if(block){
+-			  my_syslog(LOG_ERR, _("block this request %s match %s"),daemon->namebuff,ptmp->url_str);
++			  my_syslog(LOG_ERR, _("block this request %s"),daemon->namebuff);
+ 			  return;
+ 		  }
+ 	  }
+--- a/src/dnsmasq.c
++++ b/src/dnsmasq.c
+@@ -864,7 +864,7 @@ int main (int argc, char **argv)
+   /* Using inotify, have to select a resolv file at startup */
+   poll_resolv(1, 0, now);
+ #endif
+-
++  init_urllist();
+   while (1)
+     {
+       int maxfd = -1;
+@@ -1091,9 +1091,9 @@ void short_to_char(unsigned short src, c
+ 
+ struct mac_node * find_mac_node(unsigned char* mac, struct mac_node * pmac_list_hdr){
+ 	struct mac_node * ptmp = pmac_list_hdr;
+-	my_syslog(LOG_WARNING, _("mac search is %02x:%02x:%02x:%02x:%02x:%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++	// my_syslog(LOG_WARNING, _("mac search is %02x:%02x:%02x:%02x:%02x:%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+ 	while(ptmp){
+-		my_syslog(LOG_WARNING, _("mac in list is %02x:%02x:%02x:%02x:%02x:%02x"), ptmp->mac[0], ptmp->mac[1], ptmp->mac[2], ptmp->mac[3], ptmp->mac[4], ptmp->mac[5]);
++		// my_syslog(LOG_WARNING, _("mac in list is %02x:%02x:%02x:%02x:%02x:%02x"), ptmp->mac[0], ptmp->mac[1], ptmp->mac[2], ptmp->mac[3], ptmp->mac[4], ptmp->mac[5]);
+ 		if(memcmp(mac,ptmp->mac, 6) == 0 ) return ptmp;
+ 		ptmp = ptmp->pnext;
+ 	}
+@@ -1132,12 +1132,13 @@ static int build_url_list(struct url_nod
+ 
+ 		// should include in len
+ 		len = char_to_short(flat_url_list + 2 + 2*i);
++		// my_syslog(LOG_ERR, _("len is %dcount is %d"), len, count);
+ 		pnew->str_len= len;
+ 		pnew->url_str = malloc(len + 1);
+ 		memcpy(pnew->url_str, flat_url_string, len);
+ 		pnew->url_str[len] = '\0';
+ 
+-		my_syslog(LOG_WARNING, _("string %s len is %d"), pnew->url_str, pnew->str_len);
++		// my_syslog(LOG_WARNING, _("string %s len is %d"), pnew->url_str, pnew->str_len);
+ 		flat_url_string += len;
+ 		plast = pnew;
+ 	}
+@@ -1159,11 +1160,11 @@ static int add_node_form_flat(struct mac
+ 
+ 	pnew->pnext = *ppmac_list_hdr;
+ 	*ppmac_list_hdr = pnew;
+-
+ 	pnew->purl_list_hdr = NULL;
+ 
+ 	memcpy(pnew->mac, (flat_mac_node_hdr + 2), 6);
+ 	pnew->list_type = *(flat_mac_node_hdr + 8);
++
+ 	if(build_url_list( &pnew->purl_list_hdr, flat_url_list) < 0 ) return -2;
+ 
+ 	return 0;
+@@ -1243,7 +1244,7 @@ static void update_url_list(void){
+ 		close(fd);
+ 		return;
+ 	}
+-	if(sb.st_size <= 18){
++	if(sb.st_size < 9){
+ 		my_syslog(LOG_ERR, _("file size is too small %d"), sb.st_size);
+ 		close(fd);
+ 		return;
+@@ -1308,60 +1309,113 @@ static void update_url_list(void){
+ 	return;
+ }
+ 
++void init_urllist(){
++	int fd, i, ret = 0;
++	struct stat sb;
++	unsigned int len = 0, map_size = 0;
++	unsigned char* addr = NULL,  * flat_mac_node_hdr = NULL,* flat_url_list = NULL;
++	unsigned short node_count = 0;
++
++	if(gpmac_list_hdr == NULL){
++
++		my_syslog(LOG_ERR, _("init urllist"));
++		fd = open(URLFILE, O_RDONLY);
++		if(fd < 0){
++			my_syslog(LOG_ERR, _("failed to open url list"));
++			return;
++		}
++
++		if (fstat(fd, &sb) == -1){ /* To obtain file size */
++			my_syslog(LOG_ERR, _("get file info error"));
++			close(fd);
++			return;
++		}
++		if(sb.st_size <= 18){
++			my_syslog(LOG_ERR, _("file size is too small %d"), sb.st_size);
++			close(fd);
++			return;
++		}
++
++		if(sb.st_size == 0) map_size = 4096;
++		else  map_size = ((sb.st_size + 4096 - 1) & (~( 4096 - 1)));
++
++		// memory ref to dns_control.pdf
++		addr =(unsigned char *) mmap(NULL, map_size, PROT_READ, MAP_PRIVATE, fd, 0);
++		close(fd);
++		if (addr == MAP_FAILED){
++			my_syslog(LOG_ERR, _("map file error"));
++			return;
++		}
++		// every time change for one mac node, and the node will be the last one when ssst prepare the data, node_count at least is 1
++		// my_syslog(LOG_ERR, _("map addr is%08x, map_size if %d, file size %d"), addr, map_size, sb.st_size);
++
++		node_count = char_to_short(addr+7);
++		my_syslog(LOG_ERR, _("node count %d"), node_count);
++		flat_url_list = addr + 9 + 9*node_count;
++		for(i = 0; i < node_count; i++){
++			flat_mac_node_hdr = addr + 9 + 9 * i;
++			len = char_to_short(flat_mac_node_hdr);
++			my_syslog(LOG_ERR, _("len is %d"), len);
++			add_node_form_flat( &gpmac_list_hdr, flat_mac_node_hdr, flat_url_list);
++			flat_url_list += len;
++		}
++		dump_list(gpmac_list_hdr,node_count);
++	}
++}
+ #endif
+ 
+ 
+ static void sig_handler(int sig)
+ {
+-  if (pid == 0)
+-    {
+-      /* ignore anything other than TERM during startup
+-	 and in helper proc. (helper ignore TERM too) */
+-      if (sig == SIGTERM)
+-	exit(EC_MISC);
+-    }
+-  else if (pid != getpid())
+-    {
+-      /* alarm is used to kill TCP children after a fixed time. */
+-      if (sig == SIGALRM)
+-	_exit(0);
+-    }
+-  else
+-    {
+-      /* master process */
+-      int event, errsave = errno;
+-
+-      if (sig == SIGHUP)
+-	event = EVENT_RELOAD;
+-      else if (sig == SIGCHLD)
+-	event = EVENT_CHILD;
+-      else if (sig == SIGALRM)
+-	event = EVENT_ALARM;
+-      else if (sig == SIGTERM)
+-	event = EVENT_TERM;
+-      else if (sig == SIGUSR1)
+-	event = EVENT_DUMP;
+-      else if (sig == SIGUSR2)
++	if (pid == 0)
++	{
++		/* ignore anything other than TERM during startup
++		   and in helper proc. (helper ignore TERM too) */
++		if (sig == SIGTERM)
++		  exit(EC_MISC);
++	}
++	else if (pid != getpid())
++	{
++		/* alarm is used to kill TCP children after a fixed time. */
++		if (sig == SIGALRM)
++		  _exit(0);
++	}
++	else
++	{
++		/* master process */
++		int event, errsave = errno;
++
++		if (sig == SIGHUP)
++		  event = EVENT_RELOAD;
++		else if (sig == SIGCHLD)
++		  event = EVENT_CHILD;
++		else if (sig == SIGALRM)
++		  event = EVENT_ALARM;
++		else if (sig == SIGTERM)
++		  event = EVENT_TERM;
++		else if (sig == SIGUSR1)
++		  event = EVENT_DUMP;
++		else if (sig == SIGUSR2)
+ #ifdef URL_LIST
+-	  {
+-		  my_syslog(LOG_ERR, _("sigal event usr2"));
+-		  event = EVENT_UPDATE_LIST;
+-	  }
++		{
++			my_syslog(LOG_ERR, _("sigal event usr2"));
++			event = EVENT_UPDATE_LIST;
++		}
+ #else
+-	event = EVENT_REOPEN;
++		event = EVENT_REOPEN;
+ #endif
+-      else
+-	return;
++		else
++		  return;
+ 
+-      send_event(pipewrite, event, 0, NULL);
+-      errno = errsave;
+-    }
++		send_event(pipewrite, event, 0, NULL);
++		errno = errsave;
++	}
+ }
+ 
+ /* now == 0 -> queue immediate callback */
+ void send_alarm(time_t event, time_t now)
+ {
+-  if (now == 0 || event != 0)
++	if (now == 0 || event != 0)
+     {
+       /* alarm(0) or alarm(-ve) doesn't do what we want.... */
+       if ((now == 0 || difftime(event, now) <= 0.0))

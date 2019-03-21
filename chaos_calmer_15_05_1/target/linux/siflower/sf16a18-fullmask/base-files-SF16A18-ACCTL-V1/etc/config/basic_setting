@@ -1,0 +1,13 @@
+config setting 'qos'
+
+config setting 'wan_type'
+
+config setting 'guide'
+        option enable 1
+
+config setting 'no_wifi'
+        option enable 1
+
+config setting 'ac'
+        option enable 1
+        option freq_inter 0

@@ -1,0 +1,10 @@
+# /etc/profile: system-wide .profile file for the Bourne shells
+
+echo
+echo -n "Processing /etc/profile... "
+
+export LD_LIBRARY_PATH=/lib/glib:/lib:/usr/lib
+
+# no-op
+echo "Done"
+echo

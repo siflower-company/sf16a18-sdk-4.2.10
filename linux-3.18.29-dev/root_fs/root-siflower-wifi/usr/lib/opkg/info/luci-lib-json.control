@@ -1,0 +1,8 @@
+Package: luci-lib-json
+Version: git-17.052.29333-b180d45-1
+Depends: libc
+Source: package/siflower/luci-siflower/libs/luci-lib-json
+Section: luci
+Architecture: all
+Installed-Size: 3111
+Description:  LuCI JSON library

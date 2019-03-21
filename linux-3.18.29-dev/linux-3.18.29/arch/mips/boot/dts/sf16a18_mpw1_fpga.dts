@@ -1,0 +1,401 @@
+/dts-v1/;
+
+#include "sf16a18_mpw1_fpga.dtsi"
+
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "siflower,sf16a18-soc";
+
+	spdif_codec: spdif-codec@0 {
+		compatible = "linux,spdif-dit";
+	};
+
+	w18_wifi_rf: w18_wifi-rf@7A00000{
+		compatible = "siflower,pistachio-uccp";
+		phy = <&phy1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy1: w18_wifi-phy@1 {
+			reg = <1>;
+			max-speed = <100>;
+		};
+	};
+
+	spdif-audio@0 {
+		compatible = "siflower,siflower-audio";
+		model = "Siflower Spdif Audio";
+		audio-controller = <&spdif>;
+		audio-codec = <&spdif_codec>;
+		audio-out;
+	};
+};
+
+&usb_phy{
+	status = "okay";
+};
+
+&ethernet {
+	status = "okay";
+};
+
+&switch{
+	status = "okay";
+};
+
+&gmac {
+	status = "okay";
+};
+
+&gdu {
+	status = "okay";
+	num-windows = <2>;
+	rgb_order = <0 1 2>;
+
+	display-timings {
+		native-mode = <&timing0>;
+		timing0: gm05004001q {
+			clock-frequency = <34539600>;
+			hactive = <800>;
+			vactive = <480>;
+			hback-porch = <46>;
+			hfront-porch = <210>;
+			vback-porch = <23>;
+			vfront-porch = <22>;
+			hsync-len = <20>;
+			vsync-len = <10>;
+		};
+	};
+};
+
+&rng {
+	status = "okay";
+};
+
+&gdma {
+	status = "okay";
+};
+
+&usb {
+	status = "okay";
+};
+
+&emmc {
+	status = "disabled";
+};
+
+&sdio {
+	status = "okay";
+};
+
+&i2s0 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pmu@30 {
+		compatible = "siflower, sfax8-pmu";
+		reg = <0x30>;
+
+		/*
+		IR device
+		miscdev {
+			interrupts = <249 0>;
+		};
+		*/
+
+        reset-button {
+			rb-gpio = <&gpio 60 0>;
+			led-gpio = <&gpio 57 0>;
+			};
+
+		power-management {
+			dcdc0-supply = <&core>;
+			dcdc0-maxv = <1100000>;
+
+			dcdc1-supply = <&dcdc1>;
+			dcdc1-maxv = <2100000>;
+
+			dcdc2-supply = <&ddr>;
+			dcdc2-maxv = <1800000>;
+
+			dcdc3-supply = <&vddio>;
+			dcdc3-maxv = <3300000>;
+
+			ldo0-supply = <&rflb_pa>;
+			ldo0-maxv = <2600000>;
+
+			ldo1-supply = <&rfhb_pa>;
+			ldo1-maxv = <2600000>;
+
+			ldo2-supply = <&vdd18>;
+			ldo2-maxv = <1800000>;
+
+			ldo4-supply = <&rfvdda>;
+			ldo4-maxv = <1500000>;
+
+			ldo5-supply = <&rfpa_en>;
+			ldo5-maxv = <700000>;
+
+			ldo6-supply = <&ldo6_32khz>;
+			ldo6-maxv = <700000>;
+
+		};
+
+		regulators {
+			core: dcdc0 {
+				regulator-name = "VDD_CORE_0.9V";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-min-microamp = <3000000>;
+				regulator-max-microamp = <3000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			dcdc1: dcdc1 {
+				regulator-name = "DCDC1";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <2175000>;
+				regulator-min-microamp = <3000000>;
+				regulator-max-microamp = <3000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ddr: dcdc2 {
+				regulator-name = "DDR_1.5-1.8V";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-min-microamp = <3000000>;
+				regulator-max-microamp = <3000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			vddio: dcdc3 {
+				regulator-name = "VDDIO_3.3V";
+				regulator-min-microvolt = <2200000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-min-microamp = <2000000>;
+				regulator-max-microamp = <2000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			rflb_pa: ldo0 {
+				regulator-name = "RFLB_PA_2.6V";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <2600000>;
+				regulator-min-microamp = <400000>;
+				regulator-max-microamp = <400000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			rfhb_pa: ldo1 {
+				regulator-name = "RFHB_PA_2.6V";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <2600000>;
+				regulator-min-microamp = <400000>;
+				regulator-max-microamp = <400000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			vdd18: ldo2 {
+				regulator-name = "VDD18_1.8V";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-min-microamp = <400000>;
+				regulator-max-microamp = <400000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			rfvdda: ldo4 {
+				regulator-name = "RF_VDDA_1.5V";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-min-microamp = <200000>;
+				regulator-max-microamp = <200000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			rfpa_en: ldo5 {
+				regulator-name = "RFPA_EN";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <700000>;
+				regulator-min-microamp = <200000>;
+				regulator-max-microamp = <200000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo6_32khz: ldo6 {
+				regulator-name = "LDO6";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <700000>;
+				regulator-min-microamp = <200000>;
+				regulator-max-microamp = <200000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			/*
+			svcc {
+				regulator-name = "SVCC";
+				regulator-min-microvolt = <2600000>;
+				regulator-max-microvolt = <2600000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-min-microamp = <50000>;
+				regulator-max-microamp = <50000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+			*/
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+/*
+	codec: es8388s@11{
+		compatible = "ambarella,es8388s";
+		reg = <0x11>;
+	};
+*/
+	codec: es8316@11{
+		compatible = "ESSX8316";
+		reg = <0x11>;
+	};
+};
+
+&i2c2 {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+	use-dma;
+	dmas = <&gdma 10
+	&gdma 11>;
+	dma-names = "tx", "rx";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	w25q128@0 {
+		compatible = "w25q128";
+		reg = <0>;	/* chip select */
+		spi-max-frequency = <33000000>;
+
+		bank-width = <2>;
+		device-width = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "spl-loader";
+			reg = <0x0 0x20000>; /* 128k */
+			read-only;
+		};
+
+		partition@20000 {
+			label = "u-boot";
+			reg = <0x20000 0x60000>; /* 384k */
+		};
+
+		partition@80000 {
+			label = "u-boot-env";
+			reg = <0x80000 0x10000>; /* 64k */
+		};
+
+		factory:partition@90000 {
+			label = "factory";
+			reg = <0x90000 0x10000>; /* 64k */
+		};
+
+		partition@a0000 {
+			label = "firmware";
+			reg = <0xa0000 0xf60000>; /* 640k-16M */
+		};
+	};
+
+	spidev: spi@8200000 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		clock = <50000000>;
+		spi-cpha;
+		spi-cpol;
+		spi-max-frequency=<12000000>;
+	};
+};
+
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+&uart3 {
+	status = "okay";
+};
+
+&pcm0 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+};
+
+&pwm1 {
+	status = "okay";
+};
+
+
+&timer0 {
+	status = "okay";
+};
+
+&timer1 {
+	status = "okay";
+};
+
+
+&watchdog {
+	status = "okay";
+};
+
+&spdif
+{
+	status = "okay";
+};
+
+&wifi_rf {
+	status = "disabled";
+};
+
+&wifi_lb {
+	status = "okay";
+};
+
+&wifi_hb {
+	status = "okay";
+};

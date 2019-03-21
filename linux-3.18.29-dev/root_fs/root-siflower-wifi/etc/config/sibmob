@@ -1,0 +1,7 @@
+config bmob 'bmobkey'
+    option apkkey '796f6ac960f6a1edd74c9fe7295ff080'
+    option restkey '2a1f27e4f91a6269b6ab3401a466d551'
+    option masterkey '2156daeab7a2776b43fa3fdb556b6f7e'
+
+config bmob 'cloudcode'
+    option version 'V10'

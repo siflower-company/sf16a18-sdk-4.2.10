@@ -1,0 +1,10 @@
+Package: kmod-nf-ipt6
+Version: 3.18.29-1
+Depends: kernel (=3.18.29-1-c9bba86f403107e21c46951f66098d43), kmod-nf-ipt, kmod-nf-conntrack6
+Source: package/kernel/linux
+License: GPLv2
+Section: kernel
+Status: unknown hold not-installed
+Architecture: mips_siflower
+Installed-Size: 8170
+Description:  Ip6tables core

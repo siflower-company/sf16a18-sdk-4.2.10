@@ -1,0 +1,13 @@
+Index: iw-4.3/Makefile
+===================================================================
+--- iw-4.3.orig/Makefile	2017-08-08 11:26:01.640267533 +0800
++++ iw-4.3/Makefile	2017-08-08 11:26:43.648268771 +0800
+@@ -17,7 +17,7 @@
+ 	mesh.o mpath.o mpp.o scan.o reg.o version.o \
+ 	reason.o status.o link.o offch.o ps.o cqm.o \
+ 	bitrate.o vendor.o
+-OBJS += sections.o
++OBJS += sections.o connect.o
+ 
+ OBJS-$(HWSIM) += hwsim.o
+ 

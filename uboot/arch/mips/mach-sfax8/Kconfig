@@ -1,0 +1,59 @@
+menu "Siflower SFAX8 platforms"
+	depends on MACH_SFAX8
+
+config SYS_SOC
+	default "sfax8"
+
+choice
+	prompt "SOC select"
+
+config SOC_SFA18_MPW0
+	bool "SFA18 mpw0 soc"
+	help
+	  This supports Siflower sfa18 mpw0 SOC.
+
+config SOC_SFA18_MPW1
+	bool "SFA18 mpw1 soc"
+	help
+	  This supports Siflower sfa18 mpw1 SOC.
+
+config SOC_SFA18_FULLMASK
+	bool "SFA18 fullmask soc"
+	help
+	  This supports Siflower sfa18 full mask SOC.
+
+config SOC_SFA28
+	bool "SFA28 soc"
+	help
+	  This supports Siflower sfa28 SOC.
+endchoice
+
+choice
+	prompt "Board select"
+
+config TARGET_SFA18_P20B
+	bool "SFA18 p20b board"
+
+config TARGET_SFA18_P10M
+	bool "SFA18 p10m board"
+
+config TARGET_SFA18_X10
+	bool "SFA18 x10 board"
+
+config TARGET_SFA18_P10H
+	bool "SFA18 p10h board"
+
+config TARGET_SFA18_P10B
+	bool "SFA18 p10b board"
+
+config TARGET_SFA18_86V
+	bool "SFA18 86V board"
+
+config TARGET_SFA18_AC
+	bool "SFA18 AC board"
+
+endchoice
+
+source "board/siflower/sfa18_common/Kconfig"
+
+endmenu

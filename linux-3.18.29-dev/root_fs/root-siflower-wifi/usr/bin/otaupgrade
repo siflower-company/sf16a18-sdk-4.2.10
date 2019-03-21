@@ -1,0 +1,48 @@
+#!/usr/bin/lua
+
+local json = require("luci.json")
+local util =require 'luci.util'
+local sysutil = require "luci.siwifi.sf_sysutil"
+local nixio = require "nixio"
+local fs = require "nixio.fs"
+
+local image_tmp   = "/tmp/firmware.img"
+local info = {}
+local function write_info(json_info)
+    local f = nixio.open("/tmp/upgrade_status", "w", 600)
+    f:writeall(json_info)
+    f:close()
+end    
+
+info["status"] = 1
+info["msg"] = "ota upgrade is downloading now"
+local json_info = json.encode(info)
+write_info(json_info)
+
+local remote_info = json.decode(fs.readfile("/tmp/ota_info"))
+local url  = remote_info["url"]
+local ota_checksum = remote_info["checksum"]
+
+util.exec(" curl -k -m 120 -o %q  %s" %{image_tmp,url})
+local checksum_info = util.exec("md5sum %s" %image_tmp)
+local checksum = string.match(checksum_info,"([^%s]+).*")
+
+
+if(ota_checksum == checksum) then
+    info["status"] = 2
+    info["msg"] = "ota upgrade is flashing operation now"
+    local json_info = json.encode(info)
+    write_info(json_info)
+--    sysutil.sendSystemEvent(sysutil.SYSTEM_EVENT_DOWNLOADED)
+    local ret = {}
+    sysutil.sendCommandToLocalServer("RSCH need-callback -data {\"action\":\"4\"}",ret)
+    sysutil.resetAllDevice()
+    sysutil.fork_exec("sleep 3; killall dropbear uhttpd;  /sbin/sysupgrade %q " %{ image_tmp })
+else
+    info["status"] = 3
+    info["msg"] = "ota image downloaded is incorrect"
+    local json_info = json.encode(info)
+    write_info(json_info)
+    util.exec("rm /tmp/upgrade_shortest_time /tmp/firmware.img")
+end
+

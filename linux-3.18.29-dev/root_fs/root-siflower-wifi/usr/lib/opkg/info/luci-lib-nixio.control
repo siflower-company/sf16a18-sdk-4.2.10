@@ -1,0 +1,8 @@
+Package: luci-lib-nixio
+Version: git-17.052.29333-b180d45-1
+Depends: libc, liblua
+Source: package/siflower/luci-siflower/libs/luci-lib-nixio
+Section: luci
+Architecture: mips_siflower
+Installed-Size: 29664
+Description:  NIXIO POSIX library

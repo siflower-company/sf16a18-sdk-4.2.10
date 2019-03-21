@@ -1,0 +1,12 @@
+Index: dnsmasq-2.73/src/rfc2131.c
+===================================================================
+--- dnsmasq-2.73.orig/src/rfc2131.c	2015-06-13 04:39:11.000000000 +0800
++++ dnsmasq-2.73/src/rfc2131.c	2017-03-30 11:51:47.225773113 +0800
+@@ -1488,6 +1488,7 @@
+       unsigned int req_time = option_uint(opt, 0, 4);
+       if (req_time < 120 )
+ 	req_time = 120; /* sanity */
++	//req_time = 3600; /* use for sprint network test */
+       if (time == 0xffffffff || (req_time != 0xffffffff && req_time < time))
+ 	time = req_time;
+     }

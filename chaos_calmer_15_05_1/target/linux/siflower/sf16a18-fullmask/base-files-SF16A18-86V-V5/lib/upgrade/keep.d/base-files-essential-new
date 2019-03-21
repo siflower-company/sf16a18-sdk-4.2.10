@@ -1,0 +1,7 @@
+# Essential files that will be always kept
+/etc/watchdog-ping
+/etc/ignore_guest
+/etc/capwap
+/etc/wlan-file
+/etc/config_fat.tar
+/etc/config_fit.tar

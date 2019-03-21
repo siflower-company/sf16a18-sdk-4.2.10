@@ -1,0 +1,8 @@
+Package: luci-app-firewall
+Version: git-17.052.29333-b180d45-1
+Depends: libc, firewall
+Source: package/siflower/luci-siflower/applications/luci-app-firewall
+Section: luci
+Architecture: all
+Installed-Size: 10569
+Description:  Firewall and Portforwarding application

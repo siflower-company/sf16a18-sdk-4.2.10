@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+# max is 99
+START=13
+
+start(){
+	check_mode=`cat /proc/sfax8_mode_info`
+	if [ "$check_mode" = "0"  ]; then
+		eval "uci set wireless.radio0.disabled=1"
+		eval "uci set wireless.radio1.disabled=1"
+		eval "uci commit wireless"
+		eval "uci set network.lan.proto='dhcp'"
+		eval "uci commit network"
+		logger -t switch_config  "set system for fit"
+		eval "uci set system.@system[0].mode=1"
+		eval "uci commit system"
+	else
+		logger -t switch_config  "set system for fat"
+		eval "uci delete system.@system[0].mode"
+		eval "uci commit system"
+	fi
+}

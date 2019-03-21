@@ -1,0 +1,33 @@
+config SND_SOC_SFAX8_PCM
+		tristate "SoC PCM support for the Siflower SFAX8"
+		select SND_SOC_GENERIC_DMAENGINE_PCM
+		help 
+		   Say Y or M if you want to add support for PCM interface 
+		   You will also need to select the audio interfaces to support below.
+
+config SND_SOC_SFAX8_I2S
+		tristate "Siflower I2S Device Driver"
+		select SND_SOC_GENERIC_DMAENGINE_PCM
+		help
+		   Say Y or M if you want to add support for I2S driver for
+		   Siflower sfax8 I2S device. The device supports upto
+		   maximum of 8 channels each for play and record.
+
+config SND_SOC_SFAX8_SPDIF
+		tristate "SoC spdif support for Siflower SFAx8 serials"
+		select SND_SOC_GENERIC_DMAENGINE_PCM
+		help 
+		   Say Y or M if you want to add support for the spdif interface 
+		   You will also need to select the audio interfaces to support below.
+
+config SND_SOC_SFAX8_MACHINE
+		tristate "SoC machine support for the Siflower SFAX8(PCM I2S)"
+		help
+			Say Y or M if you want to add support for machine
+
+config SND_SOC_SFAX8_SPDIF_MACHINE
+		tristate "SoC machine support for the Siflower SFAX8(SPDIF)"
+		help
+			Say Y or M if you want to add support for machine
+
+

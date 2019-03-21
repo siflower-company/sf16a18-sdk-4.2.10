@@ -1,0 +1,11 @@
+Package: rpcd
+Version: 2016-04-13-73aea9b8b621a1ce034bc6ee00c9d058a40c8a3d
+Depends: libc, libubus, libubox, libuci, libblobmsg-json
+Source: package/system/rpcd
+License: ISC
+Section: utils
+Maintainer: Jo-Philipp Wich <jow@openwrt.org>
+Architecture: mips_siflower
+Installed-Size: 18690
+Description:  This package provides the UBUS RPC backend server to expose various
+ functionality to frontend programs via JSON-RPC.

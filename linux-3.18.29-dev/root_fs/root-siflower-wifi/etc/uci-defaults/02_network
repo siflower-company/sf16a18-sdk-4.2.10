@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Copyright (C) 2012 OpenWrt.org
+#
+. /lib/functions/uci-defaults.sh
+
+	uci batch<<EOF
+set network.lan.ipaddr='192.168.4.1'
+EOF
+
+uci commit network
+
+exit 0

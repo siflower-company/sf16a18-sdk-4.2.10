@@ -1,0 +1,8 @@
+Package: luci-proto-ppp
+Version: git-17.052.29333-b180d45-1
+Depends: libc
+Source: package/siflower/luci-siflower/protocols/luci-proto-ppp
+Section: luci
+Architecture: all
+Installed-Size: 2605
+Description:  Support for PPP/PPPoE/PPPoA/PPtP

@@ -1,0 +1,158 @@
+Index: libubox-2015-11-08/uloop.c
+===================================================================
+--- libubox-2015-11-08.orig/uloop.c
++++ libubox-2015-11-08/uloop.c
+@@ -63,9 +63,11 @@ static bool do_sigchld = false;
+ static struct uloop_fd_event cur_fds[ULOOP_MAX_EVENTS];
+ static int cur_fd, cur_nfds;
+ 
++int uloop_fd_add(struct uloop_fd *sock, unsigned int flags);
++
+ #ifdef USE_KQUEUE
+ 
+-int uloop_init(void)
++static int uloop_init_pollfd(void)
+ {
+ 	struct timespec timeout = { 0, 0 };
+ 	struct kevent ev = {};
+@@ -208,7 +210,7 @@ static int uloop_fetch_events(int timeou
+ #define EPOLLRDHUP 0x2000
+ #endif
+ 
+-int uloop_init(void)
++static int uloop_init_pollfd(void)
+ {
+ 	if (poll_fd >= 0)
+ 		return 0;
+@@ -294,6 +296,64 @@ static int uloop_fetch_events(int timeou
+ 
+ #endif
+ 
++static void waker_consume(struct uloop_fd *fd, unsigned int events)
++{
++	char buf[4];
++
++	while (read(fd->fd, buf, 4) > 0)
++		;
++}
++
++static int waker_pipe = -1;
++static struct uloop_fd waker_fd = {
++	.fd = -1,
++	.cb = waker_consume,
++};
++
++static void waker_init_fd(int fd)
++{
++	fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
++	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
++}
++
++static int waker_init(void)
++{
++	int fds[2];
++
++	if (waker_pipe >= 0)
++		return 0;
++
++	if (pipe(fds) < 0)
++		return -1;
++
++	waker_init_fd(fds[0]);
++	waker_init_fd(fds[1]);
++	waker_pipe = fds[1];
++
++	waker_fd.fd = fds[0];
++	waker_fd.cb = waker_consume;
++	uloop_fd_add(&waker_fd, ULOOP_READ);
++
++	return 0;
++}
++
++static void uloop_setup_signals(bool add);
++
++int uloop_init(void)
++{
++	if (uloop_init_pollfd() < 0)
++		return -1;
++
++	if (waker_init() < 0) {
++		uloop_done();
++		return -1;
++	}
++
++	uloop_setup_signals(true);
++
++	return 0;
++}
++
+ static bool uloop_fd_stack_event(struct uloop_fd *fd, int events)
+ {
+ 	struct uloop_fd_stack *cur;
+@@ -548,14 +608,21 @@ static void uloop_handle_processes(void)
+ 
+ }
+ 
++static void uloop_signal_wake(void)
++{
++	write(waker_pipe, "w", 1);
++}
++
+ static void uloop_handle_sigint(int signo)
+ {
+ 	uloop_cancelled = true;
++	uloop_signal_wake();
+ }
+ 
+ static void uloop_sigchld(int signo)
+ {
+ 	do_sigchld = true;
++	uloop_signal_wake();
+ }
+ 
+ static void uloop_install_handler(int signum, void (*handler)(int), struct sigaction* old, bool add)
+@@ -668,12 +735,7 @@ void uloop_run(void)
+ 	static int recursive_calls = 0;
+ 	struct timeval tv;
+ 
+-	/*
+-	 * Handlers are only updated for the first call to uloop_run() (and restored
+-	 * when this call is done).
+-	 */
+-	if (!recursive_calls++)
+-		uloop_setup_signals(true);
++	recursive_calls++;
+ 
+ 	uloop_cancelled = false;
+ 	while(!uloop_cancelled)
+@@ -691,17 +753,24 @@ void uloop_run(void)
+ 		uloop_run_events(uloop_get_next_timeout(&tv));
+ 	}
+ 
+-	if (!--recursive_calls)
+-		uloop_setup_signals(false);
++	--recursive_calls;
+ }
+ 
+ void uloop_done(void)
+ {
+-	if (poll_fd < 0)
+-		return;
++	uloop_setup_signals(false);
+ 
+-	close(poll_fd);
+-	poll_fd = -1;
++	if (poll_fd >= 0) {
++		close(poll_fd);
++		poll_fd = -1;
++	}
++
++	if (waker_pipe >= 0) {
++		uloop_fd_delete(&waker_fd);
++		close(waker_pipe);
++		close(waker_fd.fd);
++		waker_pipe = -1;
++	}
+ 
+ 	uloop_clear_timeouts();
+ 	uloop_clear_processes();

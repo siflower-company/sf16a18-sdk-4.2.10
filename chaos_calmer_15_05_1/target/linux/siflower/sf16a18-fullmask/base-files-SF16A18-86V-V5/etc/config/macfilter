@@ -1,0 +1,2 @@
+config setting 'status'
+	option enable '0'

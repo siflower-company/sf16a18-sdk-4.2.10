@@ -1,0 +1,19 @@
+
+#
+# License terms: GNU General Public License (GPL) version 2
+#
+config CRYPTO_DEV_SFAX8_SHAM
+		tristate "SFAX8 SHA1/SHA224/SHA256 and MD5 driver."
+		depends on CRYPTO_DEV_SFAX8
+		default n
+		help
+			This selecs the crypto driver for the SFAX8_SHAM hardware. It suppports
+			SHA1,SHA224,SHA256 and MD5 algrithm.
+
+config CRYPTO_DEV_SFAX8_CIPHER
+		tristate "SFAX8 CIPHER driver"
+		depends on CRYPTO_DEV_SFAX8
+		default n
+		help
+			This selecs the crypto driver for the SFAX8_CIPHER hardware. It suppports
+			AES,DES,TDES and  RC4 algrithm.

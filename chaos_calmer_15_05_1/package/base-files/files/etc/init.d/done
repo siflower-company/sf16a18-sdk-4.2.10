@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=95
+boot() {
+	mount_root done
+	rm -f /sysupgrade.tgz
+
+	# process user commands
+	[ -f /etc/rc.local ] && {
+		sh /etc/rc.local
+	}
+
+	# set leds to normal state
+	. /etc/diag.sh
+	set_state done
+
+	#guest wifi speed and time init
+	gwifi start
+
+	echo "$(date) INFO Router boot done" >> /tmp/sf_log.txt
+}

@@ -1,0 +1,125 @@
+#!/bin/sh
+logger -t mount  in arg $DEVPATH $ACTION $DEVICENAME
+set_fstab(){
+	dev_check=`ls /dev/$DEVICENAME`
+	if [ -n "$dev_check" ]; then
+
+		mkdir /mnt/$DEVICENAME  > /dev/null 2>&1
+
+		case $DEVICENAME in
+			*sd*)
+				temp_tar=`uci get fstab.@mount[0].target`;
+			;;
+			mmcblk0*)
+				temp_tar=`uci get fstab.@mount[1].target`;
+			;;
+		esac
+
+		if [[ $temp_tar == "/mnt/sda1" ]]; then
+			fs_index=0;
+		else
+			fs_index=1;
+		fi
+
+		temp_tar=/mnt/$DEVICENAME
+
+		logger -t mount fs_index choose $fs_index;
+
+		case $ACTION in
+			add)
+				temp_fs=`block info |grep $DEVICENAME: |awk -F 'TYPE="' '{print $2}'`;
+
+				if [[ $temp_fs == "ntfs\"" ]]; then
+					uci set fstab.@mount[$fs_index].options="rw,nls=utf8";
+					uci set fstab.@mount[$fs_index].fstype="ntfs-3g";
+					mount_tar=$temp_tar;
+				else
+					uci set fstab.@mount[$fs_index].options="rw,codepage=936,iocharset=utf8";
+					mount_tar=$temp_tar;
+				fi
+
+			;;
+			remove)
+				temp_fs=`uci get fstab.@mount[$fs_index].fstype`;
+				if [[ $temp_fs == "ntfs-3g" ]]; then
+					uci set fstab.@mount[$fs_index].fstype="";
+					mount_tar=$temp_tar;
+				fi
+			;;
+		esac
+
+		logger -t mount temp_fs $temp_fs;
+
+		uci commit fstab;
+	fi
+}
+
+set_ntfs(){
+	case $ACTION in
+		add)
+			logger -t mount add device $mount_tar
+			mount /dev/$DEVICENAME $mount_tar  > /dev/null 2>&1
+		;;
+		remove)
+			logger -t mount remove device $mount_tar
+			umount $mount_tar
+		;;
+	esac
+}
+
+case $DEVICENAME in
+	*sd*)
+		set_fstab
+
+		logger -t mount option $mount_tar
+		[ -n "$mount_tar"  ] && {
+			set_ntfs
+		}
+	;;
+	mmcblk0*)
+		set_fstab
+
+		logger -t mount option $mount_tar
+		[ -n "$mount_tar"  ] && {
+			set_ntfs
+		}
+	;;
+esac
+/sbin/block hotplug
+
+if [ $1 == "mount_all" ];then
+	cd /dev/
+	ACTION="add"
+
+	count=`ls /dev/mmcblk0* | wc -l`
+	if [ $count -ge 1 ];then
+		for i in `seq  $count`
+		do
+		{
+			DEVICENAME=`ls mmcblk0* | sed -n ""$i"p"`
+			set_fstab
+			logger -t mount option $mount_tar
+			[ -n "$mount_tar"  ] && {
+				set_ntfs
+			}
+		}
+		done
+	fi
+
+	count=`ls /dev/sd* | wc -l`
+	if [ $count -ge 1 ];then
+		for i in `seq  $count`
+		do
+		{
+			DEVICENAME=`ls sd* | sed -n ""$i"p"`
+			set_fstab
+			logger -t mount option $mount_tar
+			[ -n "$mount_tar"  ] && {
+				set_ntfs
+			}
+		}
+		done
+	fi
+	cd /
+fi
+

@@ -1,0 +1,8 @@
+Package: luci-ssl
+Version: git-17.052.29333-b180d45-1
+Depends: libc, luci, libustream-polarssl, px5g
+Source: package/siflower/luci-siflower/collections/luci-ssl
+Section: luci
+Architecture: all
+Installed-Size: 105
+Description:  Standard OpenWrt set with HTTPS support

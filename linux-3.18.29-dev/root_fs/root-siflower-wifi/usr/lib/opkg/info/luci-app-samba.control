@@ -1,0 +1,8 @@
+Package: luci-app-samba
+Version: git-17.052.29333-b180d45-1
+Depends: libc, samba36-server
+Source: package/siflower/luci-siflower/applications/luci-app-samba
+Section: luci
+Architecture: all
+Installed-Size: 1362
+Description:  Network Shares - Samba SMB/CIFS module

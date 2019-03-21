@@ -1,0 +1,8 @@
+Package: luci-i18n-base-zh-cn
+Version: git-17.052.29333-b180d45-1
+Depends: libc, luci-base
+Source: package/siflower/luci-siflower/modules/luci-base
+Section: luci
+Architecture: all
+Installed-Size: 21413
+Description:  Translation for luci-base - 普通话 (Chinese)

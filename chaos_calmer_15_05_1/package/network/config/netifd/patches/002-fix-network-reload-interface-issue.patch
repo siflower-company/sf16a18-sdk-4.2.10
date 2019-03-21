@@ -1,0 +1,11 @@
+--- a/device.c	2017-08-17 10:12:55.439064072 +0800
++++ b/device.c	2017-08-17 10:20:06.243076773 +0800
+@@ -443,7 +443,7 @@
+ {
+ 	struct device *dev;
+
+-	if (strchr(name, '.'))
++	if (strchr(name, '.') && strncmp(name, "wlan", 4) != 0)
+ 		return get_vlan_device_chain(name, create);
+
+ 	if (name[0] == '@')

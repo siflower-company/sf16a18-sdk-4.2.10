@@ -1,0 +1,17 @@
+Index: gst-plugins-good-1.4.5/ext/speex/gstspeexenc.c
+===================================================================
+--- gst-plugins-good-1.4.5.orig/ext/speex/gstspeexenc.c	2014-11-04 17:08:23.000000000 +0800
++++ gst-plugins-good-1.4.5/ext/speex/gstspeexenc.c	2018-08-29 11:24:42.083694351 +0800
+@@ -711,10 +711,12 @@
+     /* push out buffers */
+     /* store buffers for later pre_push sending */
+     headers = NULL;
++#if 0
+     GST_DEBUG_OBJECT (enc, "storing header buffers");
+     headers = g_list_prepend (headers, buf2);
+     headers = g_list_prepend (headers, buf1);
+     gst_audio_encoder_set_headers (benc, headers);
++#endif
+ 
+     enc->header_sent = TRUE;
+   }

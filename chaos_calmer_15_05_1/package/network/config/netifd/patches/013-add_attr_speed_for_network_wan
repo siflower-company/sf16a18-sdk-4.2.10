@@ -1,0 +1,147 @@
+Index: netifd-2015-12-16/device.c
+===================================================================
+--- netifd-2015-12-16.orig/device.c	2018-11-08 19:11:09.343093929 +0800
++++ netifd-2015-12-16/device.c	2018-11-08 19:11:09.343093929 +0800
+@@ -35,6 +35,7 @@
+ 	[DEV_ATTR_TYPE] = { .name = "type", .type = BLOBMSG_TYPE_STRING },
+ 	[DEV_ATTR_MTU] = { .name = "mtu", .type = BLOBMSG_TYPE_INT32 },
+ 	[DEV_ATTR_MTU6] = { .name = "mtu6", .type = BLOBMSG_TYPE_INT32 },
++	[DEV_ATTR_SPEED] = { .name = "speed", .type = BLOBMSG_TYPE_STRING },
+ 	[DEV_ATTR_MACADDR] = { .name = "macaddr", .type = BLOBMSG_TYPE_STRING },
+ 	[DEV_ATTR_TXQUEUELEN] = { .name = "txqueuelen", .type = BLOBMSG_TYPE_INT32 },
+ 	[DEV_ATTR_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+@@ -159,6 +160,9 @@
+ 	memset(n, 0, sizeof(*n));
+ 	n->mtu = s->flags & DEV_OPT_MTU ? s->mtu : os->mtu;
+ 	n->mtu6 = s->flags & DEV_OPT_MTU6 ? s->mtu6 : os->mtu6;
++	memcpy(n->speed,
++				(s->flags & DEV_OPT_SPEED ? s->speed : os->speed),
++				sizeof(n->speed));
+ 	n->txqueuelen = s->flags & DEV_OPT_TXQUEUELEN ?
+ 		s->txqueuelen : os->txqueuelen;
+ 	memcpy(n->macaddr,
+@@ -206,6 +210,14 @@
+ 		s->flags |= DEV_OPT_MTU6;
+ 	}
+
++	if ((cur = tb[DEV_ATTR_SPEED])) {
++		ea = blobmsg_data(cur);
++		if (ea) {
++			memcpy(s->speed, ea, sizeof(s->speed));
++			s->flags |= DEV_OPT_SPEED;
++		}
++	}
++
+ 	if ((cur = tb[DEV_ATTR_TXQUEUELEN])) {
+ 		s->txqueuelen = blobmsg_get_u32(cur);
+ 		s->flags |= DEV_OPT_TXQUEUELEN;
+@@ -923,6 +935,8 @@
+ 			blobmsg_add_u32(b, "mtu", st.mtu);
+ 		if (st.flags & DEV_OPT_MTU6)
+ 			blobmsg_add_u32(b, "mtu6", st.mtu6);
++		if (st.flags & DEV_OPT_SPEED)
++			blobmsg_add_string(b, "speed", st.speed);
+ 		if (st.flags & DEV_OPT_MACADDR)
+ 			blobmsg_add_string(b, "macaddr", format_macaddr(st.macaddr));
+ 		if (st.flags & DEV_OPT_TXQUEUELEN)
+Index: netifd-2015-12-16/device.h
+===================================================================
+--- netifd-2015-12-16.orig/device.h	2018-11-08 19:11:09.343093929 +0800
++++ netifd-2015-12-16/device.h	2018-11-08 19:11:09.343093929 +0800
+@@ -29,6 +29,7 @@
+ 	DEV_ATTR_TYPE,
+ 	DEV_ATTR_MTU,
+ 	DEV_ATTR_MTU6,
++	DEV_ATTR_SPEED,
+ 	DEV_ATTR_MACADDR,
+ 	DEV_ATTR_TXQUEUELEN,
+ 	DEV_ATTR_ENABLED,
+@@ -94,6 +95,7 @@
+ 	DEV_OPT_BRINPUT_DISABLE	= (1 << 17),
+ 	DEV_OPT_NETISOLATE	= (1 << 18),
+ 	DEV_OPT_COND_HIDDEN	= (1 << 19),
++	DEV_OPT_SPEED	= (1 << 20),
+ };
+
+ /* events broadcasted to all users of a device */
+@@ -139,6 +141,7 @@
+ 	unsigned int valid_flags;
+ 	unsigned int mtu;
+ 	unsigned int mtu6;
++	char speed[8];
+ 	unsigned int txqueuelen;
+ 	uint8_t macaddr[6];
+ 	bool ipv6;
+Index: netifd-2015-12-16/system-linux.c
+===================================================================
+--- netifd-2015-12-16.orig/system-linux.c	2018-11-08 19:11:09.343093929 +0800
++++ netifd-2015-12-16/system-linux.c	2018-11-08 19:17:47.047105655 +0800
+@@ -1370,18 +1370,26 @@
+
+ int system_if_up(struct device *dev)
+ {
++	int ret;
+ 	system_if_get_settings(dev, &dev->orig_settings);
+ 	/* Only keep orig settings based on what needs to be set */
+ 	dev->orig_settings.valid_flags = dev->orig_settings.flags;
+ 	dev->orig_settings.flags &= dev->settings.flags;
+ 	system_if_apply_settings(dev, &dev->settings, dev->settings.flags);
+-	return system_if_flags(dev->ifname, IFF_UP, 0);
++	ret = system_if_flags(dev->ifname, IFF_UP, 0);
++	if (dev->settings.flags & DEV_OPT_SPEED) {
++		system_update_wan_speed(dev->ifname, (&dev->settings)->speed);
++	}
++	return ret;
+ }
+
+ int system_if_down(struct device *dev)
+ {
+ 	int ret = system_if_flags(dev->ifname, 0, IFF_UP);
+ 	system_if_apply_settings(dev, &dev->orig_settings, dev->orig_settings.flags);
++	if (dev->orig_settings.flags & DEV_OPT_SPEED) {
++		system_update_wan_speed(dev->ifname, (&dev->orig_settings)->speed);
++	}
+ 	return ret;
+ }
+
+@@ -2392,6 +2400,29 @@
+ 	return ret;
+ }
+
++int system_update_wan_speed(const char *name, char *speed)
++{
++	netifd_log_message(L_NOTICE, "%s:Set interface:%s speed:%s\n", __func__, name, speed);
++	if (!strncmp(speed, "auto", 4)){
++		if (!strncmp(name, "eth1", 4))
++		  system("ethtool -s eth1 autoneg on");
++		else
++		  system("echo 0x8 0x4 0x0 0x1000 0x1e1 > /sys/kernel/debug/npu_debug");
++	}else if (!strncmp(speed, "10mfull", 7)){
++		if (!strncmp(name, "eth1", 4))
++		  system("ethtool -s eth1 autoneg off speed 10 duplex full");
++		else
++		  system("echo 0x8 0x4 0x0 0x100 0x61 > /sys/kernel/debug/npu_debug");
++	}else if (!strncmp(speed, "10mhalf", 7)){
++		if (!strncmp(name, "eth1", 4))
++		  system("ethtool -s eth1 autoneg off speed 10 duplex half");
++		else
++		  system("echo 0x8 0x4 0x0 0x0 0x21 > /sys/kernel/debug/npu_debug");
++	}
++
++	return 0;
++}
++
+ int system_add_ip_tunnel(const char *name, struct blob_attr *attr)
+ {
+ 	struct blob_attr *tb[__TUNNEL_ATTR_MAX];
+Index: netifd-2015-12-16/system.h
+===================================================================
+--- netifd-2015-12-16.orig/system.h	2018-11-08 19:11:09.343093929 +0800
++++ netifd-2015-12-16/system.h	2018-11-08 19:11:09.343093929 +0800
+@@ -154,5 +154,6 @@
+ void system_fd_set_cloexec(int fd);
+
+ int system_update_ipv6_mtu(struct device *device, int mtu);
++int system_update_wan_speed(const char *name, char *speed);
+
+ #endif

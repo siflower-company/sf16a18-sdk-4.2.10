@@ -1,0 +1,9 @@
+Package: libwebsockets
+Version: 2014-03-01
+Depends: libc, zlib, libopenssl
+Source: feeds/packages/libs/libwebsockets
+Section: libs
+Architecture: mips_siflower
+Installed-Size: 32878
+Description:  libwebsockets
+ This package contains libwebsocket libraries

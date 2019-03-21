@@ -1,0 +1,9 @@
+Package: ssst
+Version: 1-1
+Depends: libc, libpthread, librt, libm, libuci, libcurl, libjson-c, libnet1, libpcap, libopenssl
+Source: package/siflower/bin/si-sock-server
+Section: utils
+Maintainer: Franklin Wang <franklin.wang@siflower.com.cn>
+Architecture: mips_siflower
+Installed-Size: 219000
+Description:  use the ssct and ssst to test the socket client and server on openWRT platform

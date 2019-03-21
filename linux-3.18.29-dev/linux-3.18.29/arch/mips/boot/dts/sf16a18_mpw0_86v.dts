@@ -1,0 +1,116 @@
+/dts-v1/;
+
+#include "sf16a18_mpw0.dtsi"
+#include "sf16a18-thermal.dtsi"
+
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "siflower,sf16a18-soc";
+};
+
+&ethernet {
+	status = "okay";
+};
+
+&switch{
+	sfax8,port-map = "l***w";
+	status = "okay";
+};
+
+&gmac {
+	status = "okay";
+};
+
+&gdma {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	/include/	"sf16a18_pmu.dtsi"
+};
+
+
+&spi0 {
+	status = "okay";
+	use-dma;
+	dmas = <&gdma 10
+	&gdma 11>;
+	dma-names = "tx", "rx";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	w25q128@0 {
+		compatible = "w25q128";
+		reg = <0>;	/* chip select */
+		spi-max-frequency = <33000000>;
+
+		bank-width = <2>;
+		device-width = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "spl-loader";
+			reg = <0x0 0x8000>; /* 32k */
+			read-only;
+		};
+
+		partition@8000{
+			label = "u-boot";
+			reg = <0x8000 0x29000>; /* 164k */
+		};
+
+		factory:partition@31000 {
+			label = "factory";
+			reg = <0x31000 0x1000>; /* 4k */
+		};
+
+		partition@32000 {
+			label = "firmware";
+			reg = <0x32000 0x3CE000>; /* 200k-4M */
+		};
+	};
+
+	spidev: spi@8200000 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		clock = <50000000>;
+		spi-cpha;
+		spi-cpol;
+		spi-max-frequency=<12000000>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+};
+
+&timer0 {
+	status = "okay";
+};
+
+&watchdog {
+	status = "okay";
+};
+
+&wifi_rf {
+	status = "okay";
+};
+
+&wifi_lb {
+	status = "okay";
+};
+
+&wifi_hb {
+	status = "okay";
+};

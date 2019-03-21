@@ -1,0 +1,254 @@
+Index: netifd-2015-12-16/bridge.c
+===================================================================
+--- netifd-2015-12-16.orig/bridge.c	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/bridge.c	2018-07-11 09:05:06.309205000 +0800
+@@ -435,14 +435,26 @@
+ 
+ 
+ static void
+-bridge_add_member(struct bridge_state *bst, const char *name)
++bridge_add_member(struct bridge_state *bst, const char *name, bool inherit)
+ {
+ 	struct device *dev;
++	struct device *br_dev = &(bst->dev);
+ 
+ 	dev = device_get(name, true);
+ 	if (!dev)
+ 		return;
+ 
++	if(inherit){
++		//inherit device info from bridge device
++		if(br_dev->settings.flags & DEV_OPT_GROUP){
++			dev->settings.flags |= DEV_OPT_GROUP;
++			dev->settings.group = br_dev->settings.group;
++		}
++		if(br_dev->settings.flags & DEV_OPT_BRINPUT_DISABLE){
++			dev->settings.flags |= DEV_OPT_BRINPUT_DISABLE;
++			dev->settings.disable_input = br_dev->settings.disable_input;
++		}
++	}
+ 	bridge_create_member(bst, dev, false);
+ }
+ 
+@@ -535,7 +547,7 @@
+ 	vlist_update(&bst->members);
+ 	if (bst->ifnames) {
+ 		blobmsg_for_each_attr(cur, bst->ifnames, rem) {
+-			bridge_add_member(bst, blobmsg_data(cur));
++			bridge_add_member(bst, blobmsg_data(cur),true);
+ 		}
+ 	}
+ 	vlist_flush(&bst->members);
+Index: netifd-2015-12-16/device.c
+===================================================================
+--- netifd-2015-12-16.orig/device.c	2018-07-11 09:47:20.553312081 +0800
++++ netifd-2015-12-16/device.c	2018-07-11 09:05:06.245205000 +0800
+@@ -50,6 +50,8 @@
+ 	[DEV_ATTR_DADTRANSMITS] = { .name = "dadtransmits", .type = BLOBMSG_TYPE_INT32 },
+ 	[DEV_ATTR_MULTICAST_TO_UNICAST] = { .name = "multicast_to_unicast", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_MULTICAST_ROUTER] = { .name = "multicast_router", .type = BLOBMSG_TYPE_INT32 },
++	[DEV_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
++	[DEV_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ };
+ 
+ const struct uci_blob_param_list device_attr_list = {
+@@ -174,6 +176,8 @@
+ 		s->dadtransmits : os->dadtransmits;
+ 	n->multicast_to_unicast = s->multicast_to_unicast;
+ 	n->multicast_router = s->multicast_router;
++	n->group = s->group;
++	n->disable_input = s->disable_input;
+ 	n->flags = s->flags | os->flags | os->valid_flags;
+ }
+ 
+@@ -287,6 +291,16 @@
+ 			DPRINTF("Invalid value: %d - (Use 0: never, 1: learn, 2: always)\n", blobmsg_get_u32(cur));
+ 	}
+ 
++	if ((cur = tb[DEV_ATTR_GROUP])) {
++		s->group = blobmsg_get_u32(cur);
++		s->flags |= DEV_OPT_GROUP;
++	}
++
++	if ((cur = tb[DEV_ATTR_BRINPUT_DISABLE])) {
++		s->disable_input = blobmsg_get_bool(cur);
++		s->flags |= DEV_OPT_BRINPUT_DISABLE;
++	}
++
+ 	device_set_disabled(dev, disabled);
+ }
+ 
+@@ -919,6 +933,10 @@
+ 			blobmsg_add_u8(b, "multicast_to_unicast", st.multicast_to_unicast);
+ 		if (st.flags & DEV_OPT_MULTICAST_ROUTER)
+ 			blobmsg_add_u32(b, "multicast_router", st.multicast_router);
++		if (st.flags & DEV_OPT_GROUP)
++			blobmsg_add_u32(b, "group", st.group);
++		if (st.flags & DEV_OPT_BRINPUT_DISABLE)
++			blobmsg_add_u32(b, "disableinput", st.disable_input);
+ 	}
+ 
+ 	s = blobmsg_open_table(b, "statistics");
+Index: netifd-2015-12-16/device.h
+===================================================================
+--- netifd-2015-12-16.orig/device.h	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/device.h	2018-07-11 09:05:06.245205000 +0800
+@@ -44,6 +44,8 @@
+ 	DEV_ATTR_DADTRANSMITS,
+ 	DEV_ATTR_MULTICAST_TO_UNICAST,
+ 	DEV_ATTR_MULTICAST_ROUTER,
++	DEV_ATTR_GROUP,
++	DEV_ATTR_BRINPUT_DISABLE,
+ 	__DEV_ATTR_MAX,
+ };
+ 
+@@ -86,6 +88,8 @@
+ 	DEV_OPT_DADTRANSMITS		= (1 << 13),
+ 	DEV_OPT_MULTICAST_TO_UNICAST	= (1 << 14),
+ 	DEV_OPT_MULTICAST_ROUTER	= (1 << 15),
++	DEV_OPT_GROUP	= (1 << 16),
++	DEV_OPT_BRINPUT_DISABLE	= (1 << 17),
+ };
+ 
+ /* events broadcasted to all users of a device */
+@@ -146,6 +150,8 @@
+ 	unsigned int dadtransmits;
+ 	bool multicast_to_unicast;
+ 	unsigned int multicast_router;
++	unsigned int group;
++	bool disable_input;
+ };
+ 
+ /*
+Index: netifd-2015-12-16/system-linux.c
+===================================================================
+--- netifd-2015-12-16.orig/system-linux.c	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/system-linux.c	2018-07-11 09:05:06.309205000 +0800
+@@ -332,6 +332,16 @@
+ 			      dev->ifname, val);
+ }
+ 
++static void system_bridge_set_group(struct device *dev, const char *val)
++{
++	system_set_dev_sysctl("/sys/class/net/%s/brport/group", dev->ifname, val);
++}
++
++static void system_bridge_set_disable_input(struct device *dev, const char *val)
++{
++	system_set_dev_sysctl("/sys/class/net/%s/brport/disableinput", dev->ifname, val);
++}
++
+ static int system_get_sysctl(const char *path, char *buf, const size_t buf_sz)
+ {
+ 	int fd = -1, ret = -1;
+@@ -608,6 +618,17 @@
+ 		system_bridge_set_multicast_router(dev, buf, false);
+ 	}
+ 
++	if (dev->settings.flags & DEV_OPT_GROUP) {
++		snprintf(buf, sizeof(buf), "%i", dev->settings.group);
++		system_bridge_set_group(dev, buf);
++	}
++
++	if (dev->settings.flags & DEV_OPT_BRINPUT_DISABLE) {
++		system_bridge_set_disable_input(dev, dev->settings.disable_input ? "1" : "0");
++	}
++
++	netifd_log_message(L_NOTICE, "system_bridge_addif+++++++++++++++++++++++++++++++4\n");
++
+ 	return ret;
+ }
+ 
+Index: netifd-2015-12-16/wireless.c
+===================================================================
+--- netifd-2015-12-16.orig/wireless.c	2018-07-11 09:47:20.577312082 +0800
++++ netifd-2015-12-16/wireless.c	2018-07-11 09:05:06.309205000 +0800
+@@ -37,6 +37,8 @@
+ 	VIF_ATTR_NETWORK,
+ 	VIF_ATTR_ISOLATE,
+ 	VIF_ATTR_MODE,
++	VIF_ATTR_GROUP,
++	VIF_ATTR_BRINPUT_DISABLE,
+ 	__VIF_ATTR_MAX,
+ };
+ 
+@@ -45,6 +47,8 @@
+ 	[VIF_ATTR_NETWORK] = { .name = "network", .type = BLOBMSG_TYPE_ARRAY },
+ 	[VIF_ATTR_ISOLATE] = { .name = "isolate", .type = BLOBMSG_TYPE_BOOL },
+ 	[VIF_ATTR_MODE] = { .name = "mode", .type = BLOBMSG_TYPE_STRING },
++	[VIF_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
++	[VIF_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ };
+ 
+ static const struct uci_blob_param_list vif_param = {
+@@ -195,6 +199,7 @@
+ 	wdev->data = NULL;
+ 	vlist_for_each_element(&wdev->interfaces, vif, node) {
+ 		free(vif->data);
++		free(vif->device_config);
+ 		vif->data = NULL;
+ 		vif->ifname = NULL;
+ 	}
+@@ -216,6 +221,10 @@
+ 			dev->wireless_isolate = vif->isolate;
+ 			dev->wireless = true;
+ 			dev->wireless_ap = vif->ap_mode;
++			dev->settings.group = vif->group;
++			dev->settings.disable_input = vif->disable_input;
++			dev->settings.flags |= DEV_OPT_GROUP;
++			dev->settings.flags |= DEV_OPT_BRINPUT_DISABLE;
+ 		}
+ 	}
+ 
+@@ -574,6 +583,15 @@
+ 	cur = tb[VIF_ATTR_MODE];
+ 	if (cur)
+ 		vif->ap_mode = !strcmp(blobmsg_get_string(cur), "ap");
++
++	cur = tb[VIF_ATTR_GROUP];
++	if (cur)
++		vif->group = blobmsg_get_u32(cur);
++
++	cur = tb[VIF_ATTR_BRINPUT_DISABLE];
++	if (cur)
++		vif->disable_input = blobmsg_get_bool(cur);
++
+ }
+ 
+ static void
+@@ -601,6 +619,8 @@
+ 		wireless_interface_handle_link(vif_old, false);
+ 		free(vif_old->config);
+ 		vif_old->config = blob_memdup(vif_new->config);
++		free(vif_old->device_config);
++		vif_old->device_config = blob_memdup(vif_new->device_config);
+ 		vif_old->isolate = vif_new->isolate;
+ 		vif_old->ap_mode = vif_new->ap_mode;
+ 		wireless_interface_init_config(vif_old);
+@@ -615,6 +635,7 @@
+ 		free((void *) vif_old->section);
+ 		free(vif_old->config);
+ 		free(vif_old);
++		free(vif_old->device_config);
+ 	}
+ 
+ 	wdev_set_config_state(wdev, IFC_RELOAD);
+Index: netifd-2015-12-16/wireless.h
+===================================================================
+--- netifd-2015-12-16.orig/wireless.h	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/wireless.h	2018-07-11 09:50:36.445320302 +0800
+@@ -74,11 +74,14 @@
+ 
+ 	struct blob_attr *config;
+ 	struct blob_attr *data;
++	struct blob_attr *device_config;
+ 
+ 	const char *ifname;
+ 	struct blob_attr *network;
+ 	bool isolate;
+ 	bool ap_mode;
++	unsigned int group;
++	bool disable_input;
+ };
+ 
+ struct wireless_process {

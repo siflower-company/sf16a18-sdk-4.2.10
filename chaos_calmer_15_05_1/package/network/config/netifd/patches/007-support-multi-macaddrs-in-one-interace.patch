@@ -1,0 +1,43 @@
+Index: netifd-2015-12-16/bridge.c
+===================================================================
+--- netifd-2015-12-16.orig/bridge.c	2018-08-08 11:57:58.934259558 +0800
++++ netifd-2015-12-16/bridge.c	2018-08-08 12:00:10.902263449 +0800
+@@ -435,7 +435,7 @@
+ 
+ 
+ static void
+-bridge_add_member(struct bridge_state *bst, const char *name, bool inherit)
++bridge_add_member(struct bridge_state *bst, const char *name, bool inherit,int index)
+ {
+ 	struct device *dev;
+ 	struct device *br_dev = &(bst->dev);
+@@ -454,6 +454,11 @@
+ 			dev->settings.flags |= DEV_OPT_BRINPUT_DISABLE;
+ 			dev->settings.disable_input = br_dev->settings.disable_input;
+ 		}
++		if(br_dev->settings.flags & DEV_OPT_MACADDR){
++			dev->settings.flags |= DEV_OPT_MACADDR;
++			memcpy(dev->settings.macaddr,br_dev->settings.macaddr,sizeof(dev->settings.macaddr));
++			dev->settings.macaddr[sizeof(dev->settings.macaddr) - 1] = dev->settings.macaddr[sizeof(dev->settings.macaddr) - 1] + index;
++		}
+ 	}
+ 	bridge_create_member(bst, dev, false);
+ }
+@@ -535,6 +540,7 @@
+ 	struct bridge_state *bst;
+ 	struct blob_attr *cur;
+ 	int rem;
++	int index = 0;
+ 
+ 	bst = container_of(dev, struct bridge_state, dev);
+ 
+@@ -547,7 +553,8 @@
+ 	vlist_update(&bst->members);
+ 	if (bst->ifnames) {
+ 		blobmsg_for_each_attr(cur, bst->ifnames, rem) {
+-			bridge_add_member(bst, blobmsg_data(cur),true);
++			bridge_add_member(bst, blobmsg_data(cur),true,index);
++			index++;
+ 		}
+ 	}
+ 	vlist_flush(&bst->members);

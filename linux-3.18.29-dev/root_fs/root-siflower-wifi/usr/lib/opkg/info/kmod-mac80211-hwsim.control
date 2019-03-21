@@ -1,0 +1,9 @@
+Package: kmod-mac80211-hwsim
+Version: 3.18.29+2016-01-10-1
+Depends: kernel (=3.18.29-1-c9bba86f403107e21c46951f66098d43), kmod-mac80211
+Source: package/kernel/mac80211
+Section: kernel
+Maintainer: Felix Fietkau <nbd@openwrt.org>
+Architecture: mips_siflower
+Installed-Size: 20201
+Description:  mac80211 HW simulation device

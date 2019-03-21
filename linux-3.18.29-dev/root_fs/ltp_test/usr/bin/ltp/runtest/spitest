@@ -1,0 +1,2 @@
+lftest  lftest 100
+mongo_read mongo_read test.c

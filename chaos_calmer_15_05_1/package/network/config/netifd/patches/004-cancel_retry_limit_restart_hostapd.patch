@@ -1,0 +1,16 @@
+Index: netifd-2015-12-16/wireless.c
+===================================================================
+--- netifd-2015-12-16.orig/wireless.c	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/wireless.c	2018-06-20 10:10:43.573228031 +0800
+@@ -398,8 +398,9 @@
+ 	if (wdev->state == IFS_TEARDOWN || wdev->state == IFS_DOWN || wdev->cancel)
+ 		return;
+ 
+-	if (--wdev->retry < 0)
+-		wdev->autostart = false;
++	//cancel retry limit to restart hostapd
++	//if (--wdev->retry < 0)
++	//	wdev->autostart = false;
+ 
+ 	__wireless_device_set_down(wdev);
+ }

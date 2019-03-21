@@ -1,0 +1,8 @@
+Package: libnet1
+Version: 1.1.6-1
+Depends: libc, libpcap
+Source: package/feeds/packages/libnet-1.1.x
+Section: libs
+Architecture: mips_siflower
+Installed-Size: 28962
+Description:  Low-level packet creation library (v1.1.x)

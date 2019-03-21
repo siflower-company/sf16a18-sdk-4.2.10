@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PATH_DEV="/dev/mmcblk0"
+if
+	[ -b "$PATH_DEV" ] ;then
+	/bin/mount /dev/mmcblk0 /mnt/sdb	
+else  
+	/bin/umount /mnt/sdb 
+fi

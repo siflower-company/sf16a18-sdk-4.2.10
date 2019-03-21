@@ -1,0 +1,7 @@
+DISTRIB_ID='OpenWrt'
+DISTRIB_RELEASE='Chaos Calmer'
+DISTRIB_REVISION='unknown'
+DISTRIB_CODENAME='chaos_calmer'
+DISTRIB_TARGET='siflower/le'
+DISTRIB_DESCRIPTION='OpenWrt Chaos Calmer 15.05'
+DISTRIB_TAINTS='no-all'

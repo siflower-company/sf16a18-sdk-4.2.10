@@ -1,0 +1,14 @@
+Index: netifd-2015-12-16/interface.c
+===================================================================
+--- netifd-2015-12-16.orig/interface.c	2016-06-07 12:18:47.000000000 +0800
++++ netifd-2015-12-16/interface.c	2018-08-09 18:08:27.681462242 +0800
+@@ -1145,6 +1145,9 @@
+ 		if_old->autostart = if_new->config_autostart;
+ 	}
+ 
++	//update autostart from new config
++	if_old->autostart = if_new->autostart;
++
+ 	if_old->device_config = if_new->device_config;
+ 	if_old->config_autostart = if_new->config_autostart;
+ 	if_old->ifname = if_new->ifname;

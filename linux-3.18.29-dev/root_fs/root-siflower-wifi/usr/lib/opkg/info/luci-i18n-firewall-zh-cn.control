@@ -1,0 +1,8 @@
+Package: luci-i18n-firewall-zh-cn
+Version: git-17.052.29333-b180d45-1
+Depends: libc, luci-app-firewall
+Source: package/siflower/luci-siflower/applications/luci-app-firewall
+Section: luci
+Architecture: all
+Installed-Size: 3917
+Description:  Translation for luci-app-firewall - 普通话 (Chinese)

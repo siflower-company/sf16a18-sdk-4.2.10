@@ -1,0 +1,9 @@
+Package: netdetect
+Version: 1-1
+Depends: libc, libpthread, libuci
+Source: package/siflower/bin/si-ping-netdetect
+Section: utils
+Maintainer: xiaoxi <xiaoxi.lin.wang@siflower.com.cn>
+Architecture: mips_siflower
+Installed-Size: 3771
+Description:  ping www.baidu.com, www.taobao.com, www.qq.com to count the package lost rate,and count the bandwidth  

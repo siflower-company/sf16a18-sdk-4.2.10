@@ -1,0 +1,8 @@
+Package: luci-base
+Version: git-17.052.29333-b180d45-1
+Depends: libc, lua, libuci-lua, luci-lib-nixio, luci-lib-ip, rpcd, libubus-lua
+Source: package/siflower/luci-siflower/modules/luci-base
+Section: luci
+Architecture: mips_siflower
+Installed-Size: 145764
+Description:  LuCI core libraries

@@ -1,0 +1,77 @@
+Index: libubox-2015-11-08/jshn.c
+===================================================================
+--- libubox-2015-11-08.orig/jshn.c	2016-06-07 12:17:16.000000000 +0800
++++ libubox-2015-11-08/jshn.c	2018-10-29 11:50:15.360840816 +0800
+@@ -175,6 +175,39 @@
+ 	return 0;
+ }
+ 
++static int jshn_parse_file(const char *str)
++{
++	FILE *fp = NULL;
++	int file_size;
++	char *buffer = NULL;
++	int ret = 0;
++	if(!str){
++		fprintf(stderr, "file empty\n");
++		return 1;
++	}
++	fp = fopen(str, "r");
++	if(fp){
++		fseek(fp, 0, SEEK_END );
++		file_size = ftell( fp );
++		fseek( fp, 0, SEEK_SET );
++		buffer = malloc(file_size + 1);
++		buffer[file_size] = 0;
++		if(buffer){
++			fread(buffer,1,file_size,fp);
++			ret = jshn_parse(buffer);
++		}else{
++			fprintf(stderr, "malloc size %d fail\n",file_size + 1);
++			ret = 1;
++		}
++		if(buffer) free(buffer);
++		if(fp) fclose(fp);
++		return ret;
++	}else{
++		fprintf(stderr, "open file %s fail\n",str);
++		return 1;
++	}
++}
++
+ static char *get_keys(const char *prefix)
+ {
+ 	char *keys;
+@@ -297,7 +330,7 @@
+ 	bool indent = false;
+ 	int ch;
+ 
+-	while ((ch = getopt(argc, argv, "p:nir:w")) != -1) {
++	while ((ch = getopt(argc, argv, "p:nir:wf:")) != -1) {
+ 		switch(ch) {
+ 		case 'p':
+ 			var_prefix = optarg;
+@@ -305,6 +338,8 @@
+ 			break;
+ 		case 'r':
+ 			return jshn_parse(optarg);
++		case 'f':
++			return jshn_parse_file(optarg);
+ 		case 'w':
+ 			return jshn_format(no_newline, indent);
+ 		case 'n':
+Index: libubox-2015-11-08/sh/jshn.sh
+===================================================================
+--- libubox-2015-11-08.orig/sh/jshn.sh	2016-06-07 12:17:16.000000000 +0800
++++ libubox-2015-11-08/sh/jshn.sh	2018-10-29 11:50:28.664841209 +0800
+@@ -174,6 +174,10 @@
+ 	eval "`jshn -r "$1"`"
+ }
+ 
++json_load_file() {
++	eval "`jshn -f "$1"`"
++}
++
+ json_dump() {
+ 	jshn "$@" ${JSON_PREFIX:+-p "$JSON_PREFIX"} -w 
+ }

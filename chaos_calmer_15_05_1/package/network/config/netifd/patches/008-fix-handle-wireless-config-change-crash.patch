@@ -1,0 +1,41 @@
+Index: netifd-2015-12-16/wireless.c
+===================================================================
+--- netifd-2015-12-16.orig/wireless.c	2018-08-16 10:38:16.066497085 +0800
++++ netifd-2015-12-16/wireless.c	2018-08-16 10:39:47.170499771 +0800
+@@ -199,7 +199,6 @@
+ 	wdev->data = NULL;
+ 	vlist_for_each_element(&wdev->interfaces, vif, node) {
+ 		free(vif->data);
+-		free(vif->device_config);
+ 		vif->data = NULL;
+ 		vif->ifname = NULL;
+ 	}
+@@ -619,8 +618,6 @@
+ 		wireless_interface_handle_link(vif_old, false);
+ 		free(vif_old->config);
+ 		vif_old->config = blob_memdup(vif_new->config);
+-		free(vif_old->device_config);
+-		vif_old->device_config = blob_memdup(vif_new->device_config);
+ 		vif_old->isolate = vif_new->isolate;
+ 		vif_old->ap_mode = vif_new->ap_mode;
+ 		wireless_interface_init_config(vif_old);
+@@ -635,7 +632,6 @@
+ 		free((void *) vif_old->section);
+ 		free(vif_old->config);
+ 		free(vif_old);
+-		free(vif_old->device_config);
+ 	}
+ 
+ 	wdev_set_config_state(wdev, IFC_RELOAD);
+Index: netifd-2015-12-16/wireless.h
+===================================================================
+--- netifd-2015-12-16.orig/wireless.h	2018-08-16 10:38:16.066497085 +0800
++++ netifd-2015-12-16/wireless.h	2018-08-16 10:39:19.814498964 +0800
+@@ -74,7 +74,6 @@
+ 
+ 	struct blob_attr *config;
+ 	struct blob_attr *data;
+-	struct blob_attr *device_config;
+ 
+ 	const char *ifname;
+ 	struct blob_attr *network;

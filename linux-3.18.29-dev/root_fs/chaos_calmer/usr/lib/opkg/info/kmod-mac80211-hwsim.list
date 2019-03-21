@@ -1,0 +1,2 @@
+/etc/modules.d/mac80211-hwsim
+/lib/modules/3.18.23/mac80211_hwsim.ko

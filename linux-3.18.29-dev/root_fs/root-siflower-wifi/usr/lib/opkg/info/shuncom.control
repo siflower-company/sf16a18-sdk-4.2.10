@@ -1,0 +1,9 @@
+Package: shuncom
+Version: 1-1
+Depends: libc, libpthread, libm, libubus, libubox, libsqlite3, libcurl, libblobmsg-json, libjson-c, libuci, libsqlite3, libcurl
+Source: package/siflower/bin/shuncom
+Section: utils
+Maintainer: Kevin.feng <kevin.feng@siflower.com.cn>
+Architecture: mips_siflower
+Installed-Size: 143430
+Description:  use the shuncom_app to test the service

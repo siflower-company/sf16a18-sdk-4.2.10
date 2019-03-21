@@ -1,0 +1,151 @@
+--- a/device.c
++++ b/device.c
+@@ -51,6 +51,7 @@ static const struct blobmsg_policy dev_a
+ 	[DEV_ATTR_MULTICAST_TO_UNICAST] = { .name = "multicast_to_unicast", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_MULTICAST_ROUTER] = { .name = "multicast_router", .type = BLOBMSG_TYPE_INT32 },
+ 	[DEV_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
++	[DEV_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ };
+ 
+@@ -178,6 +179,7 @@ device_merge_settings(struct device *dev
+ 	n->multicast_router = s->multicast_router;
+ 	n->group = s->group;
+ 	n->disable_input = s->disable_input;
++	n->netisolate = s->netisolate;
+ 	n->flags = s->flags | os->flags | os->valid_flags;
+ }
+ 
+@@ -301,6 +303,10 @@ device_init_settings(struct device *dev,
+ 		s->flags |= DEV_OPT_BRINPUT_DISABLE;
+ 	}
+ 
++	if ((cur = tb[DEV_ATTR_NETISOLATE])) {
++		s->netisolate = blobmsg_get_bool(cur);
++		s->flags |= DEV_OPT_NETISOLATE;
++	}
+ 	device_set_disabled(dev, disabled);
+ }
+ 
+@@ -946,6 +952,8 @@ device_dump_status(struct blob_buf *b, s
+ 			blobmsg_add_u32(b, "group", st.group);
+ 		if (st.flags & DEV_OPT_BRINPUT_DISABLE)
+ 			blobmsg_add_u32(b, "disableinput", st.disable_input);
++		if (st.flags & DEV_OPT_NETISOLATE)
++			blobmsg_add_u32(b, "netisolate", st.netisolate);
+ 	}
+ 
+ 	s = blobmsg_open_table(b, "statistics");
+--- a/device.h
++++ b/device.h
+@@ -46,6 +46,7 @@ enum {
+ 	DEV_ATTR_MULTICAST_ROUTER,
+ 	DEV_ATTR_GROUP,
+ 	DEV_ATTR_BRINPUT_DISABLE,
++	DEV_ATTR_NETISOLATE,
+ 	__DEV_ATTR_MAX,
+ };
+ 
+@@ -90,6 +91,7 @@ enum {
+ 	DEV_OPT_MULTICAST_ROUTER	= (1 << 15),
+ 	DEV_OPT_GROUP	= (1 << 16),
+ 	DEV_OPT_BRINPUT_DISABLE	= (1 << 17),
++	DEV_OPT_NETISOLATE	= (1 << 18),
+ };
+ 
+ /* events broadcasted to all users of a device */
+@@ -152,6 +154,7 @@ struct device_settings {
+ 	unsigned int multicast_router;
+ 	unsigned int group;
+ 	bool disable_input;
++	bool netisolate;
+ };
+ 
+ /*
+--- a/system-linux.c
++++ b/system-linux.c
+@@ -342,6 +342,11 @@ static void system_bridge_set_disable_in
+ 	system_set_dev_sysctl("/sys/class/net/%s/brport/disableinput", dev->ifname, val);
+ }
+ 
++static void system_bridge_set_netisolate(struct device *dev, const char *val)
++{
++	system_set_dev_sysctl("/sys/class/net/%s/brport/netisolate", dev->ifname, val);
++}
++
+ static int system_get_sysctl(const char *path, char *buf, const size_t buf_sz)
+ {
+ 	int fd = -1, ret = -1;
+@@ -627,6 +632,10 @@ int system_bridge_addif(struct device *b
+ 		system_bridge_set_disable_input(dev, dev->settings.disable_input ? "1" : "0");
+ 	}
+ 
++	if (dev->settings.flags & DEV_OPT_NETISOLATE) {
++		system_bridge_set_netisolate(dev, dev->settings.netisolate ? "1" : "0");
++	}
++
+ 	netifd_log_message(L_NOTICE, "system_bridge_addif+++++++++++++++++++++++++++++++4\n");
+ 
+ 	return ret;
+@@ -1037,10 +1046,10 @@ int system_vlandev_add(struct device *vl
+ 	nlmsg_append(msg, &iim, sizeof(iim), 0);
+ 	nla_put_string(msg, IFLA_IFNAME, vlandev->ifname);
+ 	nla_put_u32(msg, IFLA_LINK, dev->ifindex);
+-	
++
+ 	if (!(linkinfo = nla_nest_start(msg, IFLA_LINKINFO)))
+ 		goto nla_put_failure;
+-	
++
+ 	nla_put_string(msg, IFLA_INFO_KIND, "vlan");
+ 
+ 	if (!(data = nla_nest_start(msg, IFLA_INFO_DATA)))
+--- a/wireless.c
++++ b/wireless.c
+@@ -39,6 +39,7 @@ enum {
+ 	VIF_ATTR_MODE,
+ 	VIF_ATTR_GROUP,
+ 	VIF_ATTR_BRINPUT_DISABLE,
++	VIF_ATTR_NETISOLATE,
+ 	__VIF_ATTR_MAX,
+ };
+ 
+@@ -49,6 +50,7 @@ static const struct blobmsg_policy vif_p
+ 	[VIF_ATTR_MODE] = { .name = "mode", .type = BLOBMSG_TYPE_STRING },
+ 	[VIF_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
+ 	[VIF_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
++	[VIF_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
+ };
+ 
+ static const struct uci_blob_param_list vif_param = {
+@@ -222,8 +224,10 @@ static void wireless_interface_handle_li
+ 			dev->wireless_ap = vif->ap_mode;
+ 			dev->settings.group = vif->group;
+ 			dev->settings.disable_input = vif->disable_input;
++			dev->settings.netisolate = vif->netisolate;
+ 			dev->settings.flags |= DEV_OPT_GROUP;
+ 			dev->settings.flags |= DEV_OPT_BRINPUT_DISABLE;
++			dev->settings.flags |= DEV_OPT_NETISOLATE;
+ 		}
+ 	}
+ 
+@@ -591,6 +595,9 @@ wireless_interface_init_config(struct wi
+ 	if (cur)
+ 		vif->disable_input = blobmsg_get_bool(cur);
+ 
++	cur = tb[VIF_ATTR_NETISOLATE];
++	if (cur)
++		vif->netisolate = blobmsg_get_bool(cur);
+ }
+ 
+ static void
+--- a/wireless.h
++++ b/wireless.h
+@@ -81,6 +81,7 @@ struct wireless_interface {
+ 	bool ap_mode;
+ 	unsigned int group;
+ 	bool disable_input;
++	bool netisolate;
+ };
+ 
+ struct wireless_process {

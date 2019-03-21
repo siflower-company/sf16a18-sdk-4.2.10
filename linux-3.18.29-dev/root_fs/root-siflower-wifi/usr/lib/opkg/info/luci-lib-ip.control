@@ -1,0 +1,8 @@
+Package: luci-lib-ip
+Version: git-17.052.29333-b180d45-1
+Depends: libc, liblua, libnl-tiny
+Source: package/siflower/luci-siflower/libs/luci-lib-ip
+Section: luci
+Architecture: mips_siflower
+Installed-Size: 9556
+Description:  Lua library for IP calculation and routing information

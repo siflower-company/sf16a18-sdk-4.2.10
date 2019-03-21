@@ -1,0 +1,9 @@
+Package: subbmob
+Version: 1-1
+Depends: libc, libpthread, libuci, libcurl, libjson-c, libwebsockets
+Source: package/siflower/bin/si-subclient-bmob
+Section: utils
+Maintainer: Robert chang <robert.chang@siflower.com.cn>
+Architecture: mips_siflower
+Installed-Size: 15010
+Description:  siwifi bmob subscribe client

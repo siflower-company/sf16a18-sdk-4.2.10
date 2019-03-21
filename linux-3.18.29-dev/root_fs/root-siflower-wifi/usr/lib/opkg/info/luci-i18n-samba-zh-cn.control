@@ -1,0 +1,8 @@
+Package: luci-i18n-samba-zh-cn
+Version: git-17.052.29333-b180d45-1
+Depends: libc, luci-app-samba
+Source: package/siflower/luci-siflower/applications/luci-app-samba
+Section: luci
+Architecture: all
+Installed-Size: 960
+Description:  Translation for luci-app-samba - 普通话 (Chinese)

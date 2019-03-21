@@ -1,0 +1,63 @@
+Index: libiwinfo-2015-06-01/include/iwinfo.h
+===================================================================
+--- libiwinfo-2015-06-01.orig/include/iwinfo.h	2016-06-07 13:25:36.000000000 +0800
++++ libiwinfo-2015-06-01/include/iwinfo.h	2018-07-09 11:09:01.634266000 +0800
+@@ -95,6 +95,7 @@
+ 	uint32_t inactive;
+ 	uint32_t rx_packets;
+ 	uint32_t tx_packets;
++	uint32_t connected_time;
+ 	struct iwinfo_rate_entry rx_rate;
+ 	struct iwinfo_rate_entry tx_rate;
+ };
+Index: libiwinfo-2015-06-01/iwinfo_cli.c
+===================================================================
+--- libiwinfo-2015-06-01.orig/iwinfo_cli.c	2016-06-07 13:25:36.000000000 +0800
++++ libiwinfo-2015-06-01/iwinfo_cli.c	2018-07-09 11:09:01.634266000 +0800
+@@ -687,6 +687,10 @@
+ 			(e->signal - e->noise),
+ 			e->inactive);
+ 
++		printf("    Connected time %8d Seconds.\n",
++			e->connected_time
++		);
++
+ 		printf("	RX: %-38s  %8d Pkts.\n",
+ 			format_assocrate(&e->rx_rate),
+ 			e->rx_packets
+Index: libiwinfo-2015-06-01/iwinfo_lua.c
+===================================================================
+--- libiwinfo-2015-06-01.orig/iwinfo_lua.c	2016-06-07 13:25:36.000000000 +0800
++++ libiwinfo-2015-06-01/iwinfo_lua.c	2018-07-09 11:09:01.634266000 +0800
+@@ -287,6 +287,9 @@
+ 			lua_pushnumber(L, e->tx_packets);
+ 			lua_setfield(L, -2, "tx_packets");
+ 
++			lua_pushnumber(L, e->connected_time);
++			lua_setfield(L, -2, "connected_time");
++
+ 			lua_pushnumber(L, e->rx_rate.rate);
+ 			lua_setfield(L, -2, "rx_rate");
+ 
+Index: libiwinfo-2015-06-01/iwinfo_nl80211.c
+===================================================================
+--- libiwinfo-2015-06-01.orig/iwinfo_nl80211.c	2016-06-07 13:25:36.000000000 +0800
++++ libiwinfo-2015-06-01/iwinfo_nl80211.c	2018-07-09 11:09:01.634266000 +0800
+@@ -1625,6 +1625,7 @@
+ 		[NL80211_STA_INFO_INACTIVE_TIME] = { .type = NLA_U32    },
+ 		[NL80211_STA_INFO_RX_PACKETS]    = { .type = NLA_U32    },
+ 		[NL80211_STA_INFO_TX_PACKETS]    = { .type = NLA_U32    },
++		[NL80211_STA_INFO_CONNECTED_TIME]= { .type = NLA_U32    },
+ 		[NL80211_STA_INFO_RX_BITRATE]    = { .type = NLA_NESTED },
+ 		[NL80211_STA_INFO_TX_BITRATE]    = { .type = NLA_NESTED },
+ 		[NL80211_STA_INFO_SIGNAL]        = { .type = NLA_U8     },
+@@ -1660,6 +1661,9 @@
+ 		if (sinfo[NL80211_STA_INFO_TX_PACKETS])
+ 			e->tx_packets = nla_get_u32(sinfo[NL80211_STA_INFO_TX_PACKETS]);
+ 
++		if (sinfo[NL80211_STA_INFO_CONNECTED_TIME])
++			e->connected_time = nla_get_u32(sinfo[NL80211_STA_INFO_CONNECTED_TIME]);
++
+ 		if (sinfo[NL80211_STA_INFO_RX_BITRATE] &&
+ 		    !nla_parse_nested(rinfo, NL80211_RATE_INFO_MAX,
+ 		                      sinfo[NL80211_STA_INFO_RX_BITRATE], rate_policy))

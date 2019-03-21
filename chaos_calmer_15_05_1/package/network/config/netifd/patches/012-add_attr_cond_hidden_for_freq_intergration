@@ -1,0 +1,36 @@
+--- a/device.c
++++ b/device.c
+@@ -53,6 +53,7 @@ static const struct blobmsg_policy dev_a
+ 	[DEV_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
+ 	[DEV_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
++	[DEV_ATTR_COND_HIDDEN] = { .name = "cond_hidden", .type = BLOBMSG_TYPE_BOOL },
+ };
+ 
+ const struct uci_blob_param_list device_attr_list = {
+--- a/device.h
++++ b/device.h
+@@ -47,6 +47,7 @@ enum {
+ 	DEV_ATTR_GROUP,
+ 	DEV_ATTR_BRINPUT_DISABLE,
+ 	DEV_ATTR_NETISOLATE,
++	DEV_ATTR_COND_HIDDEN,
+ 	__DEV_ATTR_MAX,
+ };
+ 
+@@ -92,6 +93,7 @@ enum {
+ 	DEV_OPT_GROUP	= (1 << 16),
+ 	DEV_OPT_BRINPUT_DISABLE	= (1 << 17),
+ 	DEV_OPT_NETISOLATE	= (1 << 18),
++	DEV_OPT_COND_HIDDEN	= (1 << 19),
+ };
+ 
+ /* events broadcasted to all users of a device */
+@@ -155,6 +157,7 @@ struct device_settings {
+ 	unsigned int group;
+ 	bool disable_input;
+ 	bool netisolate;
++	bool cond_hidden;
+ };
+ 
+ /*

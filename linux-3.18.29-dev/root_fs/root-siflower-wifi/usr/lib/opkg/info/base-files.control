@@ -1,0 +1,9 @@
+Package: base-files
+Version: 157.2-r49378
+Depends: libc, netifd, procd, jsonfilter, usign
+Source: package/base-files
+License: GPL-2.0
+Section: base
+Architecture: mips_siflower
+Installed-Size: 33063
+Description:  This package contains a base filesystem and system scripts for OpenWrt.

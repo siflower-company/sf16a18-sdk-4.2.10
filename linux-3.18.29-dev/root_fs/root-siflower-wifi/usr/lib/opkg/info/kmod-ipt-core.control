@@ -1,0 +1,18 @@
+Package: kmod-ipt-core
+Version: 3.18.29-1
+Depends: kernel (=3.18.29-1-c9bba86f403107e21c46951f66098d43), kmod-nf-ipt
+Source: package/kernel/linux
+License: GPLv2
+Section: kernel
+Status: unknown hold not-installed
+Architecture: mips_siflower
+Installed-Size: 15289
+Description:  Netfilter core kernel modules
+ Includes:
+ - comment
+ - limit
+ - LOG
+ - mac
+ - multiport
+ - REJECT
+ - TCPMSS

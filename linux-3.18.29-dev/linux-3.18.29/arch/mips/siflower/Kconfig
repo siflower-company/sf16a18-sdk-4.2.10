@@ -1,0 +1,247 @@
+if SIFLOWER
+
+choice
+	prompt "Siflower SoC selection"
+	default SOC_SF16A18
+	help
+	  Select Siflower MIPS SoC type.
+
+	config SOC_SF16A18
+		bool "SF16A18"
+
+	config SOC_SF16A28
+		bool "SF16A28"
+
+endchoice
+
+if SOC_SF16A18
+
+choice
+	prompt "Siflower SoC_SF16A18 selection"
+	default SF16A18_MPW0
+	help
+	  Select MPW0/MPW1/FULL_MASK SF16A18 SoC
+
+	config SF16A18_MPW0
+		bool "SF16A18_MPW0"
+
+	config SF16A18_MPW1
+		bool "SF16A18_MPW1"
+
+	config SF16A18_FULL_MASK
+		bool "SF16A18_FULL_MASK"
+
+endchoice
+
+if SF16A18_MPW0
+
+config DT_SF16A18_MPW0_P10
+	bool "Built-in device tree for sf16a18 p10 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_mpw0_p10.dts
+
+config DT_SF16A18_MPW0_P10_FLASH
+	bool "Built-in device tree for sf16a18 p10 boards with flash optimize"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_mpw0_p10_flash.dts
+
+config DT_SF16A18_MPW0_P20
+	bool "Built-in device tree for sf16a18 p20 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_mpw0_p20.dts
+
+endif #SF16A18_MPW0
+
+if SF16A18_MPW1
+
+config DT_SF16A18_MPW1_FPGA
+	bool "Built-in device tree for sf16a18 mpw1 fpga"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fpga_mpw1.dts
+
+config DT_SF16A18_MPW1_P10
+	bool "Built-in device tree for sf16a18 mpw1 p10 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_mpw1_p10.dts
+
+config DT_SF16A18_MPW1_P20
+	bool "Built-in device tree for sf16a18 mpw1 p20 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_mpw1_p20.dts
+
+endif #SF16A18_MPW1
+
+if SF16A18_FULL_MASK
+
+config DT_SF16A18_FULLMASK_P10
+	bool "Built-in device tree for sf16a18 full mask p10 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_p10.dts
+
+config DT_SF16A18_FULLMASK_P20
+	bool "Built-in device tree for sf16a18 full mask p20 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_p20.dts
+
+config DT_SF16A18_FULLMASK_P10M
+	bool "Built-in device tree for sf16a18 full mask p10m boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_p10m.dts
+
+config DT_SF16A18_FULLMASK_P10_FLASH
+	bool "Built-in device tree for sf16a18 p10 boards with flash optimize"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_p10_flash.dts
+
+config DT_SF16A18_FULLMASK_86V
+	bool "Built-in device tree for sf16a18 86v boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_86v.dts
+
+config DT_SF16A18_FULLMASK_ACCTL
+	bool "Built-in device tree for sf16a18 full mask ac boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_ac.dts
+
+config DT_SF16A18_FULLMASK_X10
+	bool "Built-in device tree for sf16a18 full mask x10 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_x10.dts
+
+config DT_SF16A18_FULLMASK_P10H
+	bool "Built-in device tree for sf16a18 full mask p10h boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+
+config DT_SF16A18_FULLMASK_P10_8M
+	bool "Built-in device tree for sf16a18 full mask p10 8m flash boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_p10_8m.dts
+
+endif #SF16A18_FULL_MASK
+
+endif #SOC_SF16A18
+
+config FIRMWARE_SIZE
+	int "CORE 1 FIRMWARE SIZE (0-8192 KB)"
+	range 0 8192
+	default 1024
+	help
+	  This is the firmware size for core 1. If firmware size is
+	  set to zero, core 1 will not be powered up.
+
+config FIRMWARE_LOAD_BASE
+	hex "CORE 1 FIRMWARE LOAD PHYSICAL BASE ADDRESS "
+	range 0 0x10000000
+	default 0x1400000
+	help
+	  This is the firmware physical base addr for core 1.
+
+config CORE1_MEM_RES
+	bool "CORE 1 MEM RESERVE"
+	default n
+
+config SIFLOWER_PWMTIMER_CLKSRC
+	bool "Enable SiFlower PWM Timer based clocksource"
+	depends on SOC_SF16A18
+	select SFAX8_TIMER
+	select CLKSRC_SFAX8_PWM
+	select MIPS_EXTERNAL_TIMER
+	help
+	  This option enables a clocksource driver based on a SiFlower
+	  PWM external timer.
+
+	  If you want to enable the CPUFreq, you need to enable
+	  this option.
+
+	  If you don't want to enable CPUFreq, you can leave this disabled.
+
+config SF_KERNEL_LITE
+	bool "Enable SiFlower lite kernel for 4MB flash"
+	default n
+	help
+	  This config enables 4MB flash optimize for SiFlower kernel
+	  configs and drivers. It will disable some module features,
+	  and only recommended for p10b.
+
+config SF_IRQ_DEBUG
+	bool "Enable calculating irq handle total time for debug."
+	default n
+	depends on SF16A18_FULL_MASK
+	help
+	  This config enables calculating the total time used for irq
+	  handler to check if it's too long.
+
+endif #SIFLOWER

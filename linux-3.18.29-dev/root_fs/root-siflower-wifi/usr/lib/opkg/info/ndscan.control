@@ -1,0 +1,9 @@
+Package: ndscan
+Version: 1-1
+Depends: libc, libpthread, librt, libm, libuci, libcurl, libjson-c, libnet1, libpcap
+Source: package/siflower/bin/netdev-scan
+Section: utils
+Maintainer: Kevin.feng <kevin.feng@siflower.com.cn>
+Architecture: mips_siflower
+Installed-Size: 3563
+Description:  use the ndscan to scan the currect device

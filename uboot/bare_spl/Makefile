@@ -1,0 +1,158 @@
+
+ifdef use_mti
+GCC_VENDOR=mti
+CC=mips-$(GCC_VENDOR)-elf-gcc
+LD=mips-$(GCC_VENDOR)-elf-ld
+OD=mips-$(GCC_VENDOR)-elf-objdump
+OC=mips-$(GCC_VENDOR)-elf-objcopy
+SZ=mips-$(GCC_VENDOR)-elf-size
+else
+PWD := $(shell pwd)
+GCC_VENDOR=$(PWD)/../toolchain/mips/bin/mipsel-openwrt-linux-uclibc
+STAGING_DIR:=$(PWD)
+export STAGING_DIR
+CC=$(GCC_VENDOR)-gcc
+LD=$(GCC_VENDOR)-ld
+OD=$(GCC_VENDOR)-objdump
+OC=$(GCC_VENDOR)-objcopy
+SZ=$(GCC_VENDOR)-size
+endif
+
+BASE=.
+ARCH=./arch/mips
+INC=./include
+ARCH_INC=$(ARCH)/include
+
+CFLAGS= -Os -g -EL -c -I $(BASE)/common -I . -I $(ARCH_INC) -I $(INC) -mmt
+CFLAGS+=-Wall -Werror
+CFLAGS+=-march=mips32r2
+CFLAGS+= -ffunction-sections -fdata-sections
+
+LDFLAGS_SF1688=-nostdlib -EL -Wl,-Map=sf1688_map -Wl,--gc-sections
+
+ifdef fullmask
+LDFLAGS_SF1688+=-T $(BASE)/sf1688_fullmask.ld
+else
+LDFLAGS_SF1688+=-T $(BASE)/sf1688_mpw0.ld
+endif
+
+ASOURCES= \
+$(ARCH)/cpu/start.S \
+$(ARCH)/cpu/init_cp0.S \
+$(ARCH)/cpu/copy_c2_ram.S \
+$(ARCH)/cpu/cpu_timer.S \
+$(ARCH)/lib/init_L2_CM2.S \
+$(ARCH)/lib/init_caches.S
+
+CSOURCES= \
+$(BASE)/main.c \
+$(BASE)/common/sys_manager.c \
+$(BASE)/common/pad.c \
+$(BASE)/common/clk.c
+
+ifdef small
+CFLAGS +=-DCONFIG_SFA18_UBOOT_LITE
+endif
+
+ifdef rgmii
+CFLAGS +=-DRGMII
+endif
+
+ifdef mpw0
+CFLAGS +=-DSFA18_CRYSTAL_6M -DMPW0
+endif
+
+ifdef fullmask
+CFLAGS += -DFULLMASK
+endif
+
+ifdef fpga
+CFLAGS +=-DFPGA
+CFLAGS +=-DDDR -I $(BASE)/ddr_fpga
+CSOURCES += $(BASE)/ddr_fpga/ddr_init.c
+else
+include $(BASE)/ddr/Makefile
+CSOURCES += $(addprefix $(BASE)/ddr/, $(obj-y))
+endif
+
+ifdef rmii
+CFLAGS +=-DRMII_GMAC
+else
+CFLAGS +=-DRGMII_GMAC
+endif
+
+ifeq ($(skip), 1)
+CFLAGS +=-DSKIP_SPI_FLASH
+endif
+
+ifeq ($(odt), 0)
+CFLAGS +=-DDDR_DISABLE_ODT
+endif
+
+ifdef led_no
+CFLAGS +=-DLED_ID=$(led_no)
+endif
+
+ifeq ($(spi_nand), 1)
+CFLAGS += -DSPI_NAND
+endif
+
+CFLAGS +=-DSPI -DFLASH -I $(BASE)/spi
+CSOURCES += $(wildcard spi/*.c)
+
+CFLAGS +=-DUART -I $(BASE)/uart
+CSOURCES += $(BASE)/uart/uart.c
+
+CFLAGS +=-DMMC -I $(BASE)/mmc
+CSOURCES += $(BASE)/mmc/mmc.c
+
+ifdef security_boot
+CSOURCES += $(wildcard security_boot/*.c)
+CFLAGS +=-DSECURITY_BOOT
+endif
+
+ifdef poe
+CSOURCES += $(wildcard ip808/*.c)
+CFLAGS += -DPOE -I $(BASE)/ip808
+endif
+
+MIPS_TOOLCHAIN=mips-mti-elf
+LIBDIR=$(MIPS_ELF_ROOT)/$(MIPS_TOOLCHAIN)/lib
+LIBS = $(LIBDIR)/../../lib/gcc/mips-mti-elf/4.9.2/el/libgcc.a
+
+ASOURCES += \
+	$(BASE)/common/memset.S \
+	$(BASE)/common/memcpy.S \
+	$(BASE)/common/memcmp.S
+
+CSOURCES += \
+	$(BASE)/common/heap.c \
+	$(BASE)/common/stdio.c
+
+COBJECTS=$(CSOURCES:.c=.o)
+AOBJECTS=$(ASOURCES:.S=.o)
+
+
+AFLAGS = $(CFLAGS) -D__ASSEMBLY__
+
+SF1688 : $(COBJECTS) $(AOBJECTS)
+	$(CC)  $(LDFLAGS_SF1688) $(COBJECTS) $(AOBJECTS) $(LIBS) -o sf1688.elf
+	$(SZ) sf1688.elf
+	$(OD) -d -S -l sf1688.elf > sf1688_dasm
+	$(OC) sf1688.elf -O binary sf1688.bin
+	./tools/checksum sf1688.bin ../$(irom_patch)
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@
+.S.o:
+	$(CC) $(AFLAGS) $< -o $@
+
+clean:
+	rm -f sf1688_map
+	rm -f sf1688_dasm
+	rm -f sf1688.elf
+	rm -f `find -name "*.o"`
+	rm -f *.bin
+	rm -f irom_spl.img
+ifneq ($(OS),Windows_NT)
+	find  $(BASE)/ -name "*.o" -exec rm -rf {} \;
+endif
