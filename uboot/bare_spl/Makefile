@@ -93,6 +93,10 @@ ifdef led_no
 CFLAGS +=-DLED_ID=$(led_no)
 endif
 
+ifdef flash_size
+CFLAGS +=-DSFA18_FLASH_SIZE_MB=$(flash_size)
+endif
+
 ifeq ($(spi_nand), 1)
 CFLAGS += -DSPI_NAND
 endif

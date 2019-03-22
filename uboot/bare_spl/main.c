@@ -31,11 +31,15 @@
 #define SYS_SPI_U_BOOT_OFFS	(32 * 1024)
 #define SYS_FACTORY_OFFS	(SYS_SPI_U_BOOT_OFFS + 164 * 1024)
 #define SYS_SPI_PCBA_OFFS	(4 * 1024 * 1024 - 256 * 1024)
-#else
+#else /* CONFIG_SFA18_UBOOT_LITE */
 #define SYS_SPI_U_BOOT_OFFS	(128 * 1024)
 #define SYS_FACTORY_OFFS	(SYS_SPI_U_BOOT_OFFS + 384 * 1024 + 64 * 1024)
+#if (SFA18_FLASH_SIZE_MB == 8)
+#define SYS_SPI_PCBA_OFFS	(8 * 1024 * 1024 - 512 * 1024)
+#else
 #define SYS_SPI_PCBA_OFFS	(16 * 1024 * 1024 - 512 * 1024)
 #endif
+#endif /* CONFIG_SFA18_UBOOT_LITE */
 
 #define DL_SPI_CTRL_NO          0
 #define DL_SDIO_BLKSIZ	        (0x200)

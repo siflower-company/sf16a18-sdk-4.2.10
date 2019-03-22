@@ -151,40 +151,35 @@
 #define CONFIG_ENV_SIZE			0x10000 /* 64KB */
 #define CONFIG_ENV_OFFSET (512 * 1024) /* MUST be aligned to an erase sector boundary */
 
-
 /*
  * Commands
  */
+/* Now CONFIG_SFA18_UBOOT_LITE can handle all difference. If we have more
+ * different partition in the furture, we can use CONFIG_SFA18_FLASH_SIZE_MB. */
+#define SFAX8_SF_READ_DDR_ADDR 0x81000000
+#ifdef CONFIG_SFA18_UBOOT_LITE
+#define SFAX8_SF_READ_FLASH_ADDR 0x32000
+#define SFAX8_SF_READ_SIZE 0x300000
+#else /* CONFIG_SFA18_UBOOT_LITE */
+#define SFAX8_SF_READ_FLASH_ADDR 0xa0000
+#define SFAX8_SF_READ_SIZE 0x300000
+#endif /* CONFIG_SFA18_UBOOT_LITE */
+
 #ifdef CONFIG_SFA18_PCBA_TEST
 /* only do pcba test here, don't boot up! */
 #define CONFIG_BOOTCOMMAND \
 	"sf_pcba_test;"
 #else /* CONFIG_SFA18_PCBA_TEST */
 #ifdef CONFIG_SPI_BOOT
-#ifdef CONFIG_SFA18_UBOOT_LITE
 #define CONFIG_BOOTCOMMAND                     \
 	"sf probe 0 33000000;"                 \
-	"sf read 0x81000000 0x32000 0x400000;" \
+	"sf read " __stringify(SFAX8_SF_READ_DDR_ADDR) " " __stringify(SFAX8_SF_READ_FLASH_ADDR) " " __stringify(SFAX8_SF_READ_SIZE) ";" \
 	"bootm"
-#else /* CONFIG_SFA18_UBOOT_LITE */
-#define CONFIG_BOOTCOMMAND                     \
-	"sf probe 0 33000000;"                 \
-	"sf read 0x81000000 0xa0000 0xa00000;" \
-	"bootm"
-#endif /* CONFIG_SFA18_UBOOT_LITE */
-
 #elif defined CONFIG_SPI_NAND_BOOT /* CONFIG_SPI_BOOT */
-#ifdef CONFIG_SFA18_UBOOT_LITE
 #define CONFIG_BOOTCOMMAND                           \
 	"spi_nand probe 0 33000000;"                 \
-	"spi_nand read 0x81000000 0x32000 0x400000;" \
+	"spi_nand read " __stringify(SFAX8_SF_READ_DDR_ADDR) " " __stringify(SFAX8_SF_READ_FLASH_ADDR) " " __stringify(SFAX8_SF_READ_SIZE) ";" \
 	"bootm"
-#else /* CONFIG_SFA18_UBOOT_LITE */
-#define CONFIG_BOOTCOMMAND                           \
-	"spi_nand probe 0 33000000;"                 \
-	"spi_nand read 0x81000000 0xa0000 0xa00000;" \
-	"bootm"
-#endif /* CONFIG_SFA18_UBOOT_LITE */
 #else  /* CONFIG_SPI_NAND_BOOT */
 #define CONFIG_BOOTCOMMAND                   \
 	"mmc dev 1;"                         \

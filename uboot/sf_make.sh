@@ -194,6 +194,11 @@ if [ $led_no ]; then
 	add_sfbl_flag led_no=$led_no
 fi
 
+flash_size=$(grep -rn "SFA18_FLASH_SIZE_MB" configs/${DEFCONFIG} | cut -d "=" -f2)
+if [ $flash_size ]; then
+	add_sfbl_flag flash_size=$flash_size
+fi
+
 if [ "$soft_ecc" = "1" ]; then
 	export SOFT_ECC=1
 	echo "Identify using soft-ecc in img header!!!"

@@ -39,7 +39,13 @@ config SYS_MEM_SIZE
 config SFA18_UBOOT_LITE
 	bool "Siflower SFAX8 uboot lite"
 	help
-	  Lite version for 4MB flash.
+	  Lite version for small flash.
+
+config SFA18_FLASH_SIZE_MB
+	int "Siflower SFAX8 flash size"
+	default 16
+	help
+	  Flash size.
 
 config SFA18_PCBA_TEST
 	bool "SiFlower PCBA test"

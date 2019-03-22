@@ -651,14 +651,14 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 		error("tx bd fail \n");
 		return -1;
 	}
+	// don't do the loop in pcba test!
+#ifndef CONFIG_SFA18_PCBA_TEST
 	ports_len = strlen(CONFIG_SFA18_ETH_PORTS);
-	if(ports_len<=5)
-	{
-		strncpy(ports_buf,CONFIG_SFA18_ETH_PORTS,ports_len);
-		for(i = 0;i < ports_len;i++)
-		{
-			if(ports_buf[i]=='1')
-			{
+	if (ports_len <= 5) {
+		strncpy(ports_buf, CONFIG_SFA18_ETH_PORTS, ports_len);
+		for (i = 0; i < ports_len; i++) {
+			if (ports_buf[i] == '1') {
+#endif
 				txd = priv->tx_bd_tbl_align + priv->txd_index;
 				ptr = phys_to_virt(txd->bd_bufptr);
 				/* Prepend the tx header to transmit packet */
@@ -690,9 +690,11 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 				priv->txd_index = ((priv->txd_index + 1) & (NUM_TX_DESCR - 1));
 				// error("pnext txd index  is %d\n",priv->txd_index);
 				// sf_writel(hif_int_src,REG_HIF_INT_SRC);
+#ifndef CONFIG_SFA18_PCBA_TEST
 			}
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -904,62 +906,8 @@ int add_default_mac_entry(unsigned char *mac, int port)
 	return add;
 }
 
-int sf_write_mac_to_flash(unsigned char* mac) {
-	unsigned char * flash_content = malloc(CONFIG_ENV_SIZE);
-	char  buf[100] = {0};
-	int ret = 0;
-	sprintf(buf,"sf probe 0 33000000;sf read 0x%lx 0x%lx 0x%lx;",
-				(unsigned long int)flash_content,
-				(unsigned long int)WEBFAILSAFE_FACTORY_ADDRESS,
-				(unsigned long int)CONFIG_ENV_SIZE);
-	// error("%s",buf);
-	ret = run_command(buf, 0);
-	if(ret < 0){
-		error("read factory failed");
-		free(flash_content);
-		return ret;
-	}
-	int index = rand() % CONFIG_ENV_SIZE;
-	mac[4] += flash_content[index];
-	mac[5] += flash_content[index++];
-
-	// error("set MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-	// 			flash_content[0], flash_content[1], flash_content[2],
-	// 			flash_content[3], flash_content[4], flash_content[5]);
-
-	if (!is_valid_ethaddr(flash_content)){
-		memcpy(flash_content, mac, 6);
-	}
-
-	// error("set MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-	// 			flash_content[0], flash_content[1], flash_content[2],
-	// 			flash_content[3], flash_content[4], flash_content[5]);
-
-	sprintf(buf,"sf erase 0x%lx 0x%lx 0x%lx;sf write 0x%lx 0x%lx 0x%lx;",
-				(unsigned long int)WEBFAILSAFE_FACTORY_ADDRESS,
-				(unsigned long int)CONFIG_ENV_SIZE,
-				(unsigned long int)CONFIG_ENV_SIZE,
-				(unsigned long int)flash_content,
-				(unsigned long int)WEBFAILSAFE_FACTORY_ADDRESS,
-				(unsigned long int)CONFIG_ENV_SIZE);
-	// error("%s",buf);
-	ret = run_command(buf, 0);
-	if(ret < 0){
-		error("write factory failed");
-	}
-	free(flash_content);
-	return ret;
-}
-
 int sf_eth_write_hwaddr(struct eth_device *dev) {
 	int tmp = 0;
-#ifndef  CONFIG_SFA18_UBOOT_LITE
-	sf_write_mac_to_flash(dev->enetaddr);
-	/* set our local address */
-	printf("set MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-				dev->enetaddr[0], dev->enetaddr[1], dev->enetaddr[2],
-				dev->enetaddr[3], dev->enetaddr[4], dev->enetaddr[5]);
-#endif
 
 	sf_writel(htonl(*(uint32_t *)dev->enetaddr), REG_MAC_ADDRESS0_LOW(0));
 	tmp = sf_readl(REG_MAC_ADDRESS0_HIGH(0));

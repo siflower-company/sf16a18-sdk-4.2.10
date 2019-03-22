@@ -159,7 +159,7 @@ void arp_receive(struct ethernet_hdr *et, struct ip_udp_hdr *ip, int len)
 #ifdef CONFIG_SFA18_PCBA_TEST
 	if (net_ip.s_addr == 0 && *(&arp->ar_tpa + 3) == 0x1) {
 		net_copy_ip(&pcba_remote_ip, &arp->ar_spa);
-#ifdef CONFIG_TARGET_SFA18_X10
+#ifdef CONFIG_SFA18_PCBA_STATIC_IP
 		struct in_addr fix_ip;
 		fix_ip = string_to_ip("192.168.4.1");
 		net_copy_ip(&net_ip, &(fix_ip.s_addr));
