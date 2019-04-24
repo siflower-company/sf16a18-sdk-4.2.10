@@ -4,7 +4,7 @@ lock_file="/tmp/_reset_lock"
 logger "$BUTTON pressed for $SEEN seconds"
 
 if [ ! -f "$lock_file" ]; then
-	if [ $SEEN -gt 4 ]; then
+	if [ $SEEN -ge 4 ]; then
 		echo "FACTORY RESET" > /dev/console
 		touch "$lock_file"
 		echo timer > sys/class/leds/eth_led0/trigger

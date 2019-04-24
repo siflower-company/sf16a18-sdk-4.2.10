@@ -525,6 +525,7 @@
 			mtd-country-id = <&factory 61>;
 			mtd-model-ver-flag = <&factory 63>;
 			mtd-model-ver = <&factory 65>;
+			mtd-hw-feature = <&factory 97>;
 			mtd-rf-cali-config = <&factory 2048>;
 			mtd-lb-tx-power-cali-config = <&factory 2052>;
 			mtd-hb-tx-power-cali-config = <&factory 2416>;

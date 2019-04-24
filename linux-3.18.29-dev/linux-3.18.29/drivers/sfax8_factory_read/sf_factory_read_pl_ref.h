@@ -33,6 +33,7 @@ struct sfax8_factory_read_context {
 	unsigned char model_ver_flag[MODEL_VER_FLAG_SIZE];
 	unsigned char model_ver[MODEL_VER_SIZE];
 	unsigned char countryID[COUNTRYID_SIZE];
+	uint32_t hw_feature;
 	uint16_t xo_config;
 	unsigned char *lb_tx_cali_table_p;
 	unsigned char *hb_tx_cali_table_p;

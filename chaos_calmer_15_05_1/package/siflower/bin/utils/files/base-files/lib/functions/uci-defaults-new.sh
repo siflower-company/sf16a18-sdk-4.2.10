@@ -31,10 +31,12 @@ json_select_object() {
 _ucidef_set_interface() {
 	local name=$1
 	local iface=$2
+	local force_link=$3
 
 	json_select_object $name
 	json_add_string ifname "${iface%%.*}"
 	[ "$iface" = "${iface%%.*}" ] || json_add_boolean create_vlan 1
+	[ "$force_link" != "" ] && json_add_string force_link $force_link
 	json_select ..
 }
 
@@ -91,12 +93,13 @@ ucidef_set_interfaces_lan_wan() {
 ucidef_set_interfaces_lan_wan() {
 	local lan_if=$1
 	local wan_if=$2
+	local wan_force_link=$3
 
 	json_select_object network
 	json_select_object lan
 	json_add_string ifname "$lan_if"
 	json_select ..
-	_ucidef_set_interface wan $wan_if
+	_ucidef_set_interface wan $wan_if $wan_force_link
 	json_select ..
 }
 
