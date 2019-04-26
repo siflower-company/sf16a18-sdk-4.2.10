@@ -288,7 +288,15 @@ static int save_value_from_factory_to_host(struct platform_device *pdev, struct 
 		priv->countryID[1] = 'N';
 	}
 	printk("countryID is %2s\n",priv->countryID);
-	//10.get XO calibration cfg
+	//10 get HW feature
+	buffer = kmalloc(sizeof(char)*HW_FEATURE_SIZE,GFP_KERNEL);
+	if(ret = get_value_through_mtd(np,"mtd-hw-feature", 0, HW_FEATURE_SIZE, buffer))
+		printk("get HW feature through mtd failed!,ret %d\n",ret);
+	priv->hw_feature = (buffer[3]<<24)  | (buffer[2]<<16) | (buffer[1]<<8) | buffer[0];
+	priv->exist_flag |= (1 << READ_HW_FEATURE);
+	printk("HW feature is %x\n",priv->hw_feature);
+
+	//11.get XO calibration cfg
 	buffer = kmalloc(sizeof(char)*4,GFP_KERNEL);
 	if(get_value_through_mtd(np,"mtd-rf-cali-config", 0, 4, buffer))
 		printk("get xo  cfg through MTD failed!\n");
@@ -306,13 +314,13 @@ static int save_value_from_factory_to_host(struct platform_device *pdev, struct 
 		return 0;
 	}
 	printk("xo_config is %x\n",priv->xo_config);
-	//11.1.get LB TX calibration tabel ptr
+	//12.1.get LB TX calibration tabel ptr
 	priv->lb_tx_cali_table_p = devm_kzalloc(&pdev->dev, sizeof(char)*LB_TX_CALI_TABLE_SIZE, GFP_KERNEL);
 	if(get_value_through_mtd(np,"mtd-lb-tx-power-cali-config", 0, LB_TX_CALI_TABLE_SIZE, priv->lb_tx_cali_table_p))
 		printk("get tx calbration table through MTD failed!\n");
 	priv->exist_flag |= (1 << READ_LB_TXPOWER_CALI_TABLE);
 	printk("lb_tx_cali_table_p: %x %x %x %x\n",priv->lb_tx_cali_table_p[0],priv->lb_tx_cali_table_p[1],priv->lb_tx_cali_table_p[2],priv->lb_tx_cali_table_p[3]);
-	//11.2.get HB TX calibration tabel ptr
+	//12.2.get HB TX calibration tabel ptr
 	priv->hb_tx_cali_table_p = devm_kzalloc(&pdev->dev, sizeof(char)*HB_TX_CALI_TABLE_SIZE, GFP_KERNEL);
 	if(get_value_through_mtd(np,"mtd-hb-tx-power-cali-config", 0, HB_TX_CALI_TABLE_SIZE, priv->hb_tx_cali_table_p))
 		printk("get tx calbration table through MTD failed!\n");
@@ -465,6 +473,18 @@ int sf_get_value_from_factory(enum sfax8_factory_read_action action, void *buffe
 								}
 								memcpy(buffer,f_read_ctx->countryID, COUNTRYID_SIZE);
 								break;
+		case READ_HW_FEATURE:	//check if the value exist
+								if(!(f_read_ctx->exist_flag & (1 << READ_HW_FEATURE))){
+										printk("Can not find hw feature!\n");
+										return -2;
+								}
+								if(len > HW_FEATURE_SIZE){
+									length = HW_FEATURE_SIZE;
+									printk("Your length is larger than max %d\n",length);
+								}
+								*(unsigned int *)buffer = f_read_ctx->hw_feature;
+								break;
+
 		case READ_RF_XO_CONFIG: //check if the value exist
 								if(!(f_read_ctx->exist_flag & (1 << READ_RF_XO_CONFIG))){
 										printk("Can not find XO config!\n");

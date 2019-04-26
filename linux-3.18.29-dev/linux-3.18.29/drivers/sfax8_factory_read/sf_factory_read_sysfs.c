@@ -435,6 +435,17 @@ static ssize_t sf_factory_read_model_ver_show(struct device *dev, struct device_
 						fr_ctx->model_ver[30], fr_ctx->model_ver[31]);
 }
 
+static ssize_t sf_factory_read_hw_feature_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct sfax8_factory_read_context *fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(to_platform_device(dev));
+	if(!fr_ctx){
+		printk("fr_ctx is null!!!\n");
+		return 0;
+	}
+	return sprintf(buf, "%x\n",fr_ctx->hw_feature);
+}
+
+
 static DEVICE_ATTR(countryid, S_IRUSR, sf_factory_read_countryid_show, NULL);
 static DEVICE_ATTR(macaddr, S_IRUSR, sf_factory_read_macaddr_show, NULL);
 static DEVICE_ATTR(macaddr_wan, S_IRUSR, sf_factory_read_macaddr_wan_show, NULL);
@@ -447,6 +458,7 @@ static DEVICE_ATTR(hw_ver_flag, S_IRUSR, sf_factory_read_hw_ver_flag_show, NULL)
 static DEVICE_ATTR(hw_ver, S_IRUSR, sf_factory_read_hw_ver_show, NULL);
 static DEVICE_ATTR(model_ver_flag, S_IRUSR, sf_factory_read_model_ver_flag_show, NULL);
 static DEVICE_ATTR(model_ver, S_IRUSR, sf_factory_read_model_ver_show, NULL);
+static DEVICE_ATTR(hw_feature, S_IRUSR, sf_factory_read_hw_feature_show, NULL);
 
 static struct attribute *factory_read_attr[] = {
 	&dev_attr_countryid.attr,
@@ -461,6 +473,7 @@ static struct attribute *factory_read_attr[] = {
 	&dev_attr_hw_ver.attr,
 	&dev_attr_model_ver_flag.attr,
 	&dev_attr_model_ver.attr,
+	&dev_attr_hw_feature.attr,
 	NULL,
 };
 

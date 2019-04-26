@@ -7,6 +7,9 @@
 	done
 }
 
+[ -f "/bin/config_check.sh" -a -f /etc/config/network ] && {
+	/bin/config_check.sh
+}
 [ -f "/etc/board.json" ] || return 1
 [ -f "/etc/config/network" ] || {
 	touch /etc/config/network

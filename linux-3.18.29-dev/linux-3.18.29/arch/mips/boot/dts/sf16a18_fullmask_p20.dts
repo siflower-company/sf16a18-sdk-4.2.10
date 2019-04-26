@@ -55,6 +55,7 @@
 
 &ethernet {
 	shutdown-portlist = "llllw";
+        led-on-off-time = /bits/ 16 <0xff 0x1ff>;
 	status = "okay";
 };
 
@@ -270,6 +271,9 @@
 
 &wifi_rf {
 	status = "okay";
+	gpio-expa = <&gpio 51 0>;
+	/*for new evb board,gpio use different map with that in p10h board*/
+	expa_map_type = <2>;
 };
 
 &wifi_lb {
