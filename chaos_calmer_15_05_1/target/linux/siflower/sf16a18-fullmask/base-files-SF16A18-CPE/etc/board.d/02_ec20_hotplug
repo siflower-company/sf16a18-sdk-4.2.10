@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# enable sim-card hot swap
+set_hotswap(){
+	# wait reset done
+	echo "setting ec20 sim-card hot-swap..." > /dev/ttyS0
+	times=0
+	while [ ! -e "/dev/ttyUSB2" ]
+	do
+		if [ $times -gt 15 ]; then
+			times=0
+			echo 1 > /proc/usb-ec20
+		else
+			sleep 1
+			let times+=1
+		fi
+	done
+
+	echo -e "at+qsimdet=1,0\r" > /dev/ttyUSB2
+	echo -e "at+qsimstat=1\r" > /dev/ttyUSB2
+	sleep 1
+	echo 1 > /proc/usb-ec20
+
+	times=0
+	while [ ! -e "/dev/ttyUSB2" ]
+	do
+		if [ $times -gt 15 ]; then
+			times=0
+			echo 1 > /proc/usb-ec20
+		else
+			sleep 1
+			let times+=1
+		fi
+	done
+
+	echo "set hot-swap done!" > /dev/ttyS0
+}
+
+set_hotswap
+exit 0

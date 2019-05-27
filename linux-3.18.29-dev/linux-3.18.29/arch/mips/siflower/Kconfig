@@ -190,6 +190,15 @@ config DT_SF16A18_FULLMASK_P10_8M
 	  pointer to the kernel.  The corresponding DTS file is at
 	  arch/mips/boot/dts/sf16a18_fullmask_p10_8m.dts
 
+config DT_SF16A18_FULLMASK_CPE
+	bool "Built-in device tree for sf16a18 full mask 4g-wifi cpe boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_cpe.dts
+
 endif #SF16A18_FULL_MASK
 
 endif #SOC_SF16A18

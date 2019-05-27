@@ -1,0 +1,222 @@
+/dts-v1/;
+
+#include "sf16a18_full_mask.dtsi"
+#include "sf16a18-thermal.dtsi"
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "siflower,sf16a18-soc";
+
+	eth0-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth0_led>;
+		pinctrl-1 = <&eth0_led_gpio>;
+		eth0 {
+			label = "eth_led0";
+			gpios = <&gpio 55 1>;
+			default-state = "on";
+		};
+	};
+
+	eth1-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth1_led>;
+		pinctrl-1 = <&eth1_led_gpio>;
+		eth1 {
+			label = "eth_led1";
+			gpios = <&gpio 56 1>;
+			default-state = "on";
+		};
+	};
+
+	eth2-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth2_led>;
+		pinctrl-1 = <&eth2_led_gpio>;
+		eth2 {
+			label = "eth_led2";
+			gpios = <&gpio 57 1>;
+			default-state = "on";
+		};
+	};
+
+	eth3-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth3_led>;
+		pinctrl-1 = <&eth3_led_gpio>;
+		eth3 {
+			label = "eth_led3";
+			gpios = <&gpio 58 1>;
+			default-state = "on";
+		};
+	};
+
+	ec20 {
+	     compatible = "siflower,sfax8-ec20";
+	     status = "okay";
+	     reset_n = <&gpio 26 1>;
+	     pwrkey = <&gpio 29 1>;
+	};
+};
+
+&usb_phy{
+	status = "okay";
+};
+
+&ethernet {
+	shutdown-portlist = "llll*";
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
+	status = "okay";
+};
+
+&switch{
+	sfax8,port-map = "llll*";
+	status = "okay";
+};
+
+&gdma {
+	status = "okay";
+};
+
+&usb {
+	status = "okay";
+};
+
+/* This is used to set voltage during dvfs.
+ * You should first know which pmu is in use, and
+ * remove the default core-voltage set in pmu dts.
+ */
+/*
+&cpu0 {
+       cpu0-supply = <&rn5t567_core>;
+       dcdc0-maxv = <1000000>;
+};
+*/
+
+
+&i2c0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	/include/	"sf16a18_pmu.dtsi"
+};
+
+&spi0 {
+	status = "okay";
+	//use-dma;
+	dmas = <&gdma 10
+	&gdma 11>;
+	dma-names = "tx", "rx";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	w25q128@0 {
+		compatible = "w25q128";
+		reg = <0>;	/* chip select */
+		spi-max-frequency = <33000000>;
+
+		bank-width = <2>;
+		device-width = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "spl-loader";
+			reg = <0x0 0x20000>; /* 128k */
+			read-only;
+		};
+
+		partition@20000 {
+			label = "u-boot";
+			reg = <0x20000 0x60000>; /* 384k */
+		};
+
+		partition@80000 {
+			label = "u-boot-env";
+			reg = <0x80000 0x10000>; /* 64k */
+		};
+
+		factory:partition@90000 {
+			label = "factory";
+			reg = <0x90000 0x10000>; /* 64k */
+		};
+
+		partition@a0000 {
+			label = "firmware";
+			reg = <0xa0000 0xf60000>; /* 640k-16M */
+		};
+	};
+
+	spidev: spi@8200000 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		clock = <50000000>;
+		spi-cpha;
+		spi-cpol;
+		spi-max-frequency=<12000000>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&timer0 {
+	status = "okay";
+};
+
+&sham {
+	status = "okay";
+};
+
+&cipher {
+	status = "okay";
+};
+
+&rng {
+	status = "okay";
+};
+
+&watchdog {
+	status = "okay";
+};
+
+&wifi_rf {
+	status = "okay";
+	gpio-expa = <&gpio 51 0>;
+};
+
+&wifi_lb {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	gpio-leds = <&gpio 36 0>;
+};
+
+&wifi_hb {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	gpio-leds = <&gpio 36 0>;
+
+};
+
+&ip6103_vdd18 {
+	regulator-compatible = "null";
+};
+
+&ip6103_rfpa_en {
+	regulator-compatible = "null";
+};
+
+&ip6103_ldo6_32khz {
+	regulator-compatible = "null";
+};

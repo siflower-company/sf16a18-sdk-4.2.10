@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013-2014 OpenWrt.org
+
+START=95
+
+USE_PROCD=1
+PROG=/usr/bin/quectel-CM
+
+reload_service() {
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	reload_service
+}
+
+stop_service() {
+	echo "stoping quectel-CM..." > /dev/ttyS0
+	killall quectel-CM
+}

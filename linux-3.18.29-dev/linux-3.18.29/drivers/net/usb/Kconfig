@@ -548,6 +548,12 @@ config USB_IPHETH
 
 	  For more information: http://giagio.com/wiki/moin.cgi/iPhoneEthernetDriver
 
+config USB_NET_GOBINET
+	tristate "ec20 r2.1 usb net gobinet driver"
+	depends on USB_USBNET
+	help
+	  EC20 R2.1 GobiNet driver.
+
 config USB_SIERRA_NET
 	tristate "USB-to-WWAN Driver for Sierra Wireless modems"
 	depends on USB_USBNET
