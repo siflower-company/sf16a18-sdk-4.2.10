@@ -643,6 +643,15 @@ static const struct option_blacklist_info telit_le922_blacklist_usbcfg3 = {
 };
 
 static const struct usb_device_id option_ids[] = {
+	{ USB_DEVICE(0x05c6, 0x9003) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x05c6, 0x9215) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0125) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0121) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0306) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0435) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0296) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0191) }, /* Quectel EC20 */
+	{ USB_DEVICE(0x2c7c, 0x0195) }, /* Quectel EC20 */
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA_LIGHT) },
@@ -1866,6 +1875,7 @@ static struct usb_serial_driver option_1port_device = {
 #ifdef CONFIG_PM
 	.suspend           = usb_wwan_suspend,
 	.resume            = usb_wwan_resume,
+	.reset_resume      = usb_wwan_resume,
 #endif
 };
 
@@ -1931,6 +1941,18 @@ static int option_probe(struct usb_serial *serial,
 	if (dev_desc->idVendor == cpu_to_le16(SAMSUNG_VENDOR_ID) &&
 	    dev_desc->idProduct == cpu_to_le16(SAMSUNG_PRODUCT_GT_B3730) &&
 	    iface_desc->bInterfaceClass != USB_CLASS_CDC_DATA)
+		return -ENODEV;
+
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x05C6) &&
+		 serial->dev->descriptor.idProduct == cpu_to_le16(0x9003)
+		 && serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
+			return -ENODEV;
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x05C6) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(0x9215)
+			&& serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
+		return -ENODEV;
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x2C7C)
+			&& serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
 		return -ENODEV;
 
 	/* Store device id so we can use it during attach. */

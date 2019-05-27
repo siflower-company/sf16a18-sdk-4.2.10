@@ -142,6 +142,10 @@ ifneq ($(findstring ACCTL,$(PROFILE)),)
 	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_ac $(1)/config-default
 endif
 
+ifneq ($(findstring CPE,$(PROFILE)),)
+    __config_name_list = $(1)/config-$(KERNEL_PATCHVER)_cpe $(1)/config-default
+endif
+
 ifneq ($(findstring X10,$(PROFILE)),)
     __config_name_list = $(1)/config-$(KERNEL_PATCHVER)_x10 $(1)/config-default
 endif

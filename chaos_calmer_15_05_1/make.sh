@@ -115,6 +115,9 @@ case ${board} in
 	p10h)
 		target_board=target/linux/siflower/sf16a18_p10h_${chip}_gmac.config
 		;;
+	cpe)
+		target_board=target/linux/siflower/sf16a18_cpe_${chip}_def.config
+		;;
 	clean)
 		echo "clean build enviroment"
 		echo "delete build dir "

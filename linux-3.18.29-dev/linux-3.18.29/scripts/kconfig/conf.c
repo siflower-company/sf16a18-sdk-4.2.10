@@ -17,6 +17,10 @@
 
 #include "lkc.h"
 
+//modified by robert.chang
+//for slience config, just use defaut value if not defined
+#define KEEP_SILENT_CONFIG 1
+
 static void conf(struct menu *menu);
 static void check_conf(struct menu *menu);
 static void xfgets(char *str, int size, FILE *in);
@@ -194,6 +198,11 @@ static int conf_sym(struct menu *menu)
 		if (menu_has_help(menu))
 			printf("/?");
 		printf("] ");
+#if KEEP_SILENT_CONFIG
+		if (!sym_has_value(sym)) {
+			sym->flags |= SYMBOL_DEF_USER;
+		}
+#endif
 		if (!conf_askvalue(sym, sym_get_string_value(sym)))
 			return 0;
 		strip(line);
