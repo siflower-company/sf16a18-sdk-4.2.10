@@ -144,6 +144,16 @@ define Package/hostapd-utils/description
  IEEE 802.1x/WPA/EAP/RADIUS Authenticator.
 endef
 
+define Package/hostapd-scripts
+  $(call Package/hostapd/Default)
+  TITLE+= (scripts)
+  DEPENDS:=@PACKAGE_wpa-supplicant||PACKAGE_wpa-supplicant-p2p||PACKAGE_wpad-mini||PACKAGE_wpad||PACKAGE_wpad-mesh
+endef
+
+define Package/hostapd-scripts/description
+ This package contains some scripts support wds or repeater.
+endef
+
 define Package/wpad/Default
   SECTION:=net
   CATEGORY:=Network
@@ -420,6 +430,9 @@ ifneq ($(LOCAL_TYPE),hostapd)
   define Package/wpa-cli/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
+  endef
+
+  define Package/hostapd-scripts/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) ./files/wpa_cli_event.sh $(1)/usr/bin/
 	$(CP) ./files/check_connection.sh $(1)/usr/bin/
@@ -444,6 +457,7 @@ $(eval $(call BuildPackage,wpa-supplicant-mini))
 $(eval $(call BuildPackage,wpa-supplicant-p2p))
 $(eval $(call BuildPackage,wpa-cli))
 $(eval $(call BuildPackage,hostapd-utils))
+$(eval $(call BuildPackage,hostapd-scripts))
 $(eval $(call BuildPackage,hostapd-common))
 $(eval $(call BuildPackage,hostapd-common-old))
 $(eval $(call BuildPackage,eapol-test))

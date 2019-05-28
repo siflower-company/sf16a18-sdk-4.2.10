@@ -30,16 +30,16 @@ define KernelPackage/sf_switch/config
 
 		config SFAX8_SWITCH_DPS
 			bool "detect port status"
-			default "y"
+			default "n"
 
 	endif
 endef
 
-#DDONOT_SHUTDOWN_WAN
 EXTRA_KCONFIG:= \
 	CONFIG_NET_VENDOR_SIFLOWER=y \
 	CONFIG_SFAX8_SWITCH=m \
 
+NOSTDINC_FLAGS += -DSF_SPEED_BANLANCE
 NOSTDINC_FLAGS += -DSF_TX_SHUTDOWN
 NOSTDINC_FLAGS += -DCONFIG_SFAX8_SWITCH_AGEING
 

@@ -52,7 +52,7 @@ hostapd_common_add_device_config() {
 	config_add_array supported_rates
 
 	config_add_string country
-	config_add_boolean country_ie doth
+	config_add_boolean country_ie doth rd_disabled
 	config_add_string require_mode
 
 	hostapd_add_log_config
@@ -126,7 +126,7 @@ hostapd_prepare_device_config() {
 	local base="${config%%.conf}"
 	local base_cfg=
 
-	json_get_vars country country_ie beacon_int doth require_mode
+	json_get_vars country country_ie beacon_int doth require_mode rd_disabled
 
 	hostapd_set_log_options base_cfg
 	hostapd_set_sf_options base_cfg
@@ -140,6 +140,8 @@ hostapd_prepare_device_config() {
 		[ "$country_ie" -gt 0 ] && append base_cfg "ieee80211d=1" "$N"
 		[ "$hwmode" = "a" -a "$doth" -gt 0 ] && append base_cfg "ieee80211h=1" "$N"
 	}
+
+	[ -n "$rd_disabled" ] && append base_cfg "rd_disabled=$rd_disabled" "$N"
 	[ -n "$hwmode" ] && append base_cfg "hw_mode=$hwmode" "$N"
 
 	local brlist= br
@@ -258,7 +260,7 @@ hostapd_set_bss_options() {
 	set_default cond_hidden 0
 	set_default wmm 1
 	set_default uapsd 1
-    set_default rsn_preauth 1
+	set_default rsn_preauth 1
 	set_default vlan_id_enable 0
 	set_default vlan_id 1
 
@@ -599,6 +601,10 @@ wpa_supplicant_prepare_interface() {
 	}
 
 	local ap_scan=
+	local country_str=
+	[ -n "$country" ] && {
+	        country_str="country=$country"
+	}
 
 	_w_mode="$mode"
 	_w_modestr=
@@ -612,7 +618,9 @@ wpa_supplicant_prepare_interface() {
 	wpa_supplicant_teardown_interface "$ifname"
 	cat > "$_config" <<EOF
 	ctrl_interface=$_rpath
-$ap_scan
+	update_config=1
+	$ap_scan
+	$country_str
 EOF
 	return 0
 }
@@ -626,7 +634,7 @@ wpa_supplicant_add_network() {
 	json_get_vars \
 		ssid bssid key \
 		basic_rate mcast_rate \
-		ieee80211w
+		ieee80211w disable_network
 
 	local key_mgmt='NONE'
 	local enc_str=
@@ -749,6 +757,8 @@ wpa_supplicant_add_network() {
 	[[ "$_w_mode" = adhoc ]] || ibss_htmode=
 	[ -n "$ibss_htmode" ] && append network_data "htmode=$ibss_htmode" "$N$T"
 
+	[ "${disable_network}" = 1 ] && append network_data "disabled=1" "$N$T"
+
 	cat >> "$_config" <<EOF
 network={
 	$scan_ssid
@@ -775,7 +785,7 @@ wpa_supplicant_run() {
 		"$@"
 
 	ret="$?"
-	wireless_add_process "$(cat "/var/run/wpa_supplicant-${ifname}.pid")" /usr/sbin/wpa_supplicant 1
+	wireless_add_process_wpas "$(cat "/var/run/wpa_supplicant-${ifname}.pid")" /usr/sbin/wpa_supplicant 1
 
 	[ "$ret" != 0 ] && wireless_setup_vif_failed WPA_SUPPLICANT_FAILED
 

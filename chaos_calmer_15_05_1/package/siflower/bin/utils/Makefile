@@ -400,30 +400,60 @@ define Package/ssst_replace/install
 	$(CP) ./files/base-files/etc/ssst_replace.sh $(1)/etc/
 endef
 
-define Package/dhcp
+define Package/86V_FAT_DHCP
 $(call Package/siflower-utils/Default)
 TITLE+=(dhcp.sh)
 endef
 
-define Package/dhcp/description
+define Package/86V_FAT_DHCP/description
 dhcp.sh
 endef
 
-define Package/dhcp/install
+define Package/86V_FAT_DHCP/install
 	$(INSTALL_DIR) $(1)/bin
 	$(CP) ./files/base-files/bin/dhcp.sh $(1)/bin/
+endef
+
+define Package/get_dhcpserver_status
+$(call Package/siflower-utils/Default)
+TITLE+=(get_dhcpserver_status)
+endef
+
+define Package/get_dhcpserver_status/description
+get_dhcpserver_status
+endef
+
+define Package/get_dhcpserver_status/install
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(CP) ./files/base-files/etc/init.d/get_dhcpserver_status $(1)/etc/init.d/
+endef
+
+define Package/dhcpserver_status
+$(call Package/siflower-utils/Default)
+TITLE+=(dhcpserver_status.sh)
+endef
+
+define Package/dhcpserver_status/description
+dhcpserver_status.sh
+endef
+
+define Package/dhcpserver_status/install
+	$(INSTALL_DIR) $(1)/bin
+	$(CP) ./files/base-files/bin/dhcpserver_status.sh $(1)/bin/
 endef
 
 $(eval $(call BuildPackage,wlanctl))
 $(eval $(call BuildPackage,uci-defaults-new))
 $(eval $(call BuildPackage,ssst_replace))
-$(eval $(call BuildPackage,dhcp))
+$(eval $(call BuildPackage,86V_FAT_DHCP))
+$(eval $(call BuildPackage,dhcpserver_status))
 $(eval $(call BuildPackage,otaupgrade))
 $(eval $(call BuildPackage,speed))
 $(eval $(call BuildPackage,init-devlist))
 $(eval $(call BuildPackage,sslcert))
 $(eval $(call BuildPackage,01_network))
 $(eval $(call BuildPackage,fixtime))
+$(eval $(call BuildPackage,get_dhcpserver_status))
 $(eval $(call BuildPackage,upgrade-file))
 $(eval $(call BuildPackage,base-config))
 $(eval $(call BuildPackage,check_net))

@@ -1,0 +1,34 @@
+Index: libiwinfo-2015-06-01/iwinfo_nl80211.c
+===================================================================
+--- libiwinfo-2015-06-01.orig/iwinfo_nl80211.c	2018-12-14 10:21:05.771013585 +0800
++++ libiwinfo-2015-06-01/iwinfo_nl80211.c	2018-12-14 10:27:00.059028453 +0800
+@@ -2143,11 +2143,20 @@
+ 			/* is another unrelated event, retry */
+ 			tries--;
+ 		}
++
++		else if (!strcmp(reply, "FAIL-BUSY\n"))
++		{
++			break;
++		}
+ 	}
+ 
+ 	/* receive and parse scan results if the wait above didn't time out */
+-	if (ready && nl80211_wpactl_recv(sock, reply, sizeof(reply)) > 0)
++	while (ready && nl80211_wpactl_recv(sock, reply, sizeof(reply)) > 0)
+ 	{
++		/* received an event notification, receive again */
++		if (reply[0] == '<')
++		      continue;
++
+ 		nl80211_get_quality_max(ifname, &qmax);
+ 
+ 		for (line = strtok_r(reply, "\n", &pos);
+@@ -2225,6 +2234,7 @@
+ 		}
+ 
+ 		*len = count * sizeof(struct iwinfo_scanlist_entry);
++		break;
+ 	}
+ 
+ 	close(sock);

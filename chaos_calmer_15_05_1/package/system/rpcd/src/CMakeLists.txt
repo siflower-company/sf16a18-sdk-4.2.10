@@ -8,6 +8,7 @@ INCLUDE_DIRECTORIES(include)
 
 OPTION(FILE_SUPPORT "File plugin support" ON)
 OPTION(IWINFO_SUPPORT "libiwinfo plugin support" ON)
+OPTION(SIWIFI_P2P_API_SUPPORT "siwifi_p2p_api plugin support" ON)
 OPTION(LEPTON_SUPPORT "lepton plugin support" ON)
 OPTION(RPCSYS_SUPPORT "rpc-sys plugin support" ON)
 
@@ -55,10 +56,17 @@ IF (IWINFO_SUPPORT)
   SET_TARGET_PROPERTIES(iwinfo_plugin PROPERTIES OUTPUT_NAME iwinfo PREFIX "")
 ENDIF()
 
+IF (SIWIFI_P2P_API_SUPPORT)
+  SET(PLUGINS ${PLUGINS} siwifi_p2p_api_plugin)
+  ADD_LIBRARY(siwifi_p2p_api_plugin MODULE lepton.c p2papi.c p2p.cpp cJSON.c)
+  TARGET_LINK_LIBRARIES(siwifi_p2p_api_plugin ubox ubus sunloginsdk pthread localhttp curl)
+  SET_TARGET_PROPERTIES(siwifi_p2p_api_plugin PROPERTIES OUTPUT_NAME siwifi_p2p_api PREFIX "")
+ENDIF()
+
 IF (LEPTON_SUPPORT)
   SET(PLUGINS ${PLUGINS} lepton_plugin)
-  ADD_LIBRARY(lepton_plugin MODULE lepton.c p2papi.c p2p.cpp cJSON.c)
-  TARGET_LINK_LIBRARIES(lepton_plugin ubox ubus sunloginsdk pthread localhttp curl)
+  ADD_LIBRARY(lepton_plugin MODULE lepton.c)
+  TARGET_LINK_LIBRARIES(lepton_plugin ubox ubus)
   SET_TARGET_PROPERTIES(lepton_plugin PROPERTIES OUTPUT_NAME lepton PREFIX "")
 ENDIF()
 

@@ -1,0 +1,61 @@
+Index: libiwinfo-2015-06-01/iwinfo_nl80211.c
+===================================================================
+--- libiwinfo-2015-06-01.orig/iwinfo_nl80211.c	2019-04-28 18:59:17.867302526 +0800
++++ libiwinfo-2015-06-01/iwinfo_nl80211.c	2019-04-28 19:00:48.279305192 +0800
+@@ -329,6 +329,7 @@
+                                                  int cmd, int flags)
+ {
+ 	int ifidx = -1, phyidx = -1;
++	struct nl_msg *ssids = NULL;
+ 	struct nl80211_msg_conveyor *cv;
+ 
+ 	if (ifname == NULL)
+@@ -360,11 +361,19 @@
+ 	if (phyidx > -1)
+ 		NLA_PUT_U32(cv->msg, NL80211_ATTR_WIPHY, phyidx);
+ 
+-	return cv;
++	ssids = nlmsg_alloc();
++	if (!ssids)
++	      return NULL;
++
++	NLA_PUT(ssids, 1, 0, "");
++
++	//we need active scan.
++	if (cmd == NL80211_CMD_TRIGGER_SCAN)
++	      nla_put_nested(cv->msg, NL80211_ATTR_SCAN_SSIDS, ssids);
+ 
+ nla_put_failure:
+-	nl80211_free(cv);
+-	return NULL;
++	nlmsg_free(ssids);
++	return cv;
+ }
+ 
+ static struct nl80211_msg_conveyor * nl80211_send(
+@@ -1992,8 +2001,13 @@
+ 
+ 	if (bss[NL80211_BSS_SIGNAL_MBM])
+ 	{
+-		sl->e->signal =
+-			(uint8_t)((int32_t)nla_get_u32(bss[NL80211_BSS_SIGNAL_MBM]) / 100);
++		// before we get signal we need to know if it is positive or not.
++		//(uint8_t)((int32_t)nla_get_u32(bss[NL80211_BSS_SIGNAL_MBM]) / 100);
++		int32_t s = (int32_t)nla_get_u32(bss[NL80211_BSS_SIGNAL_MBM]) / 100;
++
++		if (s > 0)
++		      s = -1;
++		sl->e->signal = (uint8_t)(s);
+ 
+ 		rssi = sl->e->signal - 0x100;
+ 
+@@ -2220,7 +2234,8 @@
+ 			}
+ 			else
+ 			{
+-				e->quality = rssi;
++				e->signal =  255;
++				e->quality = qmax;
+ 			}
+ 
+ 			/* Max. Quality */

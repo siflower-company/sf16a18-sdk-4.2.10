@@ -137,7 +137,9 @@ endif
 ifneq ($(findstring 86V,$(PROFILE)),)
 	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_86v $(1)/config-default
 endif
-
+ifneq ($(findstring REP,$(PROFILE)),)
+	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_rep $(1)/config-default
+endif
 ifneq ($(findstring ACCTL,$(PROFILE)),)
 	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_ac $(1)/config-default
 endif

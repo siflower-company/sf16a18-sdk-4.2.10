@@ -39,8 +39,20 @@ define KernelPackage/sf_smac/config
 			depends on !PACKAGE_SFSMAC_LB_LA_ENABLE
 			default "n"
 
+		config PACKAGE_SFUMAC_WIFI_TEST_SCRIPTS
+			bool "enable test shell scripts"
+			default "y"
+
 		config PACKAGE_SFUMAC_WIFI_ATE_TOOLS
 			bool "enable wifi ate tool"
+			default "y"
+
+		config PACKAGE_SFUMAC_LB_EXT_PA_SUPPORT
+			bool "enable support lb ext pa detect"
+			default "y"
+
+		config PACKAGE_SFUMAC_HB_EXT_PA_SUPPORT
+			bool "enable support hb ext pa detect"
 			default "y"
 
 		menu "softmac/fullmac Configuration"

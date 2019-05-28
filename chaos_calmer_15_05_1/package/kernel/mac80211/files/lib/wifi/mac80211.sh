@@ -119,6 +119,10 @@ detect_mac80211() {
 		if [ ! -n "$country" ]; then
 			country='CN'
 		fi
+		txpower_lvl=2
+		[ -f "/etc/ext_pa_exist" ] && {
+			txpower_lvl=1
+		}
 		cat <<EOF
 config wifi-device  radio$devidx
 	option type     mac80211
@@ -130,6 +134,7 @@ config wifi-device  radio$devidx
 	option ht_coex	${htcodex}
 	option noscan   $noscan
 	option radio 1
+	option txpower_lvl '$txpower_lvl'
 $dev_id
 $ht_capab
 	option hwmode	11${mode_band}

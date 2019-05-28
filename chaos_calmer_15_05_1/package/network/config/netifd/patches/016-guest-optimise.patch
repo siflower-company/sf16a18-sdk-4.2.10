@@ -1,0 +1,39 @@
+Index: netifd-2015-12-16/wireless.c
+===================================================================
+--- netifd-2015-12-16.orig/wireless.c	2019-05-10 16:29:04.781604604 +0800
++++ netifd-2015-12-16/wireless.c	2019-05-10 16:29:34.909605492 +0800
+@@ -40,6 +40,7 @@
+ 	VIF_ATTR_GROUP,
+ 	VIF_ATTR_BRINPUT_DISABLE,
+ 	VIF_ATTR_NETISOLATE,
++	VIF_ATTR_NAME,
+ 	__VIF_ATTR_MAX,
+ };
+ 
+@@ -51,6 +52,7 @@
+ 	[VIF_ATTR_GROUP] = { .name = "group", .type = BLOBMSG_TYPE_INT32 },
+ 	[VIF_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ 	[VIF_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
++	[VIF_ATTR_NAME] = { .name = "ifname", .type = BLOBMSG_TYPE_STRING  },
+ };
+ 
+ static const struct uci_blob_param_list vif_param = {
+@@ -1170,15 +1172,15 @@
+ 	struct blob_attr *tb[__VIF_ATTR_MAX];
+ 	struct blob_attr *cur;
+ 	char *name_buf;
+-	char name[8];
++	char name[16];
+ 
+ 	blobmsg_parse(vif_policy, __VIF_ATTR_MAX, tb, blob_data(data), blob_len(data));
+ 
+ 	cur = tb[VIF_ATTR_DISABLED];
+ 	if (cur && blobmsg_get_bool(cur))
+ 		return;
+-
+-	sprintf(name, "%d", wdev->vif_idx++);
++	cur = tb[VIF_ATTR_NAME];
++	sprintf(name, "%s", blobmsg_get_string(cur));
+ 
+ 	vif = calloc_a(sizeof(*vif),
+ 		       &name_buf, strlen(name) + 1);

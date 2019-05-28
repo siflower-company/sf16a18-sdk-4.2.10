@@ -18,9 +18,9 @@ drv_mac80211_init_device_config() {
 	hostapd_common_add_device_config
 
 	config_add_string path phy 'macaddr:macaddr'
-	config_add_string hwmode
+	config_add_string hwmode band
 	config_add_int beacon_int chanbw frag rts max_all_num_sta
-	config_add_int rxantenna txantenna antenna_gain txpower distance
+	config_add_int rxantenna txantenna antenna_gain txpower txpower_lvl distance
 	config_add_boolean noscan ht_coex
 	config_add_array ht_capab
 	config_add_boolean \
@@ -368,6 +368,16 @@ mac80211_get_addr() {
 	head -n $(($macidx + 1)) /sys/class/ieee80211/${phy}/addresses | tail -n1
 }
 
+mac802111_get_apmacidx(){
+	local phy="$1"
+	local mask="$(cat /sys/class/ieee80211/${phy}/address_mask)"
+
+	local oIFS="$IFS"; IFS=":"; set -- $mask; IFS="$oIFS"
+	local mask6=$6
+
+	macidx=$((0x$mask6))
+}
+
 mac80211_generate_mac() {
 	local phy="$1"
 	local id="${macidx:-0}"
@@ -437,6 +447,34 @@ mac80211_check_ap() {
 	has_ap=1
 }
 
+mac80211_iw_interface_add(){
+	local phy="$1"
+	local ifname="$2"
+	local type="$3"
+	local wdsflag="$4"
+	local rc
+
+	iw phy "$phy" interface add "$ifname" type "$type" $wdsflag
+	rc="$?"
+
+	[ "$rc" = 233  ] && {
+		# Device might have just been deleted, give the kernel some time to finish cleaning it up
+		sleep 1
+
+		iw phy "$phy" interface add "$ifname" type "$type" $wdsflag
+		rc="$?"
+	}
+
+	[ "$rc" = 233  ] && {
+		# Device might not support virtual interfaces, so the interface never got deleted in the first place.
+		# Check if the interface already exists, and avoid failing in this case.
+		ifconfig "$ifname" >/dev/null 2>/dev/null && rc=0
+	}
+
+	[ "$rc" != 0  ] && wireless_setup_failed INTERFACE_CREATION_FAILED
+	return $rc
+}
+
 mac80211_prepare_vif() {
 	json_select config
 
@@ -453,7 +491,14 @@ mac80211_prepare_vif() {
 
 	[ -n "$macaddr" ] || {
 		macaddr="$(mac80211_generate_mac $phy)"
-		macidx="$(($macidx + 1))"
+		case "$mode" in
+			sta|wds-sta)
+				macidx="$(($macidx + 1))"
+				;;
+			*)
+				macidx="$(($macidx - 1))"
+				;;
+		esac
 	}
 
 	json_add_object data
@@ -464,7 +509,7 @@ mac80211_prepare_vif() {
 	# It is far easier to delete and create the desired interface
 	case "$mode" in
 		adhoc)
-			iw phy "$phy" interface add "$ifname" type adhoc
+			mac80211_iw_interface_add "$phy" "$ifname" adhoc || return
 		;;
 		ap|wds-ap)
 			# Hostapd will handle recreating the interface and
@@ -474,27 +519,27 @@ mac80211_prepare_vif() {
 			else
 				type=interface
 			fi
-
 			mac80211_hostapd_setup_bss "$phy" "$ifname" "$macaddr" "$type" || return
 
 			[ -n "$hostapd_ctrl" ] || {
-				iw phy "$phy" interface add "$ifname" type __ap
+				mac80211_iw_interface_add "$phy" "$ifname" __ap || return
 				hostapd_ctrl="${hostapd_ctrl:-/var/run/hostapd/$ifname}"
 			}
 		;;
 		mesh)
-			iw phy "$phy" interface add "$ifname" type mp
+			mac80211_iw_interface_add "$phy" "$ifname" mp
 		;;
 		monitor)
-			iw phy "$phy" interface add "$ifname" type monitor
+			mac80211_iw_interface_add "$phy" "$ifname" monitor
 		;;
 		sta|wds-sta)
 			local wdsflag=
 			[ "$wds" -gt 0 ] && wdsflag="4addr on"
-			iw phy "$phy" interface add "$ifname" type managed $wdsflag
+			mac80211_iw_interface_add "$phy" "$ifname" managed $wdsflag
 			[ "$powersave" -gt 0 ] && powersave="on" || powersave="off"
 			iw "$ifname" set power_save "$powersave"
-			brctl addif br-lan $ifname
+			# sta not support brctl
+			[ "$mode" = "wds-sta" ] && brctl addif br-lan $ifname
 		;;
 	esac
 
@@ -509,7 +554,7 @@ mac80211_prepare_vif() {
 		# All interfaces must have unique mac addresses
 		# which can either be explicitly set in the device
 		# section, or automatically generated
-		ifconfig "$ifname" hw ether "$macaddr"
+		ifconfig "$ifname" down hw ether "$macaddr"
 	fi
 
 	json_select ..
@@ -614,7 +659,7 @@ mac80211_setup_vif() {
 
 	json_select config
 	json_get_vars mode
-	json_get_var vif_txpower txpower
+	json_get_vars vif_txpower
 
 	ifconfig "$ifname" up || {
 		wireless_setup_vif_failed IFUP_ERROR
@@ -622,7 +667,7 @@ mac80211_setup_vif() {
 		return
 	}
 
-	set_default vif_txpower "$txpower"
+	#set_default vif_txpower "$txpower"
 	[ -z "$vif_txpower" ] || iw dev "$ifname" set txpower fixed "${vif_txpower%%.*}00"
 
 	case "$mode" in
@@ -666,7 +711,7 @@ mac80211_setup_vif() {
 	esac
 
 	json_select ..
-	[ -n "$failed" ] || wireless_add_vif "$name" "$ifname"
+	[ -n "$failed" ] || wireless_add_vif "$ifname" "$ifname"
 }
 
 get_freq() {
@@ -677,10 +722,24 @@ get_freq() {
 
 mac80211_interface_cleanup() {
 	local phy="$1"
+	local mode="$2"
 
 	for wdev in $(list_phy_interfaces "$phy"); do
-		ifconfig "$wdev" down 2>/dev/null
-		iw dev "$wdev" del
+		if [ $mode = "hostap" ]; then
+			case $wdev in
+			wlan*)
+				ifconfig "$wdev" down 2>/dev/null
+				iw dev "$wdev" del
+				;;
+			esac
+		elif [ $mode = "wpa" ]; then
+			case $wdev in
+			*i*)
+				ifconfig "$wdev" down 2>/dev/null
+				iw dev "$wdev" del
+				;;
+			esac
+		fi
 	done
 }
 
@@ -688,14 +747,50 @@ drv_mac80211_cleanup() {
 	hostapd_common_cleanup
 }
 
+drv_mac80211_repup() {
+	json_select config
+	json_get_vars \
+		phy macaddr path country
+	json_select ..
+
+	# get macaddr from phy, so we need get phy first.
+	find_phy || {
+		echo "Could not find PHY for device '$1'"
+		wireless_set_retry_wpas 0
+		return 1
+	}
+
+	wireless_set_data phy="$phy"
+	mac80211_interface_cleanup "$phy" "wpa"
+
+	#local ifname
+	# set macidx = 1 to avoid get the same macaddr with ap.
+	macidx=0
+	#[ -n "$ifname"  ] || ifname="rai${phy#phy}"
+
+	for_each_interface "sta adhoc mesh monitor wds-sta" mac80211_prepare_vif
+	for_each_interface "sta adhoc mesh monitor wds-sta" mac80211_setup_vif
+	wireless_set_up_wpas
+}
+
+drv_mac80211_repdown() {
+	wireless_process_kill_wpas
+
+	json_select data
+	json_get_vars phy
+	json_select ..
+
+	mac80211_interface_cleanup "$phy" "wpa"
+}
+
 drv_mac80211_setup() {
 	json_select config
 	json_get_vars \
 		phy macaddr path \
 		country chanbw distance \
-		txpower antenna_gain \
+		txpower txpower_lvl antenna_gain \
 		rxantenna txantenna \
-		frag rts beacon_int htmode
+		frag rts beacon_int htmode band
 	json_get_values basic_rate_list basic_rate
 	json_select ..
 
@@ -706,7 +801,7 @@ drv_mac80211_setup() {
 	}
 
 	wireless_set_data phy="$phy"
-	mac80211_interface_cleanup "$phy"
+	mac80211_interface_cleanup "$phy" "hostap"
 
 	# convert channel to frequency
 	[ "$auto_channel" -gt 0 ] || freq="$(get_freq "$phy" "$channel")"
@@ -724,12 +819,19 @@ drv_mac80211_setup() {
 	macidx=0
 	staidx=0
 
+	mac802111_get_apmacidx $phy
+
 	[ -n "$chanbw" ] && {
 		for file in /sys/kernel/debug/ieee80211/$phy/ath9k/chanbw /sys/kernel/debug/ieee80211/$phy/ath5k/bwmode; do
 			[ -f "$file" ] && echo "$chanbw" > "$file"
 		done
 	}
-
+	#set txpower lvl
+	if [ "$band" == "2.4G" ]; then
+		echo $txpower_lvl > /sys/module/sf16a18_lb_smac/parameters/txpower_lvl
+	else
+		echo $txpower_lvl > /sys/module/sf16a18_hb_smac/parameters/txpower_lvl
+	fi
 	set_default rxantenna all
 	set_default txantenna all
 	set_default distance 0
@@ -737,7 +839,7 @@ drv_mac80211_setup() {
 
 	iw phy "$phy" set antenna $txantenna $rxantenna >/dev/null 2>&1
 	iw phy "$phy" set antenna_gain $antenna_gain
-	iw phy "$phy" set distance "$distance"
+	iw phy "$phy" set distance "$distance" 2 > /dev/null
 
 	[ -n "$frag" ] && iw phy "$phy" set frag "${frag%%.*}"
 	[ -n "$rts" ] && iw phy "$phy" set rts "${rts%%.*}"
@@ -749,7 +851,7 @@ drv_mac80211_setup() {
 	rm -f "$hostapd_conf_file"
 	[ -n "$has_ap" ] && mac80211_hostapd_setup_base "$phy"
 
-	for_each_interface "sta adhoc mesh monitor wds-sta" mac80211_prepare_vif
+	#for_each_interface "sta adhoc mesh monitor wds-sta" mac80211_prepare_vif
 	for_each_interface "ap wds-ap" mac80211_prepare_vif
 
 	[ -n "$hostapd_ctrl" ] && {
@@ -762,11 +864,9 @@ drv_mac80211_setup() {
 		}
 	}
 
-	for_each_interface "ap sta adhoc mesh monitor wds-ap wds-sta" mac80211_setup_vif
-
+	for_each_interface "ap wds-ap" mac80211_setup_vif
 	wireless_set_up
 }
-
 list_phy_interfaces() {
 	local phy="$1"
 	if [ -d "/sys/class/ieee80211/${phy}/device/net" ]; then
@@ -783,7 +883,7 @@ drv_mac80211_teardown() {
 	json_get_vars phy
 	json_select ..
 
-	mac80211_interface_cleanup "$phy"
+	mac80211_interface_cleanup "$phy" "hostap"
 }
 
 add_driver mac80211

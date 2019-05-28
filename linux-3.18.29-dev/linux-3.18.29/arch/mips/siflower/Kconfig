@@ -151,6 +151,14 @@ config DT_SF16A18_FULLMASK_86V
 	  The corresponding DTS file is at
 	  arch/mips/boot/dts/sf16a18_fullmask_86v.dts
 
+config DT_SF16A18_FULLMASK_REP
+	bool "Built-in device tree for sf16a18 rep boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_rep.dts
+
 config DT_SF16A18_FULLMASK_ACCTL
 	bool "Built-in device tree for sf16a18 full mask ac boards"
 	default n

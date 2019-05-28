@@ -1,11 +1,30 @@
 #!/bin/ash
 #echo "~$1~$2~$3~" > /dev/ttyS0
-if [[ "$1" == "sfi0" || "$1" == "rai0" ]]; then
+wds_if="$1"
+path_led="/sys/class/leds/siwifi-"
+
+if [[ "$wds_if" == "sfi0" ]]; then
 	trig=phy0
+	num=0
 else
 	trig=phy1
+	num=1
 fi
-path_led="/sys/class/leds/siwifi-"
+
+set_channel() {
+	chan=`iwinfo $wds_if info | grep Chan|awk -F ' ' '{print $4}'`
+
+	[ "$chan" -gt 0   ] && {
+	uci set wireless.radio${num}.channel="$chan"
+	# set sfix which is not in use disabled = 1,and set 5g htmode
+	if [ $num = 1  ]; then
+		uci set wireless.radio1.htmode="VHT80"
+		[ "$chan" = "165"   ] && uci set wireless.radio1.htmode="VHT20"
+	fi
+	uci commit wireless
+	wifi reload
+	}
+}
 
 del_clients() {
 	local cnt
@@ -45,7 +64,7 @@ del_clients() {
 	fi
 }
 
-if [[ "$1" == "sfi0" || "$1" == "sfi1" || "$1" == "rai0" || "$1" == "rai1" ]]; then
+if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 
 	if [ "$2" == "CONNECTED" ]; then
 		#echo "wpa_cli_evt: connected" > /dev/ttyS0
@@ -60,6 +79,9 @@ if [[ "$1" == "sfi0" || "$1" == "sfi1" || "$1" == "rai0" || "$1" == "rai1" ]]; t
 		uci set dhcp.lan.ignore=1
 		uci commit dhcp
 		/etc/init.d/dnsmasq reload
+
+		local sta_status=`uci get network.stabridge`
+		[ "$sta_status" = "interface" ] && set_channel
 
 		if [ -d "$path_led""$trig""::tx" ]; then
 			echo "$trig""tx" > "$path_led""$trig""::tx"/trigger
@@ -129,7 +151,5 @@ if [[ "$1" == "sfi0" || "$1" == "sfi1" || "$1" == "rai0" || "$1" == "rai1" ]]; t
 			echo "2" > /tmp/wds_sta_status
 		fi
 	fi
-
 fi
 #echo "wpa_cli_event done!" > /dev/ttyS0
-

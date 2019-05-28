@@ -1,0 +1,56 @@
+Index: dnsmasq-2.73/src/dns_block.c
+===================================================================
+--- dnsmasq-2.73.orig/src/dns_block.c	2019-05-06 14:40:02.791222458 +0800
++++ dnsmasq-2.73/src/dns_block.c	2019-05-06 14:43:07.239227896 +0800
+@@ -472,7 +472,7 @@
+ 			if (ctl & (0x1 << i)){
+ 				for(j = 0; j < si_pctl_key.key_num[i];++j ){
+ 					SLOG("key is %s",si_pctl_key.keywords[i][j]);
+-					if(sistrstr(namebuff, si_pctl_key.keywords[i][j]) != NULL){
++					if(sistrstr(namebuff, si_pctl_key.keywords[i][j]) != 0){
+ 						return 1;
+ 					}
+ 				}
+Index: dnsmasq-2.73/src/dnsmasq.c
+===================================================================
+--- dnsmasq-2.73.orig/src/dnsmasq.c	2019-05-06 14:40:02.787222458 +0800
++++ dnsmasq-2.73/src/dnsmasq.c	2019-05-06 14:43:59.091229424 +0800
+@@ -22,6 +22,7 @@
+ #ifdef URL_LIST
+ #define URLFILE "/etc/url_list"
+ struct mac_node * gpmac_list_hdr = NULL;
++void init_urllist();
+ #endif
+ 
+ struct daemon *daemon;
+@@ -864,7 +865,9 @@
+   /* Using inotify, have to select a resolv file at startup */
+   poll_resolv(1, 0, now);
+ #endif
+-  init_urllist();
++#ifdef URL_LIST
++    init_urllist();
++#endif
+ 	dns_block_start();
+ 	pthread_attr_t att;
+ 	pthread_attr_init(&att);
+Index: dnsmasq-2.73/src/forward.c
+===================================================================
+--- dnsmasq-2.73.orig/src/forward.c	2019-05-06 14:40:02.791222458 +0800
++++ dnsmasq-2.73/src/forward.c	2019-05-06 14:42:52.635227465 +0800
+@@ -1378,6 +1378,7 @@
+ 		  }
+ 	  }
+ #endif
++#ifdef HAVE_IPV6
+ 	  char lease_ret = 0;
+ 	  if(listen->family == AF_INET6){
+ 		  lease_ret = lease_dns_block(daemon->namebuff, &source_addr.in6.sin6_addr, 1);
+@@ -1399,6 +1400,7 @@
+ 		  my_syslog(LOG_ERR, _("pctl block this request %s"),daemon->namebuff);
+ 		  return;
+ 	  }
++#endif
+ 
+ #ifdef HAVE_AUTH
+       /* find queries for zones we're authoritative for, and answer them directly */

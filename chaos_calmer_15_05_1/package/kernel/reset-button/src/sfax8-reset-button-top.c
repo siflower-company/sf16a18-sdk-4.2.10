@@ -72,49 +72,18 @@ static void sfax8_update_reboot(struct sfax8_rb *sfrb)
 	return;
 }
 #endif
+
 //openwrt request that recover is time more than 5s between button press and release
-#define FLASH_LED_TIME_MS 6000
-#define FLASH_LED_COUNT 20
-
-
 static void sfax8_recover_reboot(struct sfax8_rb *sfrb)
 {
-#ifdef CONFIG_SF_KERNEL_LITE
 	printk("Recover after 7s!\n");
-
 	input_report_key(sfrb->idev, KEY_RESTART,1);
 	input_sync(sfrb->idev);
-	msleep(2*1000);//openwrt request that recover is time more than 5s between button press and release
+
+	msleep(6 * 1000);
 
 	input_report_key(sfrb->idev, KEY_RESTART,0);
 	input_sync(sfrb->idev);
-#else
-	u32 count = 0;
-	bool led_on = true;
-	//if(sfax8_recovery_clear_interrupt() == 0){
-		printk("Recover after 7s!\n");
-
-		sfax8_recovery_led_on(true);
-		led_on = true;
-
-		input_report_key(sfrb->idev, KEY_RESTART,1);
-		input_sync(sfrb->idev);
-		while(count < FLASH_LED_COUNT){
-			msleep(FLASH_LED_TIME_MS/FLASH_LED_COUNT);
-			sfax8_recovery_led_on(!led_on);
-
-			led_on = !led_on;
-			count++;
-		}
-
-		//sfax8_recovery_led_on(false);
-		sfax8_recovery_led_on(true);
-		input_report_key(sfrb->idev, KEY_RESTART,0);
-		input_sync(sfrb->idev);
-		//case we are going to recovery,so just disable the irq
-		return;
-//	}
-#endif
 }
 
 #ifdef CONFIG_SF_NETWORK_WPS
@@ -151,9 +120,6 @@ static void sfax8_rb_work(struct work_struct *work){
 			break;
 		case LONG_PRESS_INT:
 			sfax8_recover_reboot(sfrb);
-#ifndef CONFIG_SF_KERNEL_LITE
-			return;
-#endif
 			break;
 		default :
 			break;

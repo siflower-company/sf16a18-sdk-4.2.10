@@ -1,0 +1,13 @@
+Index: netifd-2015-12-16/scripts/netifd-wireless.sh
+===================================================================
+--- netifd-2015-12-16.orig/scripts/netifd-wireless.sh	2019-05-09 18:43:49.727295654 +0800
++++ netifd-2015-12-16/scripts/netifd-wireless.sh	2019-05-09 18:46:11.679299839 +0800
+@@ -331,7 +331,7 @@
+ }
+ 
+ _wdev_common_iface_config() {
+-	config_add_string mode ssid encryption 'key:wpakey'
++	config_add_string mode ssid encryption 'key:wpakey' vif_txpower
+ }
+ 
+ init_wireless_driver() {
