@@ -35,8 +35,6 @@
 #define PMU_RESET_EN		0x01
 #define RESET_EN_MASK		0x80
 #define RESET_DISABLE		0x00
-#define LED_ON				0
-#define LED_OFF				1
 
 
 static struct sfax8_data *data;
@@ -107,44 +105,6 @@ static int sfax8_ip6103_recovery_init(struct sfax8_data *u_data, struct sfax8 *s
 		}
 };
 
-/*
-* if the parameter is true, the led will be set on,
-* else set off
-*/
-static int sfax8_ip6103_recovery_led_on(bool on)
-{
-	int ret;
-	if(gpio < 0){
-		printk(KERN_ERR "%s: bad gpio number.\n", __func__);
-		return -EINVAL;
-	}
-	if(gpio != 0){
-		ret = gpio_direction_output(gpio, LED_OFF);
-		if (ret){
-			printk(KERN_ERR "Set led gpio output fail!\n");
-			return -EINVAL;
-		}
-		if(on)
-			gpio_set_value(gpio, LED_ON);
-		else
-			gpio_set_value(gpio, LED_OFF);
-	}else{
-		u16 eth_led = 0;
-		for(eth_led = 55 ; eth_led <= 59 ; eth_led++){
-			ret = gpio_direction_output(eth_led, LED_OFF);
-			if (ret){
-				printk(KERN_ERR "Set led gpio output fail!\n");
-				return -EINVAL;
-			}
-			if(on)
-				gpio_set_value(eth_led, LED_ON);
-			else
-				gpio_set_value(eth_led, LED_OFF);
-		}
-	}
-	return 0;
-}
-
 static int sfax8_ip6103_set_interrupt_mask(bool mask, struct sfax8 * sfax8)
 {
 	int ret = 0;
@@ -191,30 +151,6 @@ int sfax8_ip6103_rb_probe(struct platform_device *pdev)
 	np = of_get_child_by_name(pdev->dev.parent->of_node, "reset-button");
 	pdev->dev.of_node = np;
 
-	led_gpio = of_get_named_gpio(pdev->dev.of_node, "led-gpio", 0);
-	if (!gpio_is_valid(led_gpio)){
-		// printk( "set eth led!\n");
-		led_gpio = 0;
-	}
-	gpio = led_gpio;
-
-	if(led_gpio != 0){
-		ret = devm_gpio_request(&pdev->dev, led_gpio, "reset led gpio");
-		if (ret){
-			printk(KERN_ERR "Request reset led gpio fail! %d\n", ret);
-			goto err;
-		}
-	}else{
-		u16 eth_led = 0;
-		for(eth_led = 55 ; eth_led <= 59 ; eth_led++){
-			ret = devm_gpio_request(&pdev->dev, eth_led, "reset led gpio");
-			if (ret){
-				printk(KERN_ERR "Request reset led gpio %d fail! %d\n", (int)eth_led,ret);
-				goto err;
-			}
-		}
-	}
-
 	rb_gpio = of_get_named_gpio(pdev->dev.of_node, "rb-gpio", 0);
 	if (!gpio_is_valid(rb_gpio)){
 		printk( "Get reset gpio fail!\n");
@@ -247,8 +183,7 @@ int sfax8_ip6103_rb_probe(struct platform_device *pdev)
 	regcache_cache_bypass(parent_data->regmap, true);
 
 	ops->init = sfax8_ip6103_recovery_init;
-	ops->clear_interrupt = sfax8_ip6103_recovery_clear_interrupt;
-	ops->set_led_onoff = sfax8_ip6103_recovery_led_on;
+    ops->clear_interrupt = sfax8_ip6103_recovery_clear_interrupt;
 	ops->set_interrupt_mask = sfax8_ip6103_set_interrupt_mask;
 	dev_set_drvdata(&pdev->dev, ops);
 

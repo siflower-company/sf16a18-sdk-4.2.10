@@ -1,0 +1,5 @@
+config cloud 'addr'
+	option ip 'cloud.siflower.cn'
+	option port '443'
+	option version 'v4'
+	option cloudtype '0'

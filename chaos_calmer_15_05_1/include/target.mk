@@ -137,8 +137,16 @@ endif
 ifneq ($(findstring 86V,$(PROFILE)),)
 	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_86v $(1)/config-default
 endif
-ifneq ($(findstring REP,$(PROFILE)),)
-	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_rep $(1)/config-default
+
+ifneq ($(findstring 86V-C2,$(PROFILE)),)
+	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_86v_c2 $(1)/config-default
+endif
+
+ifneq ($(findstring REP-V1,$(PROFILE)),)
+	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_rep_v1 $(1)/config-default
+endif
+ifneq ($(findstring REP-NOPA,$(PROFILE)),)
+	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_rep_nopa $(1)/config-default
 endif
 ifneq ($(findstring ACCTL,$(PROFILE)),)
 	__config_name_list = $(1)/config-$(KERNEL_PATCHVER)_ac $(1)/config-default
