@@ -9,6 +9,19 @@ config BTN_HTTPD_PMU
 	help
 	  Enable this config to detect if run httpd with pmu button
 
+config BTN_HTTPD_GPIO
+	bool "use gpio button to detect if run httpd"
+	default n
+	help
+	  Enable this config to detect if run httpd with gpio button
+
+config BTN_HTTPD_GPIO_VAL
+	int "gpio index for enter httpd when uboot booting"
+	depends on BTN_HTTPD_GPIO
+	default 60
+	help
+	  gpio index for enter httpd when uboot booting.
+
 config SFA18_RGMII_GMAC
 	bool "SFA18  ethernet rgmii mode gmac"
 	help
@@ -75,5 +88,7 @@ source "board/siflower/sfa18_86v/Kconfig"
 source "board/siflower/sfa18_ac/Kconfig"
 source "board/siflower/sfa18_x10/Kconfig"
 source "board/siflower/sfa18_p10h/Kconfig"
+source "board/siflower/sfa18_rep/Kconfig"
+source "board/siflower/sfa18_air001/Kconfig"
 
 endif

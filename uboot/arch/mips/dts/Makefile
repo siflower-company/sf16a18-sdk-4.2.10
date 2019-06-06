@@ -9,7 +9,11 @@ dtb-$(CONFIG_TARGET_PIC32MZDASK) += pic32mzda_sk.dtb
 dtb-$(CONFIG_BOARD_TPLINK_WDR4300) += tplink_wdr4300.dtb
 dtb-$(CONFIG_SOC_SFA18_MPW0) += sfa18_mpw0.dtb
 dtb-$(CONFIG_SOC_SFA18_MPW1) += sfa18_mpw1.dtb
+ifeq ($(CONFIG_SPI_NAND), y)
+dtb-$(CONFIG_SOC_SFA18_FULLMASK) += sfa18_fullmask_nand.dtb
+else
 dtb-$(CONFIG_SOC_SFA18_FULLMASK) += sfa18_fullmask.dtb
+endif
 
 targets += $(dtb-y)
 

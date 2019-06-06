@@ -28,7 +28,7 @@ extern int spi_nand_issue_cmd(struct spi_nand_chip *chip, struct spi_nand_cmd *c
 static int spi_nand_erase(struct spi_nand_chip *chip, uint64_t addr, uint64_t len, bool check_bad);
 static int spi_nand_do_write_oob(struct spi_nand_chip *chip, loff_t to,
 			     struct mtd_oob_ops *ops);
-static bool soft_ecc = true;
+static bool soft_ecc = false;
 
 static struct spi_nand_flash spi_nand_table[] = {
 	#ifdef CONFIG_SPI_NAND_MICRON
@@ -44,6 +44,8 @@ static struct spi_nand_flash spi_nand_table[] = {
 	#ifdef CONFIG_SPI_NAND_ICMAX
 	SPI_NAND_INFO("IMS1G083ZAA1", 0x9B, 0x12, 2048, 64, 64, 1024,
 			1, 1, SPINAND_NO_ECC),
+	SPI_NAND_INFO("F50L1G41LB", 0xc8, 0x01, 2048, 64, 64, 1024,
+			1, 1, 0),
 	#endif
 	{.name = NULL},
 };
@@ -646,7 +648,8 @@ static int spi_nand_do_read_page(struct spi_nand_chip *chip, u32 page_addr,
 	int ret;
 	unsigned int ecc_error;
 	u8 status;
-	int ecc_column, size, retlen = len;
+	int ecc_column, size;
+	u32 retlen = len;
 
 	spi_nand_debug("%s: page %d, column %d, len %d\n", __func__, page_addr, column, len);
 	spi_nand_read_page_to_cache(chip, page_addr);

@@ -512,6 +512,9 @@ int phy_init(void)
 #ifdef CONFIG_PHY_XILINX
 	phy_xilinx_init();
 #endif
+#ifdef CONFIG_PHY_INTEL_XWAY
+	phy_xway_init();
+#endif
 
 	return 0;
 }
@@ -840,7 +843,7 @@ void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev)
 				phydev->dev->name, dev->name);
 	}
 	phydev->dev = dev;
-	debug("%s connected to %s\n", dev->name, phydev->drv->name);
+	printf("%s connected to %s, id %#x\n", dev->name, phydev->drv->name, phydev->phy_id);
 }
 
 #ifdef CONFIG_DM_ETH

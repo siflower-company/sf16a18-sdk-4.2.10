@@ -57,7 +57,15 @@
 #define CONFIG_SYS_MHZ			20	/* arbitrary value */
 #define CONFIG_SYS_MIPS_TIMER_FREQ	(CONFIG_SYS_MHZ * 1000000)
 
+/* gmac support */
+#ifdef CONFIG_SFA18_GMAC
+#define CONFIG_MII
+#define PHY_ANEG_TIMEOUT        8000    /* PHY needs a longer aneg time */
 
+#define CONFIG_PHY_REALTEK
+#define CONFIG_PHY_INTEL_XWAY
+
+#endif
 /*
  * Memory map
  */
@@ -210,6 +218,9 @@
 #define CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_SPL_SPI_FLASH_SUPPORT
 #define CONFIG_SPL_SPI_LOAD
+#elif defined CONFIG_SPI_NAND_BOOT
+/* define SPL_SPI_SUPPORT here to compile httpd correctly */
+#define CONFIG_SPL_SPI_SUPPORT
 #else
 /*spl emm/sd boot*/
 #define CONFIG_SPL_MMC_SUPPORT

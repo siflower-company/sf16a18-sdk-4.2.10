@@ -3,16 +3,15 @@
 #include <net.h>
 #include <config.h>
 
+#include <errno.h>
 #include <phy.h>
 #include <miiphy.h>
 
 #include <asm/io.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
 #include <netdev.h>
 #include "sfa18_gmac.h"
-static int32_t g_phy_addr = -1;
-int sgmac_invalidate_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uint buf_index){
+
+static int sgmac_invalidate_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uint buf_index){
 #ifndef NO_CACHE
 	if(is_tx){
 		if(is_tbl)
@@ -30,7 +29,7 @@ int sgmac_invalidate_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uin
 	return 0;
 }
 
-int sgmac_flush_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uint buf_index){
+static int sgmac_flush_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uint buf_index){
 #ifndef NO_CACHE
 	if(is_tx){
 		if(is_tbl)
@@ -47,21 +46,12 @@ int sgmac_flush_cache(struct sgmac_priv *priv, uint is_tx, uint is_tbl, uint buf
 #endif
 	return 0;
 }
+
 static inline void sgmac_mac_enable(struct sgmac_priv *priv)
 {
 	u32 value = readl(priv->base + GMAC_CONTROL);
 	value |= GMAC_CONTROL_RE | GMAC_CONTROL_TE;
 	writel(value, priv->base + GMAC_CONTROL);
-	int i = 0;
-	for(;i < DMA_TX_RING_SZ; i++){
-		sgmac_invalidate_cache(priv, 1, 1, i);
-		sgmac_invalidate_cache(priv, 1, 0, i);
-	}
-	i = 0;
-	for(;i < DMA_RX_RING_SZ; i++){
-		sgmac_invalidate_cache(priv, 0, 1, i);
-		sgmac_invalidate_cache(priv, 0, 0, i);
-	}
 
 	value = readl(priv->base + GMAC_DMA_OPERATION);
 	value |= DMA_OPERATION_ST | DMA_OPERATION_SR;
@@ -79,7 +69,8 @@ static inline void sgmac_mac_disable(struct sgmac_priv *priv)
 	writel(value, priv->base + GMAC_CONTROL);
 }
 
-int sf_gmac_write_hwaddr(struct eth_device *dev) {
+static int sf_gmac_write_hwaddr(struct eth_device *dev)
+{
 	u32 data;
 	int num = 0;
 	unsigned char *addr = dev->enetaddr;
@@ -105,16 +96,25 @@ static void sgmac_set_mdc_clk_div(struct sgmac_priv *priv)
 	writel(value, priv->base + GMAC_GMII_ADDR);
 }
 
-static int sgmac_hw_init(struct sgmac_priv *priv)
+static int sgmac_hw_init(struct eth_device *dev, struct sgmac_priv *priv)
 {
+	int i = 0;
 	u32 value, ctrl;
 	/* Save the ctrl register value */
 	ctrl = readl(priv->base + GMAC_CONTROL) & GMAC_CONTROL_SPD_MASK;
+
 	/* SW reset */
-
 	writel(DMA_BUS_MODE_SFT_RESET, priv->base + GMAC_DMA_BUS_MODE);
-	udelay(10000);
+	while (readl(priv->base + GMAC_DMA_BUS_MODE) & DMA_BUS_MODE_SFT_RESET) {
+		mdelay(10);
+		i++;
+		if (i > 10) {
+			printf("DMA reset timeout\n");
+			return -ETIMEDOUT;
+		}
+	}
 
+	sf_gmac_write_hwaddr(dev);
 	value = (0x10 << DMA_BUS_MODE_PBL_SHIFT) |
 		(0x10 << DMA_BUS_MODE_RPBL_SHIFT) | DMA_BUS_MODE_FB |
 		DMA_BUS_MODE_ATDS | DMA_BUS_MODE_AAL;
@@ -151,6 +151,19 @@ static int sgmac_hw_init(struct sgmac_priv *priv)
 
 	return 0;
 }
+
+/* GMAC Descriptor Access Helpers */
+static inline void desc_set_buf_len(struct sgmac_dma_desc *p, u32 buf_sz)
+{
+	if (buf_sz > MAX_DESC_BUF_SZ)
+		p->buf_size = cpu_to_le32(
+				MAX_DESC_BUF_SZ |
+				(buf_sz - MAX_DESC_BUF_SZ)
+						<< DESC_BUFFER2_SZ_OFFSET);
+	else
+		p->buf_size = cpu_to_le32(buf_sz);
+}
+
 static inline void
 desc_init_rx_desc(struct sgmac_dma_desc *p, int ring_size, int buf_sz)
 {
@@ -170,6 +183,7 @@ static inline void desc_init_tx_desc(struct sgmac_dma_desc *p, u32 ring_size)
 	memset(p, 0, sizeof(*p) * ring_size);
 	p[ring_size - 1].flags = cpu_to_le32(TXDESC_END_RING);
 }
+
 /**
  * init_sgmac_dma_desc_rings - init the RX/TX descriptor rings
  * @dev: net device structure
@@ -227,6 +241,7 @@ static void sgmac_tx_fill(struct sgmac_priv *priv) {
 static int sgmac_dma_desc_rings_init(struct sgmac_priv *priv) {
 	unsigned int bfsize;
 
+	int i = 0;
 	/* Set the Buffer size according to the MTU;
 	 * The total buffer size including any IP offset must be a multiple
 	 * of 8 bytes.
@@ -256,56 +271,41 @@ static int sgmac_dma_desc_rings_init(struct sgmac_priv *priv) {
 
 	writel(priv->dma_tx_phy, priv->base + GMAC_DMA_TX_BASE_ADDR);
 	writel(priv->dma_rx_phy, priv->base + GMAC_DMA_RX_BASE_ADDR);
+
+	for (; i < DMA_TX_RING_SZ; i++) {
+		sgmac_invalidate_cache(priv, 1, 1, i);
+		sgmac_invalidate_cache(priv, 1, 0, i);
+	}
+	for (i = 0; i < DMA_RX_RING_SZ; i++) {
+		sgmac_invalidate_cache(priv, 0, 1, i);
+		sgmac_invalidate_cache(priv, 0, 0, i);
+	}
 	return 0;
 
 }
 
-int sf_gmac_init(struct eth_device *dev, bd_t *bt) {
-	/* Enable Emac Registers */
-	if(sgmac_adjust_link((struct sgmac_priv *)dev->priv) < 0)
-				return -1;
-	sgmac_mac_enable((struct sgmac_priv *)dev->priv);
-	return 0;
-}
-
-void sf_gmac_halt(struct eth_device *dev) {
+static void sf_gmac_halt(struct eth_device *dev)
+{
 	sgmac_mac_disable((struct sgmac_priv *)dev->priv);
 	return ;
 }
 
-/* GMAC Descriptor Access Helpers */
-inline void desc_set_buf_len(struct sgmac_dma_desc *p, u32 buf_sz)
-{
-	if (buf_sz > MAX_DESC_BUF_SZ)
-		p->buf_size = cpu_to_le32(
-				MAX_DESC_BUF_SZ |
-				(buf_sz - MAX_DESC_BUF_SZ)
-						<< DESC_BUFFER2_SZ_OFFSET);
-	else
-		p->buf_size = cpu_to_le32(buf_sz);
-}
 static inline void
 desc_set_buf_addr_and_size(struct sgmac_dma_desc *p, u32 paddr, int len)
 {
 	desc_set_buf_len(p, len);
 	desc_set_buf_addr(p, (u32)paddr, len);
 }
-/**
- *  sgmac_xmit:
- *  @skb : the socket buffer
- *  @ndev : device pointer
- *  Description : Tx entry point of the driver.
- */
 
-static inline int desc_get_owner(struct sgmac_dma_desc *p) {
+static inline int desc_get_owner(struct sgmac_dma_desc *p)
+{
 	return le32_to_cpu(p->flags) & DESC_OWN;
 }
 
-int sf_gmac_send(struct eth_device *dev, void *packet, int length) {
+int sf_gmac_send(struct eth_device *dev, void *packet, int length)
+{
 	struct sgmac_priv *priv = dev->priv;
 	struct sgmac_dma_desc *desc;
-	// austin:why 32 frames will set TXDESC_INTERRUPT?
-	// FIXME: we do a little when we receive tx irq, so maybe we can tx 32
 
 	desc = priv->dma_tx + priv->tx_index;
 	sgmac_invalidate_cache(priv, 1, 1, priv->tx_index);
@@ -316,19 +316,18 @@ int sf_gmac_send(struct eth_device *dev, void *packet, int length) {
 
 	// printf(" tx idx %d\n", priv->tx_index);
 	memcpy(priv->tx_buf + priv->dma_buf_sz * priv->tx_index, packet, length);
-	sgmac_flush_cache(priv,1,0,priv->tx_index);
+	sgmac_flush_cache(priv, 1, 0, priv->tx_index);
 
 	desc_set_buf_addr_and_size(desc, virt_to_phys(priv->tx_buf + priv->dma_buf_sz * priv->tx_index), length);
 
 	desc_set_tx_owner(desc);
 
-	sgmac_flush_cache(priv,1,1,priv->tx_index);
+	sgmac_flush_cache(priv, 1, 1, priv->tx_index);
 	writel(1, (void *)priv->base + GMAC_DMA_TX_POLL);
 
 	priv->tx_index= dma_ring_incr(priv->tx_index, DMA_TX_RING_SZ);
 
 	return 0;
-
 }
 
 static inline int desc_get_rx_frame_len(struct sgmac_dma_desc *p)
@@ -342,205 +341,192 @@ static inline int desc_get_rx_frame_len(struct sgmac_dma_desc *p)
 	return len;
 }
 
-
-int sf_gmac_recv(struct eth_device *dev) {
+int sf_gmac_recv(struct eth_device *dev)
+{
 	struct sgmac_dma_desc *p;
 	int frame_len;
 	unsigned char * buf;
 	struct sgmac_priv *priv = dev->priv;
 
-
-	do{
-		sgmac_invalidate_cache(priv,0,1,priv->rx_index);
+	do {
+		sgmac_invalidate_cache(priv, 0, 1, priv->rx_index);
 		p = priv->dma_rx +  priv->rx_index;
-		if (desc_get_owner(p)){
-		  return -1;
+		if (desc_get_owner(p)) {
+			return -1;
 		}
 
 		frame_len = desc_get_rx_frame_len(p);
 
-
 		buf = net_rx_packets[priv->rx_index % PKTBUFSRX];
 
 		char * rx_pkt = (char *)phys_to_virt(p->buf1_addr);
-		sgmac_invalidate_cache(priv,0,0,priv->rx_index);
+		sgmac_invalidate_cache(priv, 0, 0, priv->rx_index);
 		memcpy(buf, rx_pkt, frame_len);
 		// printf("recv pkt to buf len %d \n",frame_len);
 		net_process_received_packet(buf , frame_len );
 		desc_set_rx_owner(p);
-		sgmac_flush_cache(priv,0,1,priv->rx_index);
+		sgmac_flush_cache(priv, 0, 1, priv->rx_index);
 		priv->rx_index = dma_ring_incr(priv->rx_index, DMA_RX_RING_SZ);
-	}while(1);
+	} while (1);
 
 	return 0;
 }
 
-#define REG_GMAC_GmiiAddr         GMAC_ADDR_BASE + 0x0010
-#define REG_GMAC_GmiiData         GMAC_ADDR_BASE + 0x0014
+static int32_t wait_phy_rw_not_busy(struct sgmac_priv *priv)
+{
+	int32_t reg = readl(priv->base + GMAC_GMII_ADDR);
+	// wait for GMII Register GB is not busy
+	while (reg & GMII_ADDR_MASK_GB) {
+		reg = readl(priv->base + GMAC_GMII_ADDR);
+	}
+	return reg;
+}
 
-static  int32_t wait_phy_rw_not_busy(void) {
-	   int32_t reg = readl((void*)REG_GMAC_GmiiAddr);
-	   // wait for GMII Register GB is not busy
-		   while (reg & GMII_ADDR_MASK_GB) {
-			      reg = readl((void*)REG_GMAC_GmiiAddr);
-			   }
-	   return reg;
+static int sgmac_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
+{
+	struct sgmac_priv *priv = (struct sgmac_priv *)bus->priv;
+	int value = wait_phy_rw_not_busy(priv);
+	// clear the data first
+	writel(0xffffffff, priv->base + GMAC_GMII_DATA);
+	// set address flag
+	value = (value & (~GMII_ADDR_MASK_GR)) |
+		((reg << 6) & GMII_ADDR_MASK_GR);
+	// set phy addr
+	value = (value & (~GMII_ADDR_MASK_PA)) |
+		((addr << 11) & GMII_ADDR_MASK_PA);
+	// set read flag
+	value = value & (~GMII_ADDR_VALUE_GW_WRITE);
+	// set GB flag to indica is busy now
+	value = value | GMII_ADDR_MASK_GB;
+	writel(value, priv->base + GMAC_GMII_ADDR);
+	// wait for complete
+	wait_phy_rw_not_busy(priv);
+	return readl(priv->base + GMAC_GMII_DATA) & GMII_DATA_MASK;
 }
 
 // set phy reg with mac register
-static void write_phy_reg(int phy_reg, int value) {
-   int addr_value = wait_phy_rw_not_busy();
-   // prepare data for register 5
-   writel(value & GMII_DATA_MASK, (void*)REG_GMAC_GmiiData);
-   // set address flag
-   addr_value = (addr_value & (~GMII_ADDR_MASK_GR))|((phy_reg << 6) & GMII_ADDR_MASK_GR);
-   // set phy addr
-   addr_value = (addr_value & (~GMII_ADDR_MASK_PA))|((g_phy_addr << 11) & GMII_ADDR_MASK_PA);
-   // set write flag
-   addr_value = addr_value  | GMII_ADDR_VALUE_GW_WRITE;
-   // set GB flag to indica is busy now
-   addr_value = addr_value | GMII_ADDR_MASK_GB;
-   writel(addr_value, (void*)REG_GMAC_GmiiAddr);
-   // wait for finish
-   wait_phy_rw_not_busy();
-}
-
-
-static int read_phy_reg_direct(int phy_addr, int phy_reg)
+static int
+sgmac_mdio_write(struct mii_dev *bus, int addr, int devad, int reg, u16 val)
 {
-	   int value = wait_phy_rw_not_busy();
-	   // clear the data first
-	      writel(0xffffffff, (void*)REG_GMAC_GmiiData);
-	   // set address flag
-	     value = (value & (~GMII_ADDR_MASK_GR)) |
-	         ((phy_reg << 6) & GMII_ADDR_MASK_GR);
-	   // set phy addr
-	      value = (value & (~GMII_ADDR_MASK_PA)) |
-	         ((phy_addr << 11) & GMII_ADDR_MASK_PA);
-	   // set read flag
-	      value = value & (~GMII_ADDR_VALUE_GW_WRITE);
-	   // set GB flag to indica is busy now
-	      value = value | GMII_ADDR_MASK_GB;
-	   writel(value, (void*)REG_GMAC_GmiiAddr);
-	   // wait for complete
-	      wait_phy_rw_not_busy();
-	   return readl((void*)REG_GMAC_GmiiData) & GMII_DATA_MASK;
-}
-
-static int read_phy_reg(int phy_reg) {
-	   return read_phy_reg_direct(g_phy_addr, phy_reg);
-}
-
-static void mdiobus_scan(void)
-{
-	int i, phy_id1, phy_id2, phy_id;
-	// g_phy_addr = 31, so we can save about 2ms in simultion.
-	for (i = 31; i >= 0; i--) {
-		phy_id1 = read_phy_reg_direct(i, MII_PHYSID1) & 0xffff;
-		phy_id2 = read_phy_reg_direct(i, MII_PHYSID2) & 0xffff;
-		phy_id = (phy_id2 | (phy_id1 << 16));
-
-		// If the phy_id is mostly Fs, there is no device there(accord
-		// with linux standard phy driver detect code)
-		if ((phy_id & 0x1fffffff) != 0x1fffffff) {
-			g_phy_addr = i;
-			printf("address phy is %d\n", g_phy_addr);
-			break;
-		}
-	}
-	return;
-}
-static int32_t gmac_init_phy(void)
-{
-	int phy_ctrl = 0;
-	mdiobus_scan();
-	if(g_phy_addr == -1){
-	  printf("phy not find \n");
-	  return -1;
-	}
-	phy_ctrl |= BMCR_ANENABLE;
-	// phy_ctrl |= BMCR_FULLDPLX;
-
-	write_phy_reg(MII_BMCR, phy_ctrl);
-	// int phy_spec_ctrl = read_phy_reg(IP10XX_SPEC_CTRL_STATUS);
-	// phy_spec_ctrl |= IP1001_RXPHASE_SEL;
-	// write_phy_reg(IP10XX_SPEC_CTRL_STATUS, phy_spec_ctrl);
-	// wait for 4 seconds
-	udelay(400000);
+	struct sgmac_priv *priv = (struct sgmac_priv *)bus->priv;
+	int addr_value = wait_phy_rw_not_busy(priv);
+	// prepare data for register 5
+	writel(val & GMII_DATA_MASK, priv->base + GMAC_GMII_DATA);
+	// set address flag
+	addr_value = (addr_value & (~GMII_ADDR_MASK_GR)) |
+		     ((reg << 6) & GMII_ADDR_MASK_GR);
+	// set phy addr
+	addr_value = (addr_value & (~GMII_ADDR_MASK_PA)) |
+		     ((addr << 11) & GMII_ADDR_MASK_PA);
+	// set write flag
+	addr_value = addr_value | GMII_ADDR_VALUE_GW_WRITE;
+	// set GB flag to indica is busy now
+	addr_value = addr_value | GMII_ADDR_MASK_GB;
+	writel(addr_value, priv->base + GMAC_GMII_ADDR);
+	// wait for finish
+	wait_phy_rw_not_busy(priv);
 	return 0;
 }
 
-#define MIIM_RTL8211F_PHY_STATUS       0x1a
-#define MIIM_RTL8211F_PAGE_SELECT      0x1f
-#define MIIM_RTL8211F_PHYSTAT_DUPLEX   0x0008
-#define MIIM_RTL8211F_PHYSTAT_SPEED    0x0030
-#define MIIM_RTL8211F_PHYSTAT_GBIT     0x0020
-#define MIIM_RTL8211F_PHYSTAT_100      0x0010
-
-int sgmac_adjust_link(struct sgmac_priv *priv)
+static void sgmac_adjust_link(struct sgmac_priv *priv,
+		struct phy_device *phydev)
 {
-	int speed = SPEED_100;
-	int duplex = DUPLEX_FULL;
-	int link = read_phy_reg(MII_BMSR);
-	int i = 0;
-	unsigned int mii_reg = 0;
-	while (!(link & BMSR_LSTATUS)) {
-		if(i == 3){
-			printf("phy link fail %d\n",i);
-			return -1;
-		}
-		printf("cannot find phy link retry %d\n",i);
-		udelay(1000000);
-		link = read_phy_reg(MII_BMSR);
-		i++;
+	int reg = readl(priv->base + GMAC_CONTROL);
+	if (!phydev->link) {
+		printf("%s: No link.\n", phydev->dev->name);
+		return;
 	}
+	reg &= ~GMAC_CONTROL_SPD_MASK;
+	if (phydev->speed == 10)
+		reg |= GMAC_SPEED_10M;
+	else if (phydev->speed == 100)
+		reg |= GMAC_SPEED_100M;
+	else if (phydev->speed == 1000)
+		reg |= GMAC_SPEED_1000M;
 
-	write_phy_reg(MIIM_RTL8211F_PAGE_SELECT, 0xa43);
-	mii_reg = read_phy_reg(MIIM_RTL8211F_PHY_STATUS);
-
-	if (mii_reg & MIIM_RTL8211F_PHYSTAT_DUPLEX)
-		duplex = DUPLEX_FULL;
+	if (phydev->duplex)
+		reg |= GMAC_CONTROL_DM;
 	else
-		duplex = DUPLEX_HALF;
+		reg &= ~GMAC_CONTROL_DM;
 
-	speed = (mii_reg & MIIM_RTL8211F_PHYSTAT_SPEED);
-
-	switch (speed) {
-	case MIIM_RTL8211F_PHYSTAT_GBIT:
-		printf("gmac phy is 1000M\n");
-		speed = SPEED_1000;
-		break;
-	case MIIM_RTL8211F_PHYSTAT_100:
-		printf("gmac phy is 100M\n");
-		speed = SPEED_100;
-		break;
-	default:
-		printf("gmac phy is 10M\n");
-		speed = SPEED_10;
-	}
-
-	   int reg = readl(priv->base + GMAC_CONTROL);
-	   reg &= ~GMAC_CONTROL_SPD_MASK;
-	   if (speed == SPEED_10)
-		 reg |= GMAC_SPEED_10M;
-	   else if (speed == SPEED_100)
-		 reg |= GMAC_SPEED_100M;
-	   else if (speed == SPEED_1000)
-		 reg |= GMAC_SPEED_1000M;
-
-
-	   if (DUPLEX_FULL == duplex)
-		 reg |= GMAC_CONTROL_DM;
-	   else
-		 reg &= ~GMAC_CONTROL_DM;
-
-	   writel(reg, priv->base + GMAC_CONTROL);
-	   return 0;
+	writel(reg, priv->base + GMAC_CONTROL);
+	printf("Speed: %d, %s duplex%s\n", phydev->speed,
+			(phydev->duplex) ? "full" : "half",
+			(phydev->port == PORT_FIBRE) ? ", fiber mode" : "");
+	return;
 }
 
-int sf_gmac_register(void){
+static int sgmac_mdio_init(const char *name, void *priv)
+{
+	struct mii_dev *bus = mdio_alloc();
+
+	if (!bus) {
+		printf("Failed to allocate MDIO bus\n");
+		return -ENOMEM;
+	}
+
+	bus->read = sgmac_mdio_read;
+	bus->write = sgmac_mdio_write;
+	snprintf(bus->name, sizeof(bus->name), "%s", name);
+
+	bus->priv = priv;
+
+	return mdio_register(bus);
+}
+
+static int sgmac_phy_init(struct sgmac_priv *priv, void *dev)
+{
+	struct phy_device *phydev;
+	int mask = 0xffffffff, ret;
+
+#ifdef CONFIG_SFA18_RGMII_GMAC
+	phydev = phy_find_by_mask(priv->bus, mask, PHY_INTERFACE_MODE_RGMII);
+#else
+	phydev = phy_find_by_mask(priv->bus, mask, PHY_INTERFACE_MODE_RMII);
+#endif
+	if (!phydev)
+		return -ENODEV;
+
+	phy_connect_dev(phydev, dev);
+
+	phydev->supported &= PHY_GBIT_FEATURES;
+	if (priv->max_speed) {
+		ret = phy_set_supported(phydev, priv->max_speed);
+		if (ret)
+			return ret;
+	}
+	phydev->advertising = phydev->supported;
+
+	priv->phydev = phydev;
+	phy_config(phydev);
+
+	return 0;
+}
+
+static int sf_gmac_init(struct eth_device *dev, bd_t *bt)
+{
+	int ret = 0;
+	struct sgmac_priv *priv = (struct sgmac_priv *)dev->priv;
+	sgmac_hw_init(dev, priv);
+	sgmac_dma_desc_rings_init(priv);
+	/* Start up the PHY */
+	ret = phy_startup(priv->phydev);
+	if (ret) {
+		printf("Could not initialize PHY %s\n",
+				priv->phydev->dev->name);
+		return ret;
+	}
+
+	/* Enable Emac Registers */
+	sgmac_adjust_link(priv, priv->phydev);
+	sgmac_mac_enable(priv);
+	return 0;
+}
+
+int sf_gmac_register(void)
+{
 	struct eth_device *dev;
-	struct sgmac_priv    *priv;
+	struct sgmac_priv *priv;
 	dev = (struct eth_device *)malloc(sizeof(struct eth_device));
 	if (dev == NULL) {
 		error("%s: Not enough memory!\n", __func__);
@@ -564,14 +550,11 @@ int sf_gmac_register(void){
 	dev->write_hwaddr = sf_gmac_write_hwaddr;
 	priv->base = (void *)GMAC_ADDR_BASE;
 	eth_register(dev);
-	// TODO: need phy init here
-	//
 	printf("read version 0x%x\n", readl(priv->base + GMAC_VERSION));
 	sgmac_set_mdc_clk_div(priv);
-	if(gmac_init_phy() < 0)
-	  return -1;
-	udelay(10000);
-	sgmac_hw_init(priv);
-	sgmac_dma_desc_rings_init(priv);
-	return 0;
+
+	sgmac_mdio_init(dev->name, priv);
+	priv->bus = miiphy_get_dev_by_name(dev->name);
+
+	return sgmac_phy_init(priv, dev);
 }

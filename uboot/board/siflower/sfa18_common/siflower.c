@@ -159,6 +159,7 @@ int misc_init_r(void)
 	return 0;
 }
 
+#ifdef CONFIG_ETH_LED
 void request_eth_led(void)
 {
 	int ret = 0;
@@ -172,15 +173,13 @@ void request_eth_led(void)
 		printf("request led pin ctrl %s\n",ret ? "fail" : "success");
 	}
 }
+#endif
 
 #ifdef CONFIG_SFA18_PCBA_TEST
 extern void pcba_net_register(void);
 int board_eth_init(bd_t *bis) {
 	int rc = -1;
 	printf("Registering sfa18 net\n");
-#ifdef CONFIG_ETH_LED
-	request_eth_led();
-#endif
 #ifdef CONFIG_SFA18_ETH
 	printf("Registering sfa18 eth\n");
 	rc = sf_eth_register();
@@ -214,9 +213,6 @@ int board_eth_init(bd_t *bis)
 {
 	int rc = -1;
 	printf("Registering sfa18 net\n");
-#ifdef CONFIG_ETH_LED
-	request_eth_led();
-#endif
 	printf("Registering sfa18 gmac\n");
 	rc = sf_gmac_register();
 	return rc;

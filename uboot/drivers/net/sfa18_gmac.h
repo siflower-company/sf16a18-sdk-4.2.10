@@ -11,8 +11,6 @@
 
 #define GMAC_ADDR_BASE 0xB0800000
 
-
-
 //for Register 4 (GMII Address Register)
 ////if GMII Busy
 #define GMII_ADDR_MASK_GB (1 << 0)
@@ -62,9 +60,12 @@ struct sgmac_priv {
 	int hwts_tx_en;
 	int hwts_rx_en;
 
+	int max_speed;
 	int link;   // PHY's last seen link state, 0 is no link and 1 is link.
 	int speed;  // PHY's last set duplex mode.
 	int duplex; // PHY's last set speed.
+	struct phy_device *phydev;
+	struct mii_dev *bus;
 
 #ifdef CONFIG_SFAX8_RGMII_GMAC
 	int gpio51;
@@ -516,6 +517,4 @@ struct sgmac_priv {
 #define dma_ring_incr(n, s) (((n) + 1) & ((s)-1))
 #define dma_ring_space(h, t, s) CIRC_SPACE(h, t, s)
 
-inline void desc_set_buf_len(struct sgmac_dma_desc *p, u32 buf_sz);
-int sgmac_adjust_link(struct sgmac_priv *priv);
 #endif

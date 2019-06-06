@@ -52,6 +52,12 @@ config TARGET_SFA18_86V
 config TARGET_SFA18_AC
 	bool "SFA18 AC board"
 
+config TARGET_SFA18_REP
+	bool "SFA18 REP board"
+
+config TARGET_SFA18_AIR001
+	bool "SFA18 air001 board"
+
 endchoice
 
 source "board/siflower/sfa18_common/Kconfig"

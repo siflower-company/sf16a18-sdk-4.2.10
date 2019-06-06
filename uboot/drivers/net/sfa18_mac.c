@@ -325,7 +325,7 @@ int sf_phy_reset_for_low_power(void){
 		sf_phy_reset(i, g_priv);
 
 	// set self connect MDI and MDIX, like p10m and ac
-	if (port_list == 0xf || port_list == 0x1f){
+	if (port_list == 0xf || port_list == 0x1f || port_list == 0x3){
 		for(i = 0; i < SF_MAC_PORTS; i++){
 			if (port_list & (1 << i)){
 				if ((i + 1) % 2)

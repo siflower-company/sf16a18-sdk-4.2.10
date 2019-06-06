@@ -139,9 +139,12 @@ const struct spi_flash_params spi_flash_params_table[] = {
 	{"BY25Q32BS",	   0x684016, 0x0,	64 * 1024,    64, RD_FULL,	    WR_QPP | SECT_4K},
 	{"EN25QH128A",	   0x1c7018, 0x0,	64 * 1024,   256, RD_FULL,	    WR_QPP | SECT_4K},
 	{"BH25Q32BS",	   0x684016, 0x0,	64 * 1024,    64, RD_FULL,	    WR_QPP | SECT_4K},
+	{"XT25Q32B",	   0x0b6016, 0x0,	64 * 1024,    64, RD_FULL,	    WR_QPP | SECT_4K},
 	{"BH25S64BG",	   0x684017, 0x0,	64 * 1024,   128, RD_FULL,	    WR_QPP | SECT_4K},
 	{"DS25Q4AM",	   0x207018, 0x0,	64 * 1024,   256, RD_FULL,	    WR_QPP | SECT_4K},
+	{"XM25QH64A",	   0x207017, 0x0,	64 * 1024,   128, RD_FULL,	    WR_QPP | SECT_4K},
 	{"DS25Q64M",	   0x207017, 0x0,	64 * 1024,   128, RD_FULL,	    WR_QPP | SECT_4K},
+	{"XT25Q64B",	   0x0b6017, 0x0,	64 * 1024,   128, RD_FULL,	    WR_QPP | SECT_4K},
 #endif
 	{},	/* Empty entry to terminate the list */
 	/*

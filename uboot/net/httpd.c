@@ -91,11 +91,34 @@ void printChecksumMd5(int address,unsigned int size)
 #endif
 
 #ifdef CONFIG_SPL_SPI_SUPPORT
+
+#ifdef CONFIG_SPI_NAND_BOOT
+#define ERASE_SECTOR_SIZE 0x20000 //128k
+static void assemble_command(char * buf, const char *img_type, const ulong size, unsigned long from, unsigned long to)
+{
+	printf("\n\n****************************\n*     %s UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n", img_type);
+	sprintf(buf, "spi_nand probe 0 33000000;spi_nand update 0x%lx 0x%lx 0x%lx;", from, to, size);
+}
+#else  // CONFIG_SPI_NAND_BOOT
+
 #ifndef CONFIG_SFA18_UBOOT_LITE
 #define ERASE_SECTOR_SIZE 0x10000 //64k
 #else
 #define ERASE_SECTOR_SIZE 0x1000 //4k
 #endif
+
+// from: the address that the image is in the memmory
+// to: the offset in the flash that the image is going to be written at
+static void assemble_command(char * buf, const char *img_type, const ulong size, unsigned long from, unsigned long to)
+{
+
+
+	printf("\n\n****************************\n*     %s UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n", img_type);
+	sprintf(buf, "sf probe 0 33000000;sf erase 0x%lx 0x%lx 0x%lx;sf write 0x%lx 0x%lx 0x%lx;",
+		to, size, (unsigned long)ERASE_SECTOR_SIZE,
+		from, to, size);
+}
+#endif // CONFIG_SPI_NAND_BOOT
 
 int do_http_upgrade(const ulong size, const int upgrade_type){
 	char buf[96];
@@ -105,45 +128,21 @@ int do_http_upgrade(const ulong size, const int upgrade_type){
 	printChecksumMd5(WEBFAILSAFE_UPLOAD_RAM_ADDRESS,size);
 	erasesize = size;
 	if(erasesize % erasesector){
-		//aligen with erase sector size
+		//aligned with erase sector size
 		erasesize = erasesize + (erasesector - (erasesize % erasesector));
 	}
 	if(upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_UBOOT){
-		printf("\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n");
-		sprintf(buf,
-				"sf probe 0 33000000;sf erase 0x%lx 0x%lx 0x%lx;sf write 0x%lx 0x%lx 0x%lx;",
-				(unsigned long int)WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS,
-			    (unsigned long int)erasesize,
-				(unsigned long int)erasesector,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_RAM_ADDRESS,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS,
-				(unsigned long int)erasesize);
+		assemble_command(buf, "U-BOOT", erasesize, WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS);
 
 	} else if(upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE){
-		printf("\n\n****************************\n*    FIRMWARE UPGRADING    *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n");
-		sprintf(buf,
-				"sf probe 0 33000000;sf erase 0x%lx 0x%lx 0x%lx;sf write 0x%lx 0x%lx 0x%lx;",
-				(unsigned long int)WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS,
-				(unsigned long int)erasesize,
-				(unsigned long int)erasesector,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_RAM_ADDRESS,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS,
-				(unsigned long int)erasesize);
+		assemble_command(buf, "FIRMWARE", erasesize, WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS);
 
 	}
 #ifndef CONFIG_SFA18_UBOOT_LITE
 	else if(upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_ART){
 		// TODO: add option to change ART partition offset,
 		// for those who want to use OFW on router with replaced/bigger FLASH
-		printf("\n\n****************************\n*      ART  UPGRADING      *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n");
-		sprintf(buf,
-				"sf probe 0 33000000;sf erase 0x%lx 0x%lx 0x%lx;sf write 0x%lx 0x%lx 0x%lx;",
-				(unsigned long int)WEBFAILSAFE_UPLOAD_ART_ADDRESS,
-				(unsigned long int)erasesize,
-				(unsigned long int)erasesector,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_RAM_ADDRESS,
-				(unsigned long int)WEBFAILSAFE_UPLOAD_ART_ADDRESS,
-				(unsigned long int)erasesize);
+		assemble_command(buf, "ART", erasesize, WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_ART_ADDRESS);
 	}
 #endif
 	else {

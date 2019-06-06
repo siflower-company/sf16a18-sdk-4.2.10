@@ -7,6 +7,10 @@
 
 #define CHECK_TIME_MS 2000
 
+#ifdef CONFIG_ETH_LED
+extern void request_eth_led(void);
+#endif
+
 #ifdef CONFIG_BTN_HTTPD_PMU
 
 /* following is IP6103 info. */
@@ -196,7 +200,6 @@ static void pmu_led_init(void)
 	}
 }
 
-extern void request_eth_led(void);
 static void pmu_btn_exit(void)
 {
 #ifdef CONFIG_ETH_LED
@@ -206,6 +209,49 @@ static void pmu_btn_exit(void)
 #endif
 }
 
+#endif
+
+
+#ifdef CONFIG_BTN_HTTPD_GPIO
+static int g_btn_gpio = CONFIG_BTN_HTTPD_GPIO_VAL;
+static int check_gpio_reset_mode(void)
+{
+	int val = 0;
+	int i = 0;
+	int cnt = 0;
+	gpio_request(g_btn_gpio, "btn_gpio");
+	gpio_direction_input(g_btn_gpio);
+	for(i = 0 ; i< 5; i++)
+	{
+		val = gpio_get_value(g_btn_gpio);
+		if(val == 0) cnt++;
+		mdelay(10);
+	}
+	if(cnt > 3){
+		printf("check_gpio_reset_mode success---gpio=%d cnt=%d\n",g_btn_gpio,cnt);
+		return 1;
+	}
+	return 0;
+}
+
+static void gpio_led_init(void)
+{
+	int led_gpio = 55;
+	//enable all eth led on
+	for(led_gpio = 55; led_gpio <= 59; led_gpio++){
+		gpio_request(led_gpio, "sf_gpio");
+		gpio_direction_output(led_gpio, 0);
+	}
+}
+
+static void gpio_btn_exit(void)
+{
+#ifdef CONFIG_ETH_LED
+	request_eth_led();
+#else
+	//todo: maybe we shoud restore jtag config
+#endif
+}
 #endif
 
 struct in_addr btn_net_httpd_ip;
@@ -223,9 +269,16 @@ static const struct btn_httpd_ops g_btn_httpd_ops = {
 	.btn_led_init = pmu_led_init,
 	.btn_exit = pmu_btn_exit
 #else
+#ifdef CONFIG_BTN_HTTPD_GPIO
+	//config by gpio
+	.btn_enter_detect = check_gpio_reset_mode,
+	.btn_led_init = gpio_led_init,
+	.btn_exit = gpio_btn_exit
+#else
 	.btn_enter_detect = NULL,
 	.btn_led_init = NULL,
 	.btn_exit = NULL
+#endif
 #endif
 };
 

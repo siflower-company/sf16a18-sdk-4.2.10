@@ -256,6 +256,8 @@ int sys_gmac_reset(void)
 			EMAC_PHY_INTF_SEL_I);
 #endif
 
+/* should be the same with linux-3.18.29/arch/mips/siflower/reset.c
+ * sys_init_emac func. */
 #ifdef RGMII
 	// set TX/RX CLK delay
 	// x(1 <= x <= 256) means to delay (x * 0.04)ns

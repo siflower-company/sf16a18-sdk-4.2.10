@@ -160,7 +160,7 @@ config SFA18_ETH
 
 config SFA18_ETH_PORTS
 	depends on SFA18_ETH
-	string "SFA18 Enable one or more lan ports;For example 1100,set the firset and second ports"
+	string "SFA18 Enable one or more lan ports. For example 11000, set the first and second ports"
 	help
 	  This driver supports sfa18 series ethernet switch
 
@@ -172,6 +172,7 @@ config SFA18_MAC
 
 config SFA18_GMAC
 	depends on SFA18_RGMII_GMAC || SFA18_RMII_GMAC
+	select PHYLIB
 	bool "SFA18  ethernet gmac driver"
 	help
 	  This driver supports sfa18 series ethernet gmac

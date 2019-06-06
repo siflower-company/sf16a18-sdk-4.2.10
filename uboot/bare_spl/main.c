@@ -188,7 +188,7 @@ static int load_image(int bl_dev, int boot)
 	end = readl((void *)0xB8600004);
 	printf("The process of verifing img cast %d us\n", (start > end ? (start - end) : ((0xFFFFFFFF - end) + start)) / 198);
 #endif
-	return load;
+	return __arch__swab32(header.ih_ep);
 }
 
 static boot_dev get_boot_dev(void)
@@ -340,7 +340,7 @@ int main(int cpu_num, char **arv)
 		if (addr == 0)
 			hang();
 
-		printf("loaded - jumping to U-Boot...\n");
+		printf("loaded - jumping to U-Boot 0x%x...\n", addr);
 		bl_prepare_for_boot();
 
 		jump_to_image(addr);

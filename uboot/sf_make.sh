@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -e
+set -e
 
 ###########################################################################
 # defuale configs.
@@ -10,22 +10,24 @@ ver="fullmask"
 prj="p20"
 sign="false"
 ddr2=
+ddr3=
 SFBL=./bare_spl
 SIGN=./sign
 SFBL_FLAG=
 flash="0"
 pcba="0"
-use_mti="0"
+use_mti="1"
 nand="0"
 patch_file="board/siflower/sfa18_common/irom_patch_default.txt"
+custom_ddr="0"
 
 show_help() {
 	echo "Usage: $0"
-	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h"
+	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h|evb_v5|air001|cpe"
 	echo "    ver=mpw0|mpw1|fullmask"
 	echo "    mode=r|d"
 	echo "    [cmd=dmake|distclean|clean|make]"
-	echo "    [ddr=m15t1g1664a|nt5cc128m16ip]"
+	echo "    [ddr3=m15t1g1664a|nt5cc128m16ip]"
 	echo "    [ddr2=em68b16cwqh]"
 	echo "    [sign=true|false]"
 	echo "    [odt=0] #disable ODT"
@@ -48,6 +50,23 @@ get_ddr_size() {
 			size=0x4000000;;
 		hy5ps1g1631c)
 			size=0x8000000;;
+		m14d5121632a)
+			size=0x4000000;;
+		nt5tu32m16eg)
+			size=0x4000000;;
+		w9751g6kb)
+			size=0x4000000;;
+		a3r12e40dbf)
+			size=0x4000000;;
+		n2tu51216dg)
+			size=0x4000000;;
+	esac
+
+	case $ddr3 in
+		m15t1g1664a)
+			size=0x8000000;;
+		nt5cc128m16ip)
+			size=0x10000000;;
 	esac
 
 	# default 128MB
@@ -74,8 +93,8 @@ do
 		ddr2=*)
 			ddr2=${args##*ddr2=}
 			;;
-		ddr=*)
-			ddr=${args##*ddr=}
+		ddr3=*)
+			ddr3=${args##*ddr3=}
 			;;
 		sign=*)
 			sign=${args##*sign=}
@@ -112,8 +131,9 @@ done
 case $prj in
 	p20* | evb | wrt)
 		DEFCONFIG="sfa18_"$ver"_p20b"
+		[ -z $ddr3 ] && ddr3=nt5cc128m16ip
 		;;
-	p10b | p10)
+	p10b | p10 | cpe)
 		DEFCONFIG="sfa18_"$ver"_p10b"
 		[ -z $ddr2 ] && ddr2=em68b16cwqh
 		;;
@@ -124,6 +144,11 @@ case $prj in
 	86v)
 		DEFCONFIG="sfa18_"$ver"_86v"
 		[ -z $ddr2 ] && ddr2=em68b16cwqh
+		;;
+	rep)
+		DEFCONFIG="sfa18_"$ver"_rep"
+		[ -z $ddr2 ] && ddr2=em68b16cwqh
+		custom_ddr="1"
 		;;
 	p10m*)
 		DEFCONFIG="sfa18_"$ver"_p10m"
@@ -138,7 +163,7 @@ case $prj in
 		;;
 	p10h)
 		DEFCONFIG="sfa18_"$ver"_p10h"
-		[ -z $ddr2 ] && ddr2=em68b16cwqh
+		[ -z $ddr2 ] && ddr2=nt5tu32m16eg
 		add_sfbl_flag rgmii=1
 		;;
 	a28)
@@ -148,6 +173,15 @@ case $prj in
 		DEFCONFIG="sfa18_"$ver"_ac"
 		add_sfbl_flag rgmii=1
 		add_sfbl_flag poe=1
+		;;
+	evb_v5)
+		DEFCONFIG="sfa18_"$ver"_p20b"
+		[ -z $ddr3 ] && ddr3=m15t1g1664a
+		;;
+	air001)
+		DEFCONFIG="sfa18_"$ver"_air001"
+		[ -z $ddr3 ] && ddr3=m15t1g1664a
+		nand=1
 		;;
 	*)
 		echo "unsupport prj $prj"
@@ -159,11 +193,11 @@ esac
 # Special settings of evb
 [ "$prj" = "evb" ] && add_sfbl_flag skip=1
 
-add_sfbl_flag ddr=$ddr ddr2=$ddr2 ${ver}=1
+add_sfbl_flag ddr3=$ddr3 ddr2=$ddr2 ${ver}=1
 
 
 # Add suffix of defconfig
-if [[ "$flash" = "1" ]] || [[ "$prj" = "p10flash" ]] || [[ "$prj" = "86v" ]]; then
+if [[ "$flash" = "1" ]] || [[ "$prj" = "p10flash" ]] || [[ "$prj" = "86v" ]] || [[ "$prj" = "rep" ]]; then
 	if [[ "$flash" = "1" ]]; then
 		DEFCONFIG=${DEFCONFIG}_flash
 	fi
@@ -185,6 +219,9 @@ if [[ "$prj" = "86v" ]]; then
 	add_sfbl_flag odt=0
 fi
 
+if [[ "$prj" = "rep" ]]; then
+	add_sfbl_flag odt=0
+fi
 [ "$sign" = "true" ] && add_sfbl_flag "security_boot=1"
 
 DEFCONFIG=${DEFCONFIG}_defconfig
@@ -257,9 +294,13 @@ cp -f $SFBL/irom_spl.img ./u-boot-spl.img
 make $DEFCONFIG
 
 [ "$mode" == "d" ] && sed -i 's/.*CONFIG_OF_EMBED.*/CONFIG_OF_EMBED=y/g' .config
-[ "$prj" != "evb" ] && sed -i 's/.*CONFIG_SYS_EXTRA_OPTIONS.*/CONFIG_SYS_EXTRA_OPTIONS="SPI_BOOT"/g' .config
+[ "$prj" != "evb" ] && [ $nand -ne 1 ] && sed -i 's/.*CONFIG_SYS_EXTRA_OPTIONS.*/CONFIG_SYS_EXTRA_OPTIONS="SPI_BOOT"/g' .config
 # Modify memory size
-[ "$ddr2" = "em68b16cwqh" -o "$ddr2" = "hy5ps1g1631c" ] && sed -i "s/.*CONFIG_SYS_MEM_SIZE.*/CONFIG_SYS_MEM_SIZE=`get_ddr_size`/g" .config
+
+if [ "$custom_ddr" == "0" ] ;then
+	[ "$ddr2" = "em68b16cwqh" -o "$ddr2" = "hy5ps1g1631c" ] && sed -i "s/.*CONFIG_SYS_MEM_SIZE.*/CONFIG_SYS_MEM_SIZE=`get_ddr_size`/g" .config
+	[ "$ddr3" = "m15t1g1664a" -o "$ddr3"="nt5cc128m16ip" ] && sed -i "s/.*CONFIG_SYS_MEM_SIZE.*/CONFIG_SYS_MEM_SIZE=`get_ddr_size`/g" .config
+fi
 
 make CROSS_COMPILE=$toolchain -j8
 #make CROSS_COMPILE=mipsel-openwrt-linux-uclibc- -j8

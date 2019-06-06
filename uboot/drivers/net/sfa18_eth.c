@@ -643,8 +643,10 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 	char *ptr;
 	int ctrl_word = 0;
 	int i = 0;
+#ifndef CONFIG_SFA18_PCBA_TEST
 	char ports_buf[5];
 	int ports_len = 0;
+#endif
 	struct sf_priv* priv = (struct sf_priv *)dev->priv;
 	// check_padding(packet, &length);
 	if(check_txbd_index(priv)){

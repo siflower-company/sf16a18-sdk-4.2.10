@@ -4,6 +4,7 @@ config SPI_NAND
 	bool "Enable SPI NAND flash support"
 	depends on DM && DM_SPI
 	select SPI_FLASH
+	select DM_SPI_FLASH
 	help
 	  This option, if enabled, provides support of SPI NAND flash.
 

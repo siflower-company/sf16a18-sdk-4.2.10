@@ -24,11 +24,18 @@ else
 	echo "branch is $branch"
 
 	# handle release branch case release branch name is not release!!!
+	is_86v_release=$(echo $branch | grep "release.86v")
+	is_rep_release=$(echo $branch | grep "release.rep")
 	isrelease=$(echo $branch | grep "release")
-	if [ "$isrelease" != "" ];then
+	if [ "$is_86v_release" != "" ];then
+		branch="release.86v"
+	elif [ "$is_rep_release" != "" ];then
+		branch="release.rep"
+	elif [ "$isrelease" != "" ];then
 		branch="release"
 	fi
-	tag=`git tag  |  grep "$branch"  | sort -V | awk 'END{print}'`
+
+	tag=`git tag  |  grep "${branch}-" | sort -V | awk 'END{print}'`
 	if [ ! -n "$tag" ] ;then
 		#compatible with old version
 		tag=`git tag  |  grep -v "v"  | sort -V | awk 'END{print}'`
@@ -83,6 +90,8 @@ if [ -n "$commit_suffix" ]; then
 else
 	prefix=${uboot_or_pcba}_${branch}_${config}_${ver}_${version}
 fi
+
+echo "branch=$branch  config=$branch  ver=$ver  version=$version"
 
 rm $target_bin -rf
 
