@@ -120,10 +120,6 @@ CSOURCES += $(wildcard ip808/*.c)
 CFLAGS += -DPOE -I $(BASE)/ip808
 endif
 
-MIPS_TOOLCHAIN=mips-mti-elf
-LIBDIR=$(MIPS_ELF_ROOT)/$(MIPS_TOOLCHAIN)/lib
-LIBS = $(LIBDIR)/../../lib/gcc/mips-mti-elf/4.9.2/el/libgcc.a
-
 ASOURCES += \
 	$(BASE)/common/memset.S \
 	$(BASE)/common/memcpy.S \
