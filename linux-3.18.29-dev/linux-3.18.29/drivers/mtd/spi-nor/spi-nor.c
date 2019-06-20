@@ -677,11 +677,14 @@ static const struct spi_device_id spi_nor_ids[] = {
 	{ "w25q256", INFO(0xef4019, 0, 64 * 1024, 512, SECT_4K) },
 
 	/* Boya, Dosilicon and other flashs */
-	{ "by25q128as", INFO(0x684018, 0, 64 * 1024, 256, SECT_4K) },
+	{ "by25q128as",INFO(0x684018, 0, 64 * 1024, 256, SECT_4K) },
 	{ "by25q64as", INFO(0x684017, 0, 64 * 1024, 128, SECT_4K) },
 	{ "by25q32bs", INFO(0x684016, 0, 64 * 1024, 64, SECT_4K) },
-	{ "ds25q4am", INFO(0x207018, 0, 64 * 1024, 256, SECT_4K) },
-	{ "ds25q64m", INFO(0x207017, 0, 64 * 1024, 128, SECT_4K) },
+	{ "ds25q4am",  INFO(0x207018, 0, 64 * 1024, 256, SECT_4K) },
+	{ "ds25q64m",  INFO(0x207017, 0, 64 * 1024, 128, SECT_4K) },
+	{ "xm25qh64a", INFO(0x207017, 0, 64 * 1024, 128, SECT_4K) },
+	{ "xt25q64b", INFO(0x0b6017, 0, 64 * 1024, 128, SECT_4K) },
+	{ "gd25q64c", INFO(0xc84017, 0, 64 * 1024, 128, SECT_4K) },
 
 	/* Catalyst / On Semiconductor -- non-JEDEC */
 	{ "cat25c11", CAT25_INFO(  16, 8, 16, 1, SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
