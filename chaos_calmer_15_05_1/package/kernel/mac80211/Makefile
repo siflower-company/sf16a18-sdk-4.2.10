@@ -1464,12 +1464,12 @@ config-y:= \
 	WLAN_VENDOR_TI \
 	WLAN_VENDOR_ZYDAS
 
-ifndef CONFIG_FLASH_OPTIMIZE
+#ifndef CONFIG_FLASH_OPTIMIZE
 #for ate cmd,when flash size is lower, did not choose priv ioctl
 config-y += MAC80211_PRIV_IOCTL
-else
+#else
 config-y += MAC80211_LITE_FLASH
-endif
+#endif
 ifdef CONFIG_MEMORY_OPTIMIZE
 config-y += MAC80211_LITE_MEMORY
 endif

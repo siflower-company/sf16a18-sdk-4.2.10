@@ -16,6 +16,12 @@ if [ "$1" = "repeater" ]; then
         uci set wireless.radio1.channel="$chan"
     fi
     uci commit wireless
+    uci del_list uhttpd.main.index_page='cgi-bin/test.lua'
+    uci del_list uhttpd.main.index_page='index.htm'
+    uci set uhttpd.main.error_page='/index.htm'
+    uci add_list uhttpd.main.index_page='index.htm'
+    uci commit
+    /etc/init.d/uhttpd restart
     wifi reload
     ubus call lepton.network kick_sta
     ifconfig eth0 down; sleep 2;ifconfig eth0 up

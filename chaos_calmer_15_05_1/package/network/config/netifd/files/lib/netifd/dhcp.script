@@ -151,4 +151,10 @@ if [ "${apMode}" = "1"  ]; then
 	[ -f /etc/udhcpc.user ] && . /etc/udhcpc.user "$@"
 fi
 
+[ -n "$(uci -q get network.stabridge)" -a -n "$ip" ] && {
+	#echo "$0 set stabridge ip" > /dev/ttyS0
+	uci set network.stabridge.ipaddr="$ip"
+	uci commit network
+	/etc/init.d/relayd restart
+}
 exit 0

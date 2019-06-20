@@ -18,25 +18,34 @@ check_wds_connection () {
 	return 0
 }
 
-get_channel() {
-	chan=`iwinfo $wds_if info | grep Chan|awk -F ' ' '{print $4}'`
-	case $wds_if in
+check_wps(){
+	wps_status=0
+	[ -f /tmp/wps_status ] && {
+		wps_status=`cat /tmp/wps_status`
+	}
+}
+
+prepare_params() {
+	case "$wds_if" in
 		sfi0)
-			num=0
+			radio_num=0
+			band=24g
 			;;
 		sfi1)
-			num=1
+			radio_num=1
+			band=5g
 			;;
 	esac
 }
 
 set_channel() {
-	get_channel
+	#get_channel
+	chan=`iwinfo $wds_if info | grep Chan|awk -F ' ' '{print $4}'`
 
 	[ "$chan" -gt 0  ] && {
-		uci set wireless.radio${num}.channel="$chan"
+		uci set wireless.radio${radio_num}.channel="$chan"
 		# set sfix which is not in use disabled = 1,and set 5g htmode
-		if [ $num = 1 ]; then
+		if [ $radio_num = 1 ]; then
 			uci set wireless.@wifi-iface[2].disabled='1'
 			uci set wireless.radio1.htmode="VHT80"
 			[ "$chan" = "165"  ] && uci set wireless.radio1.htmode="VHT20"
@@ -44,20 +53,59 @@ set_channel() {
 			uci set wireless.@wifi-iface[3].disabled='1'
 		fi
 		uci commit wireless
-		wifi reload
+		output=`wifi reload`
 	}
 }
 
+set_uhttpd() {
+	if [ "$1" = "index" ] ;then
+		uci del_list uhttpd.main.index_page='cgi-bin/test.lua'
+		uci del_list uhttpd.main.index_page='index.htm'
+		uci set uhttpd.main.error_page='/index.htm'
+		uci add_list uhttpd.main.index_page='index.htm'
+		uci commit
+		/etc/init.d/uhttpd restart
+	elif [ "$1" = "test" ] ;then
+		uci del_list uhttpd.main.index_page='cgi-bin/test.lua'
+		uci del_list uhttpd.main.index_page='index.htm'
+		uci set uhttpd.main.error_page='/cgi-bin/test.lua'
+		uci add_list uhttpd.main.index_page='cgi-bin/test.lua'
+		uci commit
+		/etc/init.d/uhttpd restart
+	else
+		echo "set_uhttpd param error" > /dev/ttyS0
+	fi
+	#echo "$0 set_uhttpd end" > /dev/ttyS0
+}
 
 if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
-	wds_enabled="0"
 	config_load wireless
 	config_foreach check_wds_connection wifi-iface
 	if [[ "$wds_enabled" != "1" ]]; then
 		exit 0
 	fi
 
+	check_wps
+	prepare_params
+
+	if [ "$2" == "WPS-SUCCESS" ]; then
+		[ "$wps_status" = 0 ] && {
+			echo "$wds_if" > /tmp/wps_status
+			#echo "wps~select~$wds_if~" > /dev/ttyS0
+		}
+	fi
+
 	if [ "$2" == "CONNECTED" ]; then
+		if [ "$wps_status" != 0 ]; then
+			if [ "$wds_if" != "$wps_status" ]; then
+				#echo "wps $wps_status now $wds_if so exit 0" > /dev/ttyS0
+				exit 0
+			fi
+			#shall we change wps_status here to avoid setting more than once?
+			/usr/bin/wps_config.sh $wds_if $band
+			exit 0
+		fi
+
 		#echo "wpa_cli_evt: connected" > /dev/ttyS0
 		local busy=`cat /tmp/wds_sta_status`
 		while [ "$busy" == "b" ]
@@ -73,12 +121,14 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		[ "$sta_status" = "0"  ] && {
 			/etc/init.d/dnsmasq restart
 			set_channel
+			set_uhttpd "index"
 		}
 
 		echo "0" > /tmp/wds_sta_status
 	fi
 
 	if [ "$2" == "DISCONNECTED" ]; then
+		[ "$wps_status" != "0" ] && exit 0
 		#echo "wpa_cli_evt: disconnected" > /dev/ttyS0
 		local busy=`cat /tmp/wds_sta_status`
 		while [ "$busy" == "b" ]
@@ -101,6 +151,7 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		uci set wireless.@wifi-iface[3].disabled='0'
 		uci commit
 
+		set_uhttpd "test"
 		# kick out devices
 		ubus call lepton.network net_restart
 
