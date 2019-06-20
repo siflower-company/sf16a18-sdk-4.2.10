@@ -57,7 +57,7 @@ struct gpio_keys_drvdata {
 	struct mutex disable_lock;
 	struct gpio_button_data data[0];
 };
-#ifdef CONFIG_SF_KERNEL_LITE
+#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
 static int gpio_mode_sel;
 #endif
 /*
@@ -698,7 +698,7 @@ gpio_keys_get_devtree_pdata(struct device *dev)
 
 #endif
 
-#ifdef CONFIG_SF_KERNEL_LITE
+#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
 int sfax8_mode_value(void)
 {
 	return gpio_get_value_cansleep(gpio_mode_sel);
@@ -754,7 +754,7 @@ static int gpio_keys_probe(struct platform_device *pdev)
 	size_t size;
 	int i, error;
 	int wakeup = 0;
-#ifdef CONFIG_SF_KERNEL_LITE
+#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
 	struct proc_dir_entry *file;
 	const struct gpio_keys_button *button_sel;
 #endif
@@ -813,7 +813,7 @@ static int gpio_keys_probe(struct platform_device *pdev)
 			wakeup = 1;
 	}
 
-#ifdef CONFIG_SF_KERNEL_LITE
+#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
 	button_sel = &pdata->buttons[0];
 	gpio_mode_sel = button_sel->gpio;
 
@@ -927,7 +927,7 @@ static int __init gpio_keys_init(void)
 
 static void __exit gpio_keys_exit(void)
 {
-#ifdef CONFIG_SF_KERNEL_LITE
+#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
 	remove_proc_entry("sfax8_mode_info", NULL);
 #endif
 	platform_driver_unregister(&gpio_keys_device_driver);
