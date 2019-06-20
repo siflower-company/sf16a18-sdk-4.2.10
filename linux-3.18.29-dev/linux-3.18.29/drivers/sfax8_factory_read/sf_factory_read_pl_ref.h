@@ -34,9 +34,15 @@ struct sfax8_factory_read_context {
 	unsigned char model_ver[MODEL_VER_SIZE];
 	unsigned char countryID[COUNTRYID_SIZE];
 	uint32_t hw_feature;
+	unsigned char vender_flag[VENDER_FLAG_SIZE];
+	unsigned char vender[VENDER_SIZE];
+	unsigned char product_key_flag[PRODUCT_KEY_FLAG_SIZE];
+	unsigned char product_key[PRODUCT_KEY_SIZE];
+	unsigned char login_info_flag[LOGIN_INFO_FLAG_SIZE];
+	uint32_t login_info;
+	unsigned char wifi_version[WIFI_VERSION_SIZE];
 	uint16_t xo_config;
-	unsigned char *lb_tx_cali_table_p;
-	unsigned char *hb_tx_cali_table_p;
+	unsigned char wifi_info[WIFI_INFO_SIZE];
 	unsigned int exist_flag;
 	bool cali_exist;
 	unsigned char wifi_lb_macaddr[MACADDR_SIZE];
@@ -45,7 +51,7 @@ struct sfax8_factory_read_context {
 	unsigned char macaddr0[MACADDR_SIZE];
 
 	//the debug fs root node
-    struct dentry *debugfs;
+	struct dentry *debugfs;
 
 	//the fs root node
 	uint32_t start_offset;

@@ -223,322 +223,432 @@ static void handle_macaddr_internal(struct device_node *np,struct sfax8_factory_
 	}
 }
 
-static int save_value_from_factory_to_host(struct platform_device *pdev, struct sfax8_factory_read_context *priv)
+static int save_value_from_factory_to_host(struct platform_device *pdev,
+		struct sfax8_factory_read_context *priv)
 {
 	int ret = 0;
 	unsigned char *buffer;
 	struct device_node *np = pdev->dev.of_node;
-	//1.get mac address
-	if((ret = get_value_through_mtd(np,"mtd-mac-address", 0, MACADDR_SIZE, priv->macaddr))){
-		printk("get mac address through mtd failed!,ret %d\n",ret);
-	}else{
+	// get mac address
+	if ((ret = get_value_through_mtd(np, "mtd-mac-address", 0, MACADDR_SIZE,
+			     priv->macaddr))) {
+		printk("get mac address through mtd failed! ret %d\n",ret);
+	} else {
 		//handle mac address internal
 		handle_macaddr_internal(np,priv);
 	}
 	priv->exist_flag |= (1 << READ_MAC_ADDRESS);
 	printk("macaddr is %x %x %x %x %x %x\n",priv->macaddr[0],priv->macaddr[1],priv->macaddr[2],priv->macaddr[3],priv->macaddr[4],priv->macaddr[5]);
-	//2.get sn number
-	if((ret = get_value_through_mtd(np,"mtd-sn-number", 0, SN_SIZE, priv->sn)))
-		printk("get sn number through mtd failed!,ret %d\n",ret);
+	// get sn number
+	if ((ret = get_value_through_mtd(
+			     np, "mtd-sn-number", 0, SN_SIZE, priv->sn)))
+		printk("get sn number through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_SN);
 	printk("sn is %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x\n",
 			priv->sn[0],priv->sn[1],priv->sn[2],priv->sn[3],priv->sn[4],priv->sn[5],
 			priv->sn[6],priv->sn[7],priv->sn[8],priv->sn[9],priv->sn[10],priv->sn[11],
 			priv->sn[12],priv->sn[13],priv->sn[14],priv->sn[15]);
-	//3.get sn flag
-	if((ret = get_value_through_mtd(np,"mtd-sn-flag", 0, SN_FLAG_SIZE, &priv->sn_flag)))
-		printk("get sn flag through mtd failed!,ret %d\n",ret);
+	// get sn flag
+	if ((ret = get_value_through_mtd(np, "mtd-sn-flag", 0, SN_FLAG_SIZE,
+			     &priv->sn_flag)))
+		printk("get sn flag through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_SN_FLAG);
-	printk("sn_flag is 0x%x\n",priv->sn_flag);
-	//4.get pcba boot mark
-	if((ret = get_value_through_mtd(np,"mtd-pcba-boot", 0, PCBA_BOOT_SIZE, priv->pcba_boot)))
-		printk("get pcba boot mark through mtd failed!,ret %d\n",ret);
+	printk("sn_flag is 0x%x\n", priv->sn_flag);
+	// get pcba boot mark
+	if ((ret = get_value_through_mtd(np, "mtd-pcba-boot", 0, PCBA_BOOT_SIZE,
+			     priv->pcba_boot)))
+		printk("get pcba boot mark through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_PCBA_BOOT);
-	printk("pcba_boot is %4s\n",priv->pcba_boot);
-	//5.get hardware version flag
-	if((ret = get_value_through_mtd(np,"mtd-hardware-ver-flag", 0, HARDWARE_VER_FLAG_SIZE, priv->hw_ver_flag)))
-		printk("get hardware version flag through mtd failed!,ret %d\n",ret);
+	// get hardware version flag
+	if ((ret = get_value_through_mtd(np, "mtd-hardware-ver-flag", 0,
+			     HARDWARE_VER_FLAG_SIZE, priv->hw_ver_flag)))
+		printk("get hardware version flag through mtd failed! ret %d\n",
+				ret);
 	priv->exist_flag |= (1 << READ_HARDWARE_VER_FLAG);
-	printk("hardware version flag is %2s\n",priv->hw_ver_flag);
-	//6.get hardware version
-	if((ret = get_value_through_mtd(np,"mtd-hardware-ver", 0, HARDWARE_VER_SIZE, priv->hw_ver)))
-		printk("get hardware version through mtd failed!,ret %d\n",ret);
+	printk("hardware version flag is %.2s\n", priv->hw_ver_flag);
+	// get hardware version
+	if ((ret = get_value_through_mtd(np, "mtd-hardware-ver", 0,
+			     HARDWARE_VER_SIZE, priv->hw_ver)))
+		printk("get hardware version through mtd failed! ret %d\n",
+				ret);
 	priv->exist_flag |= (1 << READ_HARDWARE_VER);
-	printk("hardware version is %32s\n",priv->hw_ver);
-	//7.get model version flag
-	if((ret = get_value_through_mtd(np,"mtd-model-ver-flag", 0, HARDWARE_VER_FLAG_SIZE, priv->model_ver_flag)))
-		printk("get model version flag through mtd failed!,ret %d\n",ret);
+	printk("hardware version is %.32s\n", priv->hw_ver);
+	// get model version flag
+	if ((ret = get_value_through_mtd(np, "mtd-model-ver-flag", 0,
+			     HARDWARE_VER_FLAG_SIZE, priv->model_ver_flag)))
+		printk("get model version flag through mtd failed! ret %d\n",
+				ret);
 	priv->exist_flag |= (1 << READ_HARDWARE_VER_FLAG);
-	printk("model version flag is %2s\n",priv->model_ver_flag);
-	//8.get model version
-	if((ret = get_value_through_mtd(np,"mtd-model-ver", 0, MODEL_VER_SIZE, priv->model_ver)))
-		printk("get model version through mtd failed!,ret %d\n",ret);
+	printk("model version flag is %.2s\n", priv->model_ver_flag);
+	// get model version
+	if ((ret = get_value_through_mtd(np, "mtd-model-ver", 0, MODEL_VER_SIZE,
+			     priv->model_ver)))
+		printk("get model version through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_MODEL_VER);
-	printk("model version is %32s\n",priv->model_ver);
-	//9.get counrty id
-	if((ret = get_value_through_mtd(np,"mtd-country-id", 0, COUNTRYID_SIZE, priv->countryID)))
-		printk("get country ID through mtd failed!,ret %d\n",ret);
-	if((priv->countryID[0] >= 0x41) && (priv->countryID[0] <= 0x7A)
-			&& (priv->countryID[1] >= 0x41) && (priv->countryID[1] <= 0x7A)){
+	printk("model version is %.32s\n", priv->model_ver);
+	// get counrty id
+	if ((ret = get_value_through_mtd(np, "mtd-country-id", 0,
+			     COUNTRYID_SIZE, priv->countryID)))
+		printk("get country ID through mtd failed! ret %d\n", ret);
+	if ((priv->countryID[0] >= 'A') && (priv->countryID[0] <= 'z') &&
+			(priv->countryID[1] >= 'A') &&
+			(priv->countryID[1] <= 'z')) {
 		priv->exist_flag |= (1 << READ_COUNTRY_ID);
-	}
-	else{
-		printk("can not find an vaild country ID[%2s], use default value[CN]\n",priv->countryID);
+	} else {
+		printk("can not find an vaild country ID[%.2s], use default "
+		       "value[CN]\n",
+				priv->countryID);
 		priv->countryID[0] = 'C';
 		priv->countryID[1] = 'N';
 	}
-	printk("countryID is %2s\n",priv->countryID);
-	//10 get HW feature
-	buffer = kmalloc(sizeof(char)*HW_FEATURE_SIZE,GFP_KERNEL);
-	if(ret = get_value_through_mtd(np,"mtd-hw-feature", 0, HW_FEATURE_SIZE, buffer))
-		printk("get HW feature through mtd failed!,ret %d\n",ret);
-	priv->hw_feature = (buffer[3]<<24)  | (buffer[2]<<16) | (buffer[1]<<8) | buffer[0];
+	printk("countryID is %.2s\n", priv->countryID);
+	// get HW feature
+	buffer = kmalloc(sizeof(char) * HW_FEATURE_SIZE, GFP_KERNEL);
+	if ((ret = get_value_through_mtd(
+			     np, "mtd-hw-feature", 0, HW_FEATURE_SIZE, buffer)))
+		printk("get HW feature through mtd failed! ret %d\n", ret);
+	priv->hw_feature = (buffer[3] << 24) | (buffer[2] << 16) |
+			   (buffer[1] << 8) | buffer[0];
 	priv->exist_flag |= (1 << READ_HW_FEATURE);
-	printk("HW feature is %x\n",priv->hw_feature);
+	printk("HW feature is %#x\n", priv->hw_feature);
+	kfree(buffer);
+	// get vender flag
+	if ((ret = get_value_through_mtd(np, "mtd-vender-flag", 0,
+			     VENDER_FLAG_SIZE, priv->vender_flag)))
+		printk("get vender flag through mtd failed! ret %d\n",
+				ret);
+	priv->exist_flag |= (1 << READ_VENDER_FLAG);
+	printk("vender flag is %.2s\n", priv->vender_flag);
+	// get vender
+	if ((ret = get_value_through_mtd(np, "mtd-vender", 0, VENDER_SIZE,
+			     priv->vender)))
+		printk("get vender through mtd failed! ret %d\n", ret);
+	priv->exist_flag |= (1 << READ_VENDER);
+	printk("vender is %.16s\n", priv->vender);
+	// get product key flag
+	if ((ret = get_value_through_mtd(np, "mtd-product-key-flag", 0,
+			     PRODUCT_KEY_FLAG_SIZE, priv->product_key_flag)))
+		printk("get product key flag through mtd failed! ret %d\n",
+				ret);
+	priv->exist_flag |= (1 << READ_PRODUCT_KEY_FLAG);
+	printk("product key flag is %.2s\n", priv->product_key_flag);
+	// get product key
+	if ((ret = get_value_through_mtd(np, "mtd-product-key", 0, PRODUCT_KEY_SIZE,
+			     priv->product_key)))
+		printk("get product key through mtd failed! ret %d\n", ret);
+	priv->exist_flag |= (1 << READ_PRODUCT_KEY);
+	printk("product key is %.16s\n", priv->product_key);
 
-	//11.get XO calibration cfg
-	buffer = kmalloc(sizeof(char)*4,GFP_KERNEL);
-	if(get_value_through_mtd(np,"mtd-rf-cali-config", 0, 4, buffer))
-		printk("get xo  cfg through MTD failed!\n");
-	//check if some value have been saved in flash through a mark value "XO"
-	if(buffer[0] == 'X' && buffer[1] == 'O'){
-			priv->cali_exist = true;
-			priv->xo_config = (buffer[2]<<8)|buffer[3];
-			printk("XO config value : %x\n",priv->xo_config);
-			priv->exist_flag |= (1 << READ_RF_XO_CONFIG);
-			kfree(buffer);
-	}
-	else {
-		printk("Do not find XO cali value in factory,mark is %c%c\n",buffer[0],buffer[1]);
-		kfree(buffer);
+	// get login info flag
+	if ((ret = get_value_through_mtd(np, "mtd-login-info-flag", 0,
+			     LOGIN_INFO_FLAG_SIZE, priv->login_info_flag)))
+		printk("get login info flag through mtd failed! ret %d\n",
+				ret);
+	priv->exist_flag |= (1 << READ_LOGIN_INFO_FLAG);
+	printk("login info flag is %.2s\n", priv->login_info_flag);
+	// get login info
+	if ((ret = get_value_through_mtd(np, "mtd-login-info", 0, LOGIN_INFO_SIZE,
+			     (unsigned char *)&priv->login_info)))
+		printk("get login info through mtd failed! ret %d\n", ret);
+	priv->exist_flag |= (1 << READ_LOGIN_INFO);
+	printk("login info is %#x\n", priv->login_info);
+
+	// get wifi version
+	if ((ret = get_value_through_mtd(np, "mtd-wifi-version", 0,
+			     WIFI_VERSION_SIZE, priv->wifi_version)))
+		printk("get wifi version failed! ret %d\n", ret);
+	//check if some value have been saved in flash through a mark value "XO" or "V2"
+	if ((priv->wifi_version[0] == 'X' && priv->wifi_version[1] == 'O') ||
+			(priv->wifi_version[0] == 'V' &&
+					priv->wifi_version[1] == '2')) {
+		priv->exist_flag |= 1 << READ_WIFI_VERSION;
+		printk("get wifi version %.2s\n", priv->wifi_version);
+	} else {
+		printk("Do not find XO cali value in factory, mark is %.2s\n",
+				priv->wifi_version);
 		return 0;
 	}
-	printk("xo_config is %x\n",priv->xo_config);
-	//12.1.get LB TX calibration tabel ptr
-	priv->lb_tx_cali_table_p = devm_kzalloc(&pdev->dev, sizeof(char)*LB_TX_CALI_TABLE_SIZE, GFP_KERNEL);
-	if(get_value_through_mtd(np,"mtd-lb-tx-power-cali-config", 0, LB_TX_CALI_TABLE_SIZE, priv->lb_tx_cali_table_p))
-		printk("get tx calbration table through MTD failed!\n");
-	priv->exist_flag |= (1 << READ_LB_TXPOWER_CALI_TABLE);
-	printk("lb_tx_cali_table_p: %x %x %x %x\n",priv->lb_tx_cali_table_p[0],priv->lb_tx_cali_table_p[1],priv->lb_tx_cali_table_p[2],priv->lb_tx_cali_table_p[3]);
-	//12.2.get HB TX calibration tabel ptr
-	priv->hb_tx_cali_table_p = devm_kzalloc(&pdev->dev, sizeof(char)*HB_TX_CALI_TABLE_SIZE, GFP_KERNEL);
-	if(get_value_through_mtd(np,"mtd-hb-tx-power-cali-config", 0, HB_TX_CALI_TABLE_SIZE, priv->hb_tx_cali_table_p))
-		printk("get tx calbration table through MTD failed!\n");
-	priv->exist_flag |= (1 << READ_HB_TXPOWER_CALI_TABLE);
-	printk("hb_tx_cali_table_p: %x %x %x %x\n",priv->hb_tx_cali_table_p[0],priv->hb_tx_cali_table_p[1],priv->hb_tx_cali_table_p[2],priv->hb_tx_cali_table_p[3]);
+
+	// get wifi info
+	if ((ret = get_value_through_mtd(np, "mtd-wifi-info", 0, WIFI_INFO_SIZE,
+			     priv->wifi_info)))
+		printk("get wifi info through mtd failed! ret %d\n", ret);
+	/* XO value is the first two bytes in wifi_info */
+	priv->exist_flag |= (1 << READ_RF_XO_CONFIG);
+	priv->exist_flag |= (1 << READ_WIFI_INFO);
 	return 0;
 }
 
-int sf_get_value_from_factory(enum sfax8_factory_read_action action, void *buffer, int len)
+int sf_get_value_from_factory(enum sfax8_factory_read_action action,
+		void *buffer,
+		int len)
 {
 	int length = len;
-	if(!buffer){
+	if (!buffer) {
 		printk("buffer is null\n");
 		return -1;
 	}
-	switch (action){
-		case READ_MAC_ADDRESS:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))){
-										printk("Can not find mac address!\n");
-										return -2;
-								}
-								if(len > MACADDR_SIZE){
-									length = MACADDR_SIZE;
-									printk("Your length is larger than max %d\n", length);
-								}
-								memcpy(buffer,f_read_ctx->macaddr,length);
-								break;
-		case READ_WAN_MAC_ADDRESS:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))){
-										printk("Can not find mac address!\n");
-										return -2;
-								}
-								if(len > MACADDR_SIZE){
-									length = MACADDR_SIZE;
-									printk("Your length is larger than max %d\n", length);
-								}
-								memcpy(buffer,f_read_ctx->wan_macaddr,length);
-								break;
-		case READ_WIFI_LB_MAC_ADDRESS:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))){
-										printk("Can not find mac address!\n");
-										return -2;
-								}
-								if(len > MACADDR_SIZE){
-									length = MACADDR_SIZE;
-									printk("Your length is larger than max %d\n", length);
-								}
-								memcpy(buffer,f_read_ctx->wifi_lb_macaddr,length);
-								break;
-		case READ_WIFI_HB_MAC_ADDRESS:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))){
-										printk("Can not find mac address!\n");
-										return -2;
-								}
-								if(len > MACADDR_SIZE){
-									length = MACADDR_SIZE;
-									printk("Your length is larger than max %d\n", length);
-								}
-								memcpy(buffer,f_read_ctx->wifi_hb_macaddr,length);
-								break;
-		case READ_SN:			//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_SN))){
-										printk("Can not find sn number!\n");
-										return -2;
-								}
-								if(len > SN_SIZE){
-									length = SN_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->sn,length);
-								break;
-		case READ_SN_FLAG:		//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_SN_FLAG))){
-										printk("Can not find sn flag!\n");
-										return -2;
-								}
-								if(len > SN_FLAG_SIZE){
-									length = SN_FLAG_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								*(unsigned char *)buffer = f_read_ctx->sn_flag;
-								break;
-		case READ_PCBA_BOOT:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_PCBA_BOOT))){
-										printk("Can not find pcab boot mark!\n");
-										return -2;
-								}
-								if(len > PCBA_BOOT_SIZE){
-									length = PCBA_BOOT_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->pcba_boot,length);
-								break;
-		case READ_HARDWARE_VER_FLAG:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_HARDWARE_VER_FLAG))){
-										printk("Can not find hardware version flag!\n");
-										return -2;
-								}
-								if(len > HARDWARE_VER_FLAG_SIZE){
-									length = HARDWARE_VER_FLAG_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->hw_ver_flag, length);
-								break;
-		case READ_HARDWARE_VER:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_HARDWARE_VER))){
-										printk("Can not find hardware version!\n");
-										return -2;
-								}
-								if(len > HARDWARE_VER_SIZE){
-									length = HARDWARE_VER_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->hw_ver, length);
-								break;
-		case READ_MODEL_VER_FLAG:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MODEL_VER_FLAG))){
-										printk("Can not find model version flag!\n");
-										return -2;
-								}
-								if(len > MODEL_VER_FLAG_SIZE){
-									length = MODEL_VER_FLAG_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->model_ver_flag, length);
-								break;
-		case READ_MODEL_VER:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_MODEL_VER))){
-										printk("Can not find model version!\n");
-										return -2;
-								}
-								if(len > MODEL_VER_SIZE){
-									length = MODEL_VER_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->model_ver, length);
-								break;
-		case READ_COUNTRY_ID:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_COUNTRY_ID))){
-										printk("Can not find country id!\n");
-										return -2;
-								}
-								if(len > COUNTRYID_SIZE){
-									length = COUNTRYID_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->countryID, COUNTRYID_SIZE);
-								break;
-		case READ_HW_FEATURE:	//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_HW_FEATURE))){
-										printk("Can not find hw feature!\n");
-										return -2;
-								}
-								if(len > HW_FEATURE_SIZE){
-									length = HW_FEATURE_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								*(unsigned int *)buffer = f_read_ctx->hw_feature;
-								break;
-
-		case READ_RF_XO_CONFIG: //check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_RF_XO_CONFIG))){
-										printk("Can not find XO config!\n");
-										return -2;
-								}
-								if(len > XO_CONFIG_SIZE){
-									length = XO_CONFIG_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								*(unsigned int *)buffer = f_read_ctx->xo_config;
-								break;
-		case READ_LB_TXPOWER_CALI_TABLE:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_LB_TXPOWER_CALI_TABLE))){
-										printk("Can not find lb tx cali table!\n");
-										if(!f_read_ctx->cali_exist)
-											return 1;
-										return -2;
-								}
-								if(len > LB_TX_CALI_TABLE_SIZE){
-									length = LB_TX_CALI_TABLE_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->lb_tx_cali_table_p,length);
-								break;
-		case READ_HB_TXPOWER_CALI_TABLE:
-								//check if the value exist
-								if(!(f_read_ctx->exist_flag & (1 << READ_HB_TXPOWER_CALI_TABLE))){
-										printk("Can not find hb tx cali table!\n");
-										if(!f_read_ctx->cali_exist)
-											return 1;
-										return -2;
-								}
-								if(len > HB_TX_CALI_TABLE_SIZE){
-									length = HB_TX_CALI_TABLE_SIZE;
-									printk("Your length is larger than max %d\n",length);
-								}
-								memcpy(buffer,f_read_ctx->hb_tx_cali_table_p,length);
-								break;
-		default:
-								printk("unknow action %d\n",action);
-								break;
+	switch (action) {
+	case READ_MAC_ADDRESS:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))) {
+			printk("Can not find mac address!\n");
+			return -2;
+		}
+		if (len > MACADDR_SIZE) {
+			length = MACADDR_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->macaddr, length);
+		break;
+	case READ_WAN_MAC_ADDRESS:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))) {
+			printk("Can not find mac address!\n");
+			return -2;
+		}
+		if (len > MACADDR_SIZE) {
+			length = MACADDR_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->wan_macaddr, length);
+		break;
+	case READ_WIFI_LB_MAC_ADDRESS:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))) {
+			printk("Can not find mac address!\n");
+			return -2;
+		}
+		if (len > MACADDR_SIZE) {
+			length = MACADDR_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->wifi_lb_macaddr, length);
+		break;
+	case READ_WIFI_HB_MAC_ADDRESS:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MAC_ADDRESS))) {
+			printk("Can not find mac address!\n");
+			return -2;
+		}
+		if (len > MACADDR_SIZE) {
+			length = MACADDR_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->wifi_hb_macaddr, length);
+		break;
+	case READ_SN:
+		if (!(f_read_ctx->exist_flag & (1 << READ_SN))) {
+			printk("Can not find sn number!\n");
+			return -2;
+		}
+		if (len > SN_SIZE) {
+			length = SN_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->sn, length);
+		break;
+	case READ_SN_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_SN_FLAG))) {
+			printk("Can not find sn flag!\n");
+			return -2;
+		}
+		if (len > SN_FLAG_SIZE) {
+			length = SN_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		*(unsigned char *)buffer = f_read_ctx->sn_flag;
+		break;
+	case READ_PCBA_BOOT:
+		if (!(f_read_ctx->exist_flag & (1 << READ_PCBA_BOOT))) {
+			printk("Can not find pcab boot mark!\n");
+			return -2;
+		}
+		if (len > PCBA_BOOT_SIZE) {
+			length = PCBA_BOOT_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->pcba_boot, length);
+		break;
+	case READ_HARDWARE_VER_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_HARDWARE_VER_FLAG))) {
+			printk("Can not find hardware version flag!\n");
+			return -2;
+		}
+		if (len > HARDWARE_VER_FLAG_SIZE) {
+			length = HARDWARE_VER_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->hw_ver_flag, length);
+		break;
+	case READ_HARDWARE_VER:
+		if (!(f_read_ctx->exist_flag & (1 << READ_HARDWARE_VER))) {
+			printk("Can not find hardware version!\n");
+			return -2;
+		}
+		if (len > HARDWARE_VER_SIZE) {
+			length = HARDWARE_VER_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->hw_ver, length);
+		break;
+	case READ_MODEL_VER_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MODEL_VER_FLAG))) {
+			printk("Can not find model version flag!\n");
+			return -2;
+		}
+		if (len > MODEL_VER_FLAG_SIZE) {
+			length = MODEL_VER_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->model_ver_flag, length);
+		break;
+	case READ_MODEL_VER:
+		if (!(f_read_ctx->exist_flag & (1 << READ_MODEL_VER))) {
+			printk("Can not find model version!\n");
+			return -2;
+		}
+		if (len > MODEL_VER_SIZE) {
+			length = MODEL_VER_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->model_ver, length);
+		break;
+	case READ_COUNTRY_ID:
+		if (!(f_read_ctx->exist_flag & (1 << READ_COUNTRY_ID))) {
+			printk("Can not find country id!\n");
+			return -2;
+		}
+		if (len > COUNTRYID_SIZE) {
+			length = COUNTRYID_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->countryID, COUNTRYID_SIZE);
+		break;
+	case READ_HW_FEATURE:
+		if (!(f_read_ctx->exist_flag & (1 << READ_HW_FEATURE))) {
+			printk("Can not find hw feature!\n");
+			return -2;
+		}
+		if (len > HW_FEATURE_SIZE) {
+			length = HW_FEATURE_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		*(unsigned int *)buffer = f_read_ctx->hw_feature;
+		break;
+	case READ_VENDER_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_VENDER_FLAG))) {
+			printk("Can not find vender flag!\n");
+			return -2;
+		}
+		if (len > VENDER_FLAG_SIZE) {
+			length = VENDER_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->vender_flag, length);
+		break;
+	case READ_VENDER:
+		if (!(f_read_ctx->exist_flag & (1 << READ_VENDER))) {
+			printk("Can not find vender!\n");
+			return -2;
+		}
+		if (len > VENDER_SIZE) {
+			length = VENDER_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->vender, length);
+		break;
+	case READ_PRODUCT_KEY_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_PRODUCT_KEY_FLAG))) {
+			printk("Can not find product key flag!\n");
+			return -2;
+		}
+		if (len > PRODUCT_KEY_FLAG_SIZE) {
+			length = PRODUCT_KEY_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->product_key_flag, length);
+		break;
+	case READ_PRODUCT_KEY:
+		if (!(f_read_ctx->exist_flag & (1 << READ_PRODUCT_KEY))) {
+			printk("Can not find product key!\n");
+			return -2;
+		}
+		if (len > PRODUCT_KEY_SIZE) {
+			length = PRODUCT_KEY_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->product_key, length);
+		break;
+	case READ_LOGIN_INFO_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_LOGIN_INFO_FLAG))) {
+			printk("Can not find log info flag!\n");
+			return -2;
+		}
+		if (len > LOGIN_INFO_FLAG_SIZE) {
+			length = LOGIN_INFO_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->login_info_flag, length);
+		break;
+	case READ_LOGIN_INFO:
+		if (!(f_read_ctx->exist_flag & (1 << READ_LOGIN_INFO))) {
+			printk("Can not find login info!\n");
+			return -2;
+		}
+		if (len > LOGIN_INFO_SIZE) {
+			length = LOGIN_INFO_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, &f_read_ctx->login_info, length);
+		break;
+	case READ_WIFI_VERSION:
+		if (!(f_read_ctx->exist_flag & (1 << READ_WIFI_VERSION))) {
+			printk("Can not find wifi version!\n");
+			return -2;
+		}
+		if (len > WIFI_VERSION_SIZE) {
+			length = WIFI_VERSION_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->wifi_version, length);
+		break;
+	case READ_WIFI_INFO:
+		if (!(f_read_ctx->exist_flag & (1 << READ_WIFI_INFO))) {
+			printk("Can not find wifi info!\n");
+			return -2;
+		}
+		if (len > WIFI_INFO_SIZE) {
+			length = WIFI_INFO_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->wifi_info, length);
+		break;
+	case READ_RF_XO_CONFIG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_RF_XO_CONFIG))) {
+			printk("Can not find XO config!\n");
+			return -2;
+		}
+		if (len > XO_CONFIG_SIZE) {
+			length = XO_CONFIG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		/* XO value is the first two bytes of wifi_info */
+		memcpy(buffer, f_read_ctx->wifi_info, length);
+		break;
+	default:
+		printk("unknow action %d\n", action);
+		break;
 	}
 	return 0;
 }
 EXPORT_SYMBOL_GPL(sf_get_value_from_factory);
 
-static int sfax8_factory_read_os_resources_get(struct platform_device *pdev, struct sfax8_factory_read_context **p_priv)
+static int sfax8_factory_read_os_resources_get(struct platform_device *pdev,
+		struct sfax8_factory_read_context **p_priv)
 {
 	struct sfax8_factory_read_context *priv;
 	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(struct sfax8_factory_read_context), GFP_KERNEL);
-	if(!priv){
+	priv = devm_kzalloc(&pdev->dev,
+			sizeof(struct sfax8_factory_read_context), GFP_KERNEL);
+	if (!priv) {
 		printk("can not allocate memory!\n");
 		ret = -ENOMEM;
 		return ret;
@@ -546,11 +656,10 @@ static int sfax8_factory_read_os_resources_get(struct platform_device *pdev, str
 
 	priv->np = pdev->dev.of_node;
 	*p_priv = priv;
-    f_read_ctx = priv;
+	f_read_ctx = priv;
 	platform_set_drvdata(pdev, priv);
 	return 0;
 }
-
 
 static int sfax8_factory_read_os_resources_free(struct platform_device *pdev, struct sfax8_factory_read_context *priv)
 {
@@ -558,6 +667,7 @@ static int sfax8_factory_read_os_resources_free(struct platform_device *pdev, st
 	f_read_ctx = NULL;
 	return 0;
 }
+
 /*
  *  * func:this is sfax8_factory_read module's probe function, it's do the following things:
  *  1,set the private data to the platform drivers
@@ -608,7 +718,6 @@ int sfax8_factory_read_remove(struct platform_device *pdev)
 	sfax8_factory_read_os_resources_free(pdev, priv);
 	return 0;
 }
-
 
 /* *********************************************************************Register Platform Drivers******************************************************/
 static const struct of_device_id sfax8_factory_read_of_match[] = {

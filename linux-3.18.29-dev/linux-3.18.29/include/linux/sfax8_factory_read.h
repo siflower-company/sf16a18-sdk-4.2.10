@@ -18,12 +18,6 @@
 #ifndef _SFAX8_FACTORY_READ_H_
 #define _SFAX8_FACTORY_READ_H_
 
-#define LB_ONE_CHAN_GAIN_NUM 28
-/* 8(11a) + 8(HT20 MCS 0-7) + 8(HT40 MCS 0-7) + 9(VHT20 MCS 0-8) + 10(VHT40 MCS 0-9) + 10(VHT80 MCS 0-9) */
-#define HB_ONE_CHAN_GAIN_NUM 53
-#define LB_CHANNEL_COUNT 13 /* channel 1-13 */
-#define HB_CHANNEL_COUNT 25 /* channel 36-64, 100-144, 149-165 */
-
 //size unit: BYTE
 #define MACADDR_SIZE            6
 #define SN_SIZE                 16
@@ -34,11 +28,16 @@
 #define MODEL_VER_FLAG_SIZE     2
 #define MODEL_VER_SIZE          32
 #define COUNTRYID_SIZE          2
-#define HW_FEATURE_SIZE			4
+#define HW_FEATURE_SIZE         4
+#define VENDER_FLAG_SIZE        2
+#define VENDER_SIZE             16
+#define PRODUCT_KEY_FLAG_SIZE   2
+#define PRODUCT_KEY_SIZE        32
+#define LOGIN_INFO_FLAG_SIZE    2
+#define LOGIN_INFO_SIZE         4
+#define WIFI_VERSION_SIZE       2
+#define WIFI_INFO_SIZE          2046
 #define XO_CONFIG_SIZE          2
-#define LB_TX_CALI_TABLE_SIZE   LB_ONE_CHAN_GAIN_NUM*LB_CHANNEL_COUNT
-#define HB_TX_CALI_TABLE_SIZE   HB_ONE_CHAN_GAIN_NUM*HB_CHANNEL_COUNT
-
 /**
 * @name HW feature definitions
 * <pre>
@@ -70,6 +69,15 @@
 //HOTSINK_EXIST LSB position
 #define HW_FEATURE_HOTSINK_EXIST_LSB	2
 
+/*@name login info definitions
+ *
+ * Bits        Name            Value
+ * 0           telnetd         0->enable telnetd, 1->disable it
+ * 1           ssh             0->disable ssh, 1->enable it (haven't accomplished now)
+ * 2           serial port     0->disable serial port, 1->disable it (haven't accomplished now))
+ *
+ * */
+
 enum sfax8_factory_read_action {
 	//for eth basic address
 	READ_MAC_ADDRESS,
@@ -88,9 +96,15 @@ enum sfax8_factory_read_action {
 	READ_MODEL_VER,
 	READ_COUNTRY_ID,
 	READ_HW_FEATURE,
+	READ_VENDER_FLAG,
+	READ_VENDER,
+	READ_PRODUCT_KEY_FLAG,
+	READ_PRODUCT_KEY,
+	READ_LOGIN_INFO_FLAG,
+	READ_LOGIN_INFO,
+	READ_WIFI_VERSION,
 	READ_RF_XO_CONFIG,
-	READ_LB_TXPOWER_CALI_TABLE,
-	READ_HB_TXPOWER_CALI_TABLE,
+	READ_WIFI_INFO,
 };
 
 int sf_get_value_from_factory(enum sfax8_factory_read_action action, void *buffer, int len);

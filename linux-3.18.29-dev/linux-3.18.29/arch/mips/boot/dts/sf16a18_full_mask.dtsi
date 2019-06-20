@@ -526,9 +526,14 @@
 			mtd-model-ver-flag = <&factory 63>;
 			mtd-model-ver = <&factory 65>;
 			mtd-hw-feature = <&factory 97>;
-			mtd-rf-cali-config = <&factory 2048>;
-			mtd-lb-tx-power-cali-config = <&factory 2052>;
-			mtd-hb-tx-power-cali-config = <&factory 2416>;
+			mtd-vender-flag = <&factory 101>;
+			mtd-vender = <&factory 103>;
+			mtd-product-key-flag = <&factory 119>;
+			mtd-product-key = <&factory 121>;
+			mtd-login-info-flag = <&factory 153>;
+			mtd-login-info = <&factory 155>;
+			mtd-wifi-version = <&factory 2048>;
+			mtd-wifi-info = <&factory 2050>;
 			status = "okay";
 	};
 
