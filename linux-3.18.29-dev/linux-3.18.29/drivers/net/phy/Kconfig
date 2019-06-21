@@ -48,7 +48,7 @@ config MARVELL_PHY
 	tristate "Drivers for Marvell PHYs"
 	---help---
 	  Currently has a driver for the 88E1011S
-	
+
 config DAVICOM_PHY
 	tristate "Drivers for Davicom PHYs"
 	---help---
@@ -201,6 +201,15 @@ config MDIO_OCTEON
 	  It is required by the Octeon Ethernet device drivers.
 
 	  If in doubt, say Y.
+
+config INTEL_XWAY_PHY
+	tristate "Intel XWAY PHYs"
+	default n
+	---help---
+	  Supports the Intel XWAY (former Lantiq) 11G and 22E PHYs.
+	  These PHYs are marked as standalone chips under the names
+	  PEF 7061, PEF 7071 and PEF 7072 or integrated into the Intel
+	  SoCs xRX200, xRX300, xRX330, xRX350 and xRX550.
 
 config MDIO_SUN4I
 	tristate "Allwinner sun4i MDIO interface support"

@@ -19,6 +19,7 @@ obj-$(CONFIG_BCM7XXX_PHY)	+= bcm7xxx.o
 obj-$(CONFIG_BCM87XX_PHY)	+= bcm87xx.o
 obj-$(CONFIG_ICPLUS_PHY)	+= icplus.o
 obj-$(CONFIG_ADM6996_PHY)	+= adm6996.o
+obj-$(CONFIG_INTEL_XWAY_PHY)	+= intel-xway.o
 obj-$(CONFIG_MVSWITCH_PHY)	+= mvswitch.o
 obj-$(CONFIG_MVSW61XX_PHY)	+= mvsw61xx.o
 obj-$(CONFIG_IP17XX_PHY)	+= ip17xx.o

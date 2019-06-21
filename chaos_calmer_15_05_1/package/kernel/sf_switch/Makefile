@@ -47,7 +47,11 @@ ifdef CONFIG_TARGET_siflower_sf16a18_fullmask
 NOSTDINC_FLAGS += -DCONFIG_SF16A18_FULL_MASK
 endif
 
+ifdef CONFIG_KERNEL_DEBUG_FS
 SFAX8_KO_NAME="sfax8eth_switch.ko"
+else
+SFAX8_KO_NAME="sfax8eth_switch_nodebugfs.ko"
+endif
 
 ifdef CONFIG_SFAX8_SWITCH_VLAN
 ifdef CONFIG_KERNEL_DEBUG_FS
