@@ -16,11 +16,11 @@ Index: hostapd-2015-03-25/src/ap/ap_config.h
 --- hostapd-2015-03-25.orig/src/ap/ap_config.h
 +++ hostapd-2015-03-25/src/ap/ap_config.h
 @@ -359,6 +359,7 @@ struct hostapd_bss_config {
- 
+
  	int ap_max_inactivity;
  	int ignore_broadcast_ssid;
 +	int conditionally_ignore_bcast_ssid;
- 
+
  	int wmm_enabled;
  	int wmm_uapsd;
 Index: hostapd-2015-03-25/src/ap/beacon.c
@@ -30,15 +30,15 @@ Index: hostapd-2015-03-25/src/ap/beacon.c
 @@ -641,6 +641,9 @@ void handle_probe_req(struct hostapd_dat
  			goto check_hidden;
  	}
- 
-+	if (hapd->conf->conditionally_ignore_bcast_ssid)
-+		goto unhidden;
+
++	//if (hapd->conf->conditionally_ignore_bcast_ssid)
++		//goto unhidden;
 +
  check_hidden:
  	if (hapd->conf->ignore_broadcast_ssid && elems.ssid_len == 0 &&
  	    elems.ssid_list_len == 0) {
 @@ -865,18 +868,22 @@ int ieee802_11_build_ap_params(struct ho
- 
+
  	/* SSID */
  	*pos++ = WLAN_EID_SSID;
 -	if (hapd->conf->ignore_broadcast_ssid == 2) {
@@ -69,7 +69,7 @@ Index: hostapd-2015-03-25/src/ap/beacon.c
 -		pos += hapd->conf->ssid.ssid_len;
 +		*pos++ = 0; /* empty SSID */
  	}
- 
+
  	/* Supported rates */
 @@ -1012,16 +1019,20 @@ int ieee802_11_build_ap_params(struct ho
  		(hapd->conf->ieee802_1x &&
@@ -112,12 +112,12 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
 +#include "ap_drv_ops.h"
  #include <libubox/avl.h>
  #include <uci.h>
- 
+
  static struct ubus_context *ctx;
  static struct blob_buf b;
  static int ctx_ref;
 +static uint32_t sf_adv_wl_wifi_ap_id = 0;
- 
+
  static inline struct hostapd_data *get_hapd_from_object(struct ubus_object *obj)
  {
 @@ -144,6 +146,7 @@ hostapd_bss_get_clients(struct ubus_cont
@@ -158,12 +158,12 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
 +		}
 +	}
  }
- 
+
  void hostapd_ubus_free_bss(struct hostapd_data *hapd)
 @@ -660,6 +681,15 @@ void hostapd_ubus_free_bss(struct hostap
  	if (!ctx)
  		return;
- 
+
 +	if (hapd->conf->conditionally_ignore_bcast_ssid) {
 +		if (!ubus_lookup_id(ctx, "sf_adv_wl_wifi_ap", &sf_adv_wl_wifi_ap_id)) {
 +			blob_buf_init(&b, 0);
@@ -179,7 +179,7 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
 @@ -689,6 +719,18 @@ ubus_event_cb(struct ubus_notify_request
  		ureq->deny = true;
  }
- 
+
 +static void wifi_ap_probe_req_cb(struct ubus_request *req, int type, struct blob_attr *msg)
 +{
 +	struct blob_attr *tb[1];
@@ -200,13 +200,13 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
  	struct ubus_event_req ureq = {};
  	const u8 *addr;
 +	int ret = 0;
- 
+
  	if (req->mgmt_frame)
  		addr = req->mgmt_frame->sa;
 @@ -728,8 +771,38 @@ int hostapd_ubus_handle_event(struct hos
  		}
  	}
- 
+
 +	if (hapd->conf->conditionally_ignore_bcast_ssid
 +				&& req->type == HOSTAPD_UBUS_PROBE_REQ) {
 +		if (ctx && !ubus_lookup_id(ctx, "sf_adv_wl_wifi_ap", &sf_adv_wl_wifi_ap_id)) {
@@ -240,24 +240,24 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
  	if (!hapd->ubus.obj.has_subscribers)
 -		return 0;
 +		goto out;
- 
+
  	if (req->type < ARRAY_SIZE(types))
  		type = types[req->type];
 @@ -744,13 +817,16 @@ int hostapd_ubus_handle_event(struct hos
  	blobmsg_add_u32(&b, "freq", hapd->iface->freq);
- 
+
  	if (ubus_notify_async(ctx, &hapd->ubus.obj, type, b.head, &ureq.nreq))
 -		return 0;
 +		goto out;
- 
+
  	ureq.nreq.status_cb = ubus_event_cb;
  	ubus_complete_request(ctx, &ureq.nreq.req, 100);
- 
+
  	if (ureq.deny)
  		return -1;
 +out:
 +	if (hapd->conf->conditionally_ignore_bcast_ssid)
 +		return ret;
- 
+
  	return 0;
  }

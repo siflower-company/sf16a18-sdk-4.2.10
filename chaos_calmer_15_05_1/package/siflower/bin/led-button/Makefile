@@ -27,12 +27,17 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
+	$(CP) ./src/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
 endef
 
 define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) \
+		CC="$(TARGET_CC)" \
+		CFLAGS="$(TARGET_CFLAGS) -Wall -Werror -mips32r2" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 define Package/led-button/install
@@ -44,10 +49,11 @@ define Package/led-button/install
 	$(INSTALL_DIR) $(1)/usr/share
 	$(INSTALL_DIR) $(1)/usr/share/led-button
 	$(INSTALL_CONF) ./files/led    $(1)/etc/config/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/led-button $(1)/bin/
 	$(INSTALL_BIN) ./files/led_button_init  $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/wps.sh  $(1)/usr/share/led-button/
+	$(INSTALL_BIN) ./files/wps_config.sh  $(1)/usr/share/led-button/
 	$(INSTALL_BIN) ./files/wifi_ctrl.sh  $(1)/usr/share/led-button/
-	$(CP) ./files/led-button $(1)/bin/
 endef
 
 

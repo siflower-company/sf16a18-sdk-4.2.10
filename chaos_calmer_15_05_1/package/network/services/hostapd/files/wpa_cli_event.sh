@@ -2,28 +2,54 @@
 #echo "~$1~$2~$3~" > /dev/ttyS0
 wds_if="$1"
 path_led="/sys/class/leds/siwifi-"
-
-if [[ "$wds_if" == "sfi0" ]]; then
-	trig=phy0
-	num=0
-else
-	trig=phy1
-	num=1
-fi
+wps_enabled=0
 
 set_channel() {
-	chan=`iwinfo $wds_if info | grep Chan|awk -F ' ' '{print $4}'`
+	#get channel
+	chan=`iwinfo "$wds_if" info | grep Chan|awk -F ' ' '{print $4}'`
 
-	[ "$chan" -gt 0   ] && {
-	uci set wireless.radio${num}.channel="$chan"
-	# set sfix which is not in use disabled = 1,and set 5g htmode
-	if [ $num = 1  ]; then
-		uci set wireless.radio1.htmode="VHT80"
-		[ "$chan" = "165"   ] && uci set wireless.radio1.htmode="VHT20"
-	fi
-	uci commit wireless
-	wifi reload
+	[ "$chan" -gt 0 ] && {
+		uci set wireless.radio${num}.channel="$chan"
+		if [ $num = 1 ]; then
+			uci set wireless.radio1.htmode="VHT80"
+			[ "$chan" = "165" ] && uci set wireless.radio1.htmode="VHT20"
+		fi
+		uci commit wireless
+		output=`wifi reload`
 	}
+}
+
+check_wps() {
+	wps_status=0
+	[ -f /tmp/wps_status ] && {
+		wps_status=`cat /tmp/wps_status`
+	}
+}
+
+uci_delete_station() {
+	local name
+	local cnt=0
+	until [ "$name" = "$1" -o $cnt -gt 8  ]
+	do
+		let "cnt++"
+		name=`uci get wireless.@wifi-iface[$cnt].ifname`
+	done
+	[ $cnt -gt 8  ] || uci delete wireless.@wifi-iface[$cnt]
+}
+
+prepare_params() {
+	case $wds_if in
+		sfi0)
+			trig=phy0
+			num=0
+			band=24g
+			;;
+		sfi1)
+			trig=phy1
+			num=1
+			band=5g
+			;;
+	esac
 }
 
 del_clients() {
@@ -65,8 +91,37 @@ del_clients() {
 }
 
 if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
+	check_wps
+	prepare_params
+
+	if [ "$2" == "WPS-SUCCESS" ]; then
+		[ "$wps_status" = 0  ] && {
+			echo "$wds_if" > /tmp/wps_status
+			#echo "wps~select~$wds_if~" > /dev/ttyS0
+		}
+		#TODO  LED control should spilt in func.
+	fi
+
+	if [ "$2" == "WPS-FAIL"  ]; then
+		echo "~$1~$2~rm wps_status" > /dev/ttyS0
+		uci_delete_station "sfi0"
+		uci_delete_station "sfi1"
+		uci commit wireless
+		output=`wifi reload`
+		[ -f /tmp/wps_status ] && rm /tmp/wps_status
+	fi
 
 	if [ "$2" == "CONNECTED" ]; then
+		if [ "$wps_status" != 0  ]; then
+			if [ "$wds_if" != "$wps_status"  ]; then
+				#echo "wps $wps_status now $wds_if so exit 0" > /dev/ttyS0
+				exit 0
+			fi
+			#shall we change wps_status here to avoid setting more than once?
+			/usr/share/led-button/wps_config.sh $wds_if $band
+			exit 0
+		fi
+
 		#echo "wpa_cli_evt: connected" > /dev/ttyS0
 		local busy=`cat /tmp/wds_sta_status`
 		while [ "$busy" == "b" ]
@@ -78,7 +133,7 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		# disable lan dhcp server
 		uci set dhcp.lan.ignore=1
 		uci commit dhcp
-		/etc/init.d/dnsmasq reload
+		output=`/etc/init.d/dnsmasq reload`
 
 		local sta_status=`uci get network.stabridge`
 		[ "$sta_status" = "interface" ] && set_channel
@@ -93,6 +148,7 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 	fi
 
 	if [ "$2" == "DISCONNECTED" ]; then
+		[ "$wps_status" != 0  ] && exit 0
 		#echo "wpa_cli_evt: disconnected" > /dev/ttyS0
 		local busy=`cat /tmp/wds_sta_status`
 		while [ "$busy" == "b" ]
@@ -104,12 +160,12 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		# enable lan dhcp server
 		uci set dhcp.lan.ignore=0
 		uci commit dhcp
-		/etc/init.d/dnsmasq reload
+		output=`/etc/init.d/dnsmasq reload`
 
 		# kick out devices, 0 for eth devices, 1 for wifi, 2 for all
 		del_clients 2
 
-		local is_enabled=`ifconfig | grep $1`
+		local is_enabled=`ifconfig | grep "$1"`
 		if [ "$is_enabled" == "" ]; then
 			echo "1" > /tmp/wds_sta_status
 			exit 0
