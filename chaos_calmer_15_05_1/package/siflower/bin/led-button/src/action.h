@@ -15,7 +15,7 @@
 	if (level <= LOG_ERR) { \
 		printf(fmt, ## __VA_ARGS__); \
 	} else if (level <= DEBUG) {	\
-		syslog(level, fmt, ## __VA_ARGS__); \
+		syslog(level, "led-button " fmt, ## __VA_ARGS__); \
 	} } while (0)
 
 /*

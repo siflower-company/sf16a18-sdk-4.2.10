@@ -55,17 +55,21 @@
 
 &gpio_keys {
 	status = "okay";
-	button1@29 {
+	button1@16 {
 		label = "Function Mode Select";
 		/*linux,input-type = <0x5>;*/
 		linux,code = <0x102>;
 		gpios = <&gpio 16 1>;
+		poll-interval = <10>;
+		debounce-interval = <20>;
 	};
 
 	button2@26 {
 		label = "WIfI reset button";
 		linux,code = <0x101>;
 		gpios = <&gpio 26 1>;
+		poll-interval = <10>;
+		debounce-interval = <20>;
 	};
 };
 

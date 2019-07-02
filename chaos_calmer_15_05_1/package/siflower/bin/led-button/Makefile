@@ -50,6 +50,7 @@ define Package/led-button/install
 	$(INSTALL_DIR) $(1)/usr/share/led-button
 	$(INSTALL_CONF) ./files/led    $(1)/etc/config/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/led-button $(1)/bin/
+	$(INSTALL_BIN) ./files/check_btn_cfg $(1)/bin/
 	$(INSTALL_BIN) ./files/led_button_init  $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/wps.sh  $(1)/usr/share/led-button/
 	$(INSTALL_BIN) ./files/wps_config.sh  $(1)/usr/share/led-button/

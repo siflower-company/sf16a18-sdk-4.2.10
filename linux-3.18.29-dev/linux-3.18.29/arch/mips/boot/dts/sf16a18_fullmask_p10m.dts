@@ -8,6 +8,54 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 	compatible = "siflower,sf16a18-soc";
+
+	eth0-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth0_led>;
+		pinctrl-1 = <&eth0_led_gpio>;
+		eth0 {
+			label = "eth_led0";
+			gpios = <&gpio 55 1>;
+			default-state = "on";
+		};
+	};
+
+	eth1-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth1_led>;
+		pinctrl-1 = <&eth1_led_gpio>;
+		eth1 {
+			label = "eth_led1";
+			gpios = <&gpio 56 1>;
+			default-state = "on";
+		};
+	};
+
+	eth2-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth2_led>;
+		pinctrl-1 = <&eth2_led_gpio>;
+		eth2 {
+			label = "eth_led2";
+			gpios = <&gpio 57 1>;
+			default-state = "on";
+		};
+	};
+
+	eth3-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth3_led>;
+		pinctrl-1 = <&eth3_led_gpio>;
+		eth3 {
+			label = "eth_led3";
+			gpios = <&gpio 58 1>;
+			default-state = "on";
+		};
+	};
 };
 
 &ethernet {
