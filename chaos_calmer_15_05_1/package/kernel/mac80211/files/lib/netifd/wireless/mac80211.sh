@@ -535,7 +535,7 @@ mac80211_prepare_vif() {
 		sta|wds-sta)
 			local wdsflag=
 			[ "$wds" -gt 0 ] && wdsflag="4addr on"
-			mac80211_iw_interface_add "$phy" "$ifname" managed $wdsflag
+            mac80211_iw_interface_add "$phy" "$ifname" managed "$wdsflag"
 			[ "$powersave" -gt 0 ] && powersave="on" || powersave="off"
 			iw "$ifname" set power_save "$powersave"
 			# sta not support brctl
