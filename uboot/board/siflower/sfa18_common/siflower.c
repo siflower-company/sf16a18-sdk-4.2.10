@@ -32,6 +32,8 @@ enum sys_con {
 	SYSCON_A18_FULLMASK_AC,
 	SYSCON_A18_FULLMASK_X10,
 	SYSCON_A18_FULLMASK_P10H,
+	SYSCON_A18_FULLMASK_REP,
+	SYSCON_A18_FULLMASK_AIR001,
 };
 
 //todo remove when gpio is ready
@@ -75,6 +77,14 @@ static enum sys_con sfa18_sys_con(void)
 
 #ifdef CONFIG_TARGET_SFA18_P10H
 	return SYSCON_A18_FULLMASK_P10H;
+#endif
+
+#ifdef CONFIG_TARGET_SFA18_REP
+	return SYSCON_A18_FULLMASK_REP;
+#endif
+
+#ifdef CONFIG_TARGET_SFA18_AIR001
+	return SYSCON_A18_FULLMASK_AIR001;
 #endif
 
 	return SYSCON_UNKNOWN;
@@ -128,6 +138,14 @@ int checkboard(void)
 
 		case SYSCON_A18_FULLMASK_P10H:
 			puts(" FULLMASK P10H");
+			break;
+
+		case SYSCON_A18_FULLMASK_REP:
+			puts(" FULLMASK REP");
+			break;
+
+		case SYSCON_A18_FULLMASK_AIR001:
+			puts(" FULLMASK AIR001");
 			break;
 
 		default:

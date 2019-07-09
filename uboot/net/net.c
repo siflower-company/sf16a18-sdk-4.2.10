@@ -603,10 +603,12 @@ restart:
 			ret = -EINTR;
 			goto done;
 		}
-		if(!webfailsafe_ready_for_upgrade)
-		  net_state = NETLOOP_CONTINUE;
-		else
-		  net_state = NETLOOP_SUCCESS;
+		if (protocol == HTTPD) {
+			if(!webfailsafe_ready_for_upgrade)
+			  net_state = NETLOOP_CONTINUE;
+			else
+			  net_state = NETLOOP_SUCCESS;
+		}
 
 
 #if 1

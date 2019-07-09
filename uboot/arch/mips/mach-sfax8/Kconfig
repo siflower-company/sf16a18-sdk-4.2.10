@@ -61,5 +61,6 @@ config TARGET_SFA18_AIR001
 endchoice
 
 source "board/siflower/sfa18_common/Kconfig"
+source "arch/mips/mach-sfax8/pcba-test/Kconfig"
 
 endmenu

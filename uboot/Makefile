@@ -689,6 +689,15 @@ else
 PLATFORM_LIBGCC := -L $(shell dirname `$(CC) $(c_flags) -print-libgcc-file-name`) -lgcc
 endif
 PLATFORM_LIBS += $(PLATFORM_LIBGCC)
+
+ifneq ($(CONFIG_SFAX8_WIFI_TEST),)
+ifneq ($(CONFIG_SFAX8_WIFI_EXPA),)
+PLATFORM_LIBS += ./arch/mips/mach-sfax8/pcba-test/wifi/wifi_expa.a
+else
+PLATFORM_LIBS += ./arch/mips/mach-sfax8/pcba-test/wifi/wifi_inpa.a
+endif
+endif
+
 export PLATFORM_LIBS
 export PLATFORM_LIBGCC
 

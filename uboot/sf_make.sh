@@ -176,6 +176,7 @@ case $prj in
 		;;
 	evb_v5)
 		DEFCONFIG="sfa18_"$ver"_p20b"
+		add_sfbl_flag rgmii=1
 		[ -z $ddr3 ] && ddr3=m15t1g1664a
 		;;
 	air001)
@@ -289,6 +290,11 @@ echo "toolchain=$toolchain"
 # compile bare_spl
 make -C $SFBL $SFBL_FLAG
 cp -f $SFBL/irom_spl.img ./u-boot-spl.img
+
+if [[ "$pcba" = "1" ]]; then
+	cp arch/mips/mach-sfax8/pcba-test/wifi/wifi_inpa.a_bak arch/mips/mach-sfax8/pcba-test/wifi/wifi_inpa.a
+	cp arch/mips/mach-sfax8/pcba-test/wifi/wifi_expa.a_bak arch/mips/mach-sfax8/pcba-test/wifi/wifi_expa.a
+fi
 
 # compile uboot
 make $DEFCONFIG
