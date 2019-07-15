@@ -48,16 +48,32 @@ NOSTDINC_FLAGS += -DCONFIG_SF16A18_FULL_MASK
 endif
 
 ifdef CONFIG_KERNEL_DEBUG_FS
+ifneq ($(findstring 86V,$(PROFILE)),)
+SFAX8_KO_NAME="86v_sfax8eth_switch.ko"
+else
 SFAX8_KO_NAME="sfax8eth_switch.ko"
+endif
+else
+ifneq ($(findstring 86V,$(PROFILE)),)
+SFAX8_KO_NAME="86v_sfax8eth_switch_nodebugfs.ko"
 else
 SFAX8_KO_NAME="sfax8eth_switch_nodebugfs.ko"
+endif
 endif
 
 ifdef CONFIG_SFAX8_SWITCH_VLAN
 ifdef CONFIG_KERNEL_DEBUG_FS
+ifneq ($(findstring 86V,$(PROFILE)),)
+SFAX8_KO_NAME="86v_sfax8eth_vlan.ko"
+else
 SFAX8_KO_NAME="sfax8eth_vlan.ko"
+endif
+else
+ifneq ($(findstring 86V,$(PROFILE)),)
+SFAX8_KO_NAME="86v_sfax8eth_vlan_nodebugfs.ko"
 else
 SFAX8_KO_NAME="sfax8eth_vlan_nodebugfs.ko"
+endif
 endif
 endif
 
