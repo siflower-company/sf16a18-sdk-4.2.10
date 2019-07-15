@@ -590,7 +590,7 @@ static irqreturn_t sfax8_gpio_irq_handler(int irq, void *dev_id)
 	unsigned long events;
 	unsigned offset;
 	unsigned gpio;
-	unsigned int type;
+	unsigned int type, pending;
 
 	if(!pc)
 		return IRQ_NONE;
@@ -605,11 +605,14 @@ static irqreturn_t sfax8_gpio_irq_handler(int irq, void *dev_id)
 		gpio = (SFAX8_GPIOS_PER_BANK * bank) + offset;
 		type = pc->irq_type[gpio];
 
+		pending = sfax8_gpio_rd(pc, GPIO_INTPEND(gpio));
+
 		/* ack edge triggered IRQs immediately */
 		if (!(type & IRQ_TYPE_LEVEL_MASK))
 			sfax8_gpio_wr(pc, GPIO_INTPEND(gpio), 0);
 
-		generic_handle_irq(irq_linear_revmap(pc->irq_domain, gpio));
+		if (pending)
+			generic_handle_irq(irq_linear_revmap(pc->irq_domain, gpio));
 
 		/* ack level triggered IRQ after handling them */
 		if (type & IRQ_TYPE_LEVEL_MASK)

@@ -52,6 +52,7 @@ static void led_set_software_blink(struct led_classdev *led_cdev,
 		return;
 	}
 
+	__led_set_brightness(led_cdev, LED_OFF);
 	mod_timer(&led_cdev->blink_timer, jiffies + 1);
 }
 

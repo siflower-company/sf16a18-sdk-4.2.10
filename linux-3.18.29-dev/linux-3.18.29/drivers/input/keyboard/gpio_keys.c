@@ -31,7 +31,7 @@
 #include <linux/of_gpio.h>
 #include <linux/spinlock.h>
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 #include <linux/reboot.h>
 #define REBOOT_BUTTON (26)
 #define REBOOT_PRESS_SLOT (5)
@@ -43,7 +43,7 @@ struct gpio_button_data {
 	struct work_struct work;
 	unsigned int timer_debounce;	/* in msecs */
 	unsigned int irq;
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 	unsigned long last_seen;
 #endif
 	spinlock_t lock;
@@ -57,7 +57,7 @@ struct gpio_keys_drvdata {
 	struct mutex disable_lock;
 	struct gpio_button_data data[0];
 };
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 static int gpio_mode_sel;
 #endif
 /*
@@ -339,13 +339,6 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 	struct input_dev *input = bdata->input;
 	unsigned int type = button->type ?: EV_KEY;
 	int state = (gpio_get_value_cansleep(button->gpio) ? 1 : 0) ^ button->active_low;
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
-	if (button->gpio == REBOOT_BUTTON) {
-		if (bdata->last_seen && (jiffies - bdata->last_seen) / 100 >= REBOOT_PRESS_SLOT && state)
-			machine_restart(NULL);
-		bdata->last_seen = jiffies;
-	}
-#endif
 
 	if (type == EV_ABS) {
 		if (state)
@@ -360,6 +353,16 @@ static void gpio_keys_gpio_work_func(struct work_struct *work)
 {
 	struct gpio_button_data *bdata =
 		container_of(work, struct gpio_button_data, work);
+	const struct gpio_keys_button *button = bdata->button;
+	int state = (gpio_get_value_cansleep(button->gpio) ? 1 : 0) ^ button->active_low;
+
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
+	if (button->gpio == REBOOT_BUTTON) {
+		if (bdata->last_seen && (jiffies - bdata->last_seen) / 100 >= REBOOT_PRESS_SLOT && state)
+			machine_restart(NULL);
+		bdata->last_seen = jiffies;
+	}
+#endif
 
 	gpio_keys_gpio_report_event(bdata);
 
@@ -698,7 +701,7 @@ gpio_keys_get_devtree_pdata(struct device *dev)
 
 #endif
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 int sfax8_mode_value(void)
 {
 	return gpio_get_value_cansleep(gpio_mode_sel);
@@ -754,7 +757,7 @@ static int gpio_keys_probe(struct platform_device *pdev)
 	size_t size;
 	int i, error;
 	int wakeup = 0;
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 	struct proc_dir_entry *file;
 	const struct gpio_keys_button *button_sel;
 #endif
@@ -813,7 +816,7 @@ static int gpio_keys_probe(struct platform_device *pdev)
 			wakeup = 1;
 	}
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 	button_sel = &pdata->buttons[0];
 	gpio_mode_sel = button_sel->gpio;
 
@@ -927,7 +930,7 @@ static int __init gpio_keys_init(void)
 
 static void __exit gpio_keys_exit(void)
 {
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 	remove_proc_entry("sfax8_mode_info", NULL);
 #endif
 	platform_driver_unregister(&gpio_keys_device_driver);
