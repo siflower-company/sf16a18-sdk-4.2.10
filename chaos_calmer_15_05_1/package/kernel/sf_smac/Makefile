@@ -10,6 +10,12 @@ define KernelPackage/sf_smac
   SUBMENU:=Wireless Drivers
   TITLE:=SIFLOWER sf16a18 wireless driver
   DEPENDS:=+kmod-mac80211 +@DRIVER_11N_SUPPORT
+ifdef CONFIG_TARGET_siflower_sf16a18_fullmask_SF16A18-86V-V5
+	FILES:=\
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_rf.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_smac.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/startcore.ko
+else
 ifdef CONFIG_FLASH_OPTIMIZE
 	FILES:=\
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/flash-opt/sf16a18_rf.ko \
@@ -21,7 +27,7 @@ else
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full/sf16a18_smac.ko \
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full/startcore.ko
 endif
-
+endif
 endef
 
 define KernelPackage/sf_smac/config
