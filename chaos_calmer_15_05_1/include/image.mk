@@ -472,11 +472,6 @@ define BuildImage
 			rm  $(TARGET_DIR)/etc/uhttpd.key; \
 			cp  $(PLATFORM_SUBDIR)/base-files-$(PROFILE)/etc/config/dhcp $(TARGET_DIR)/etc/config/dhcp; \
 			cp  $(TOPDIR)/package/network/services/uhttpd/files/index.htm $(TARGET_DIR)/www/; \
-		elif [ "$(shell echo $(PROFILE) | grep "86V")" != "" ]; then \
-			cp  $(TOPDIR)/package/kernel/sf_smac/config/fullmask/umac/flash-opt/86v_startcore.ko $(TARGET_DIR)/lib/modules/3.18.29/startcore.ko; \
-			cp  $(TOPDIR)/package/kernel/sf_smac/config/fullmask/umac/flash-opt/86v_sf16a18_rf.ko $(TARGET_DIR)/lib/modules/3.18.29/sf16a18_rf.ko; \
-			cp  $(TOPDIR)/package/kernel/sf_smac/config/fullmask/umac/flash-opt/86v_sf16a18_smac.ko $(TARGET_DIR)/lib/modules/3.18.29/sf16a18_smac.ko; \
-			rm -rf $(TARGET_DIR)/www/*.js $(TARGET_DIR)/www/*.css $(TARGET_DIR)/www/img/; \
 		else \
 			rm -rf $(TARGET_DIR)/www/*.js $(TARGET_DIR)/www/*.css $(TARGET_DIR)/www/img/; \
 		fi
