@@ -1547,7 +1547,7 @@ function ota_upgrade(arg_list_table)
 					f:close()
 					mode = 1
 					send_ota_upgrade(arg_list_table,0, mode)
-					sysutil.fork_exec("/usr/bin/otaupgrade")
+					sysutil.fork_exec("/sbin/otaupgrade")
 				else
 					luci.util.exec("rm /tmp/upgrade_shortest_time")
 					code = sferr.EEROR_NO_LOCALVERSION_EAQULE_OTAVERSION
@@ -1683,7 +1683,7 @@ function ac_ota_upgrade_impl(check, mode)
 					luci.util.exec("rm /tmp/upgrade_shortest_time")
 					code = sferr.EEROR_NO_LOCALVERSION_EAQULE_OTAVERSION
 				else
-					sysutil.fork_exec("/usr/bin/otaupgrade")
+					sysutil.fork_exec("/sbin/otaupgrade")
 				end
 			end
 		else
