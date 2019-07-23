@@ -13,7 +13,7 @@ siflower_setup_interfaces()
 
 	ucidef_set_interfaces_lan "eth0.1 eth0.2"
 	ucidef_add_switch "switch0" "1" "1"
-	ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 5t"
+	ucidef_add_switch_vlan "switch0" "1" "0 5t"
 	ucidef_add_switch_vlan "switch0" "2" "4 5t"
 }
 

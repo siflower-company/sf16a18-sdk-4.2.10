@@ -306,12 +306,12 @@ function set_sysinfo()
 	}
 
 	nixio.syslog("crit", myprint(arg_list_table))
-	if info.lan_ip ~= "" and info.mask ~= "" and info.gateway ~= "" and info.connectmode ~= "" and info.dhcp_enable ~= "" then
+	if info.lan_ip ~= "" and info.mask ~= "" and info.gateway ~= "" and info.connectmode ~= 0 and info.dhcp_enable ~= "" then
 		if not check_ip_legality(info.gateway , info.lan_ip , info.mask) then
 			code = sferr.ERROR_NO_GATEWAY_CONFLICT_WITH_LAN_SEGMENT
 		end
 	end
-    if info.connectmode == 1 then
+    if info.connectmode == 1 and code == 0 then --static model
 		if _uci_real:get("network", "lan", "ipaddr") ~= info.lan_ip then
 			_uci_real:set("network", "lan", "ipaddr", info.lan_ip)
 		end
@@ -322,21 +322,29 @@ function set_sysinfo()
 			_uci_real:set("network", "lan", "gateway", info.gateway)
 			-- here dns for ntp
 		end
-		if _uci_real:get("network", "lan",  "dns") ~= info.defaultDNS then
-			_uci_real:set("network", "lan", "dns", info.defaultDNS)
+		if _uci_real:get("auto_tmp", "tmp",  "dns") ~= info.defaultDNS then
+			_uci_real:set("auto_tmp", "tmp", "dns", info.defaultDNS)
+			_uci_real:commit("auto_tmp")
 		end
-		if _uci_real:get("network", "lan",  "standbyDns") ~= info.standbyDNS then
-			_uci_real:set("network", "lan", "standbyDns", info.standbyDNS)
+		if _uci_real:get("auto_tmp", "tmp",  "standbyDns") ~= info.standbyDNS then
+			_uci_real:set("auto_tmp", "tmp", "standbyDns", info.standbyDNS)
+			_uci_real:commit("auto_tmp")
 		end
 		if _uci_real:get("uhttpd", "main",  "network_timeout") ~= info.web_timeout then
 			_uci_real:set("uhttpd", "main", "network_timeout", info.web_timeout)
 		end
-		if _uci_real:get("network","lan","connectmode") ~= info.connectmode then
-			_uci_real:set("network","lan","connectmode",info.connectmode)
+		if _uci_real:get("auto_tmp","tmp","connectmode") ~= info.connectmode then
+			_uci_real:set("auto_tmp","tmp","connectmode",info.connectmode)
+			_uci_real:commit("auto_tmp")
 		end
-		if _uci_real:get("network","lan","dhcp_enable") ~= info.dhcp_enable then
-			_uci_real:set("network","lan","dhcp_enable",info.dhcp_enable)
+		if _uci_real:get("auto_tmp","tmp","dhcp_enable") ~= info.dhcp_enable then
+			_uci_real:set("auto_tmp","tmp","dhcp_enable",info.dhcp_enable)
+			_uci_real:commit("auto_tmp")
     	end
+		if _uci_real:get("network","lan","proto") ~= info.dhcp_enable then
+			_uci_real:set("network","lan","proto","static")
+		end
+
 		if info.web_port then
 			local port_list = _uci_real:get_list("uhttpd", "main", "listen_http")
 			nixio.syslog("crit", myprint(port_list))
@@ -353,23 +361,36 @@ function set_sysinfo()
 			_uci_real:save("network")
 			_uci_real:commit("network")
 			_uci_real:load("network")
-			fork_exec("sleep 2; env -i /bin/ubus call network reload >/dev/null 2>/dev/null")
 		end
-	elseif info.connectmode == 0 then
-		if _uci_real:get("network","lan","connectmode") ~= info.connectmode then
-			_uci_real:set("network","lan","connectmode",info.connectmode)
+		fork_exec("sleep 2; /etc/init.d/network restart >/dev/null 2>/dev/null")
+	elseif info.connectmode == 0 and code == 0 then --auto model
+		if _uci_real:get("auto_tmp","tmp","connectmode") ~= info.connectmode then
+			_uci_real:set("auto_tmp","tmp","connectmode",info.connectmode)
+			_uci_real:commit("auto_tmp")
 		end
-		if _uci_real:get("network","lan","dhcp_enable") ~= info.dhcp_enable then
-			_uci_real:set("network","lan","dhcp_enable",info.dhcp_enable)
+		if _uci_real:get("auto_tmp","tmp","dhcp_enable") ~= info.dhcp_enable then
+			_uci_real:set("auto_tmp","tmp","dhcp_enable",info.dhcp_enable)
+			_uci_real:commit("auto_tmp")
     	end
+		if _uci_real:get("auto_tmp", "tmp",  "dns") ~= info.defaultDNS then
+			_uci_real:set("auto_tmp", "tmp", "dns", "")
+			_uci_real:commit("auto_tmp")
+		end
+		if _uci_real:get("auto_tmp", "tmp",  "standbyDns") ~= info.standbyDNS then
+			_uci_real:set("auto_tmp", "tmp", "standbyDns", "")
+			_uci_real:commit("auto_tmp")
+		end
+		if _uci_real:get("network","lan","proto") ~= info.dhcp_enable then
+			_uci_real:set("network","lan","proto","dhcp")
+		end
 		local changes = _uci_real:changes("network")
 		if((changes ~= nil) and (type(changes) == "table") and (next(changes) ~= nil)) and result.code == 0 then
 			nixio.syslog("crit", "change network")
 			_uci_real:save("network")
 			_uci_real:commit("network")
 			_uci_real:load("network")
-			fork_exec("sleep 2; env -i /bin/ubus call network reload >/dev/null 2>/dev/null")
 		end
+		fork_exec("sleep 2; env -i /bin/ubus call network restart >/dev/null 2>/dev/null")
 	end
 	if _uci_real:get("led", "BTN0", "wifi_enable") ~= info.led then
 		_uci_real:set("led", "BTN0", "wifi_enable", info.led)
@@ -382,22 +403,35 @@ function set_sysinfo()
 	sflog("INFO","system information  configure changed!")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(result)
-	fork_exec("sleep 2;/bin/sh /bin/dhcp.sh >/dev/null 2>/dev/null")
 end
 
 function get_sysinfo()
 	local listen_httpd = _uci_real:get("uhttpd", "main", "listen_http")
+	local connectmode = _uci_real:get("auto_tmp","tmp","connectmode")
+    if connectmode == '0' then   --auto
+		lan_ip = _uci_real:get("auto_tmp", "tmp", "ipaddr")
+		mask = _uci_real:get("auto_tmp", "tmp", "netmask")
+		gateway = _uci_real:get("auto_tmp", "tmp", "gateway")
+		defaultDNS= _uci_real:get("auto_tmp","tmp","dns")
+		standbyDNS = _uci_real:get("auto_tmp","tmp","standbyDns")
+	elseif connectmode == '1' then  --static
+		lan_ip = _uci_real:get("network", "lan", "ipaddr")
+		mask = _uci_real:get("network", "lan", "netmask")
+		gateway = _uci_real:get("network", "lan", "gateway")
+		defaultDNS= _uci_real:get("auto_tmp","tmp","dns")
+		standbyDNS = _uci_real:get("auto_tmp","tmp","standbyDns")
+	end
 	local info = {
-		lan_ip = _uci_real:get("network", "lan", "ipaddr"),
-		mask = _uci_real:get("network", "lan", "netmask"),
-		gateway = _uci_real:get("network", "lan", "gateway"),
 		web_port = string.sub(listen_httpd[1], string.find(listen_httpd[1], ":")+1, #listen_httpd[1]),
 		web_timeout = _uci_real:get("uhttpd", "main", "network_timeout"),
 		led = _uci_real:get("led", "BTN0", "wifi_enable"),
-		dhcp_enable = _uci_real:get("network","lan","dhcp_enable"),
-		connectmode = _uci_real:get("network","lan","connectmode"),
-		defaultDNS= _uci_real:get("network","lan","dns"),
-		standbyDNS = _uci_real:get("network","lan","standbyDns"),
+		dhcp_enable = _uci_real:get("auto_tmp","tmp","dhcp_enable"),
+		connectmode = connectmode,
+		lan_ip = lan_ip,
+		mask = mask,
+		gateway = gateway,
+		defaultDNS = defaultDNS,
+		standbyDNS = standbyDNS,
 	}
 
 	result = {
@@ -631,8 +665,8 @@ function set_password()
     if luci.sys.user.checkpasswd("admin", passwd_table.passwordold) then
         stat = luci.sys.user.setpasswd("admin", passwd_table.passwordnew)
     else
-		result.code = -1
-		result.msg = "error old passwd!"
+		result.code = sferr.ERROR_NO_OLDPASSWORD_INCORRECT
+		result.msg = sferr.getErrorMessage(result.code)
     end
     nixio.syslog("crit", myprint(result))
 	sflog("INFO","Change password!")

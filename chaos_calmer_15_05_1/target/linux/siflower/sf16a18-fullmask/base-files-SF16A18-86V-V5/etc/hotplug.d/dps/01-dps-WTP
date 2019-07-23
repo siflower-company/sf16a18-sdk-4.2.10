@@ -14,6 +14,3 @@ wtp=`ps | grep "WTP" | wc -l`
 if [ $wtp != 1 ]; then
 	killall WTP
 fi
-
-echo "dhcp.sh start to run" >> /dev/ttyS0
-/bin/sh /bin/dhcp.sh

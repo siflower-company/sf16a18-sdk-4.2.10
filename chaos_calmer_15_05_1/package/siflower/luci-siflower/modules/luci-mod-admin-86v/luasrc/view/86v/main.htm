@@ -76,7 +76,7 @@
                         <!--<input type="radio" name="setting-encode" value="GB2312">GB2312-->
                         <input type="radio" name="setting-encode" value="UTF-8" checked>UTF-8
                     </td></tr>
-<tr><td id="setting-is_guest" class="inline-text-L"><%:network type%></td><td class="inline-text-R"><select id="setting-net-type" style="float: left;">
+<tr><td id="setting-is_guest" class="inline-text-L"><%:network type%></td><td class="inline-text-R"><select id="setting-net-type" style="float: left;" onchange="isolateDefault(this);">
 								<option value="1"><%:employee network%></option>
 								<option value="2"><%:visitor network%></option>
                     </select>
@@ -92,7 +92,7 @@
 								<option value="none"><%:not encrypt%></option>
                         <option value="psk2+ccmp">psk2+ccmp</option>
                     </select></td></tr>
-					<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input id="password" onkeyup="nStrLimit(this)" maxlength="31"></td></tr>
+					<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input id="password" onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
 					<tr><td class="inline-text-L"><%:wireless internal isolation%></td><td class="inline-text-R"><input type="checkbox" id="setting-isolate" style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
                         <i class="btnHelp" onclick="getHelp('wirDisFeg')" style="margin-left: 20px;margin-top: 0px;"></i>
                         <li class="btnHelp">
@@ -328,6 +328,13 @@
                     getWirelessNet();
                     return;
                 }
+                if (password != check(password)){
+                    text.innerText = '<%:input password invalid%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password');
+                    getWirelessNet();
+                    return;
+                }
             }
             var params = {'band2':services.band2[selected_index]};
         } else {
@@ -384,6 +391,13 @@
             if (encryptSelect[encryptSelectIndex].value!="none"){
                 if (password.length<8){
 					text.innerText = '<%:wireless password error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password');
+                    getWirelessNet();
+                    return;
+                }
+                if (password != check(password)){
+                    text.innerText = '<%:input password invalid%>';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('password');
                     getWirelessNet();
@@ -634,4 +648,13 @@
             document.getElementById('password').disabled = false;
         }
     }
+
+    function isolateDefault(e) {
+        if (e[e.selectedIndex].text == '<%:visitor network%>'){
+            document.getElementById('setting-isolate').checked = true;
+        } else {
+            document.getElementById('setting-isolate').checked = false;
+        }
+    }
+
 </script>

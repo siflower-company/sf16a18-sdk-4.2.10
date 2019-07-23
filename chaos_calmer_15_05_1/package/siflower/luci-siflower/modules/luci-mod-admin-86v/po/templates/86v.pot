@@ -433,10 +433,10 @@ msgstr ""
 msgid "New password length error"
 msgstr ""
 
-msgid "Two password input inconsistent"
+msgid "Two password input inconsistent!"
 msgstr ""
 
-msgid "The original password is wrong, please input again"
+msgid "old password is incorrect"
 msgstr ""
 
 msgid "log contents"
@@ -490,7 +490,7 @@ msgstr ""
 msgid "The startup delay is limited to 60-300 seconds"
 msgstr ""
 
-msgid "The number of bags allowed is limited to 1-35535"
+msgid "The number of bags allowed is limited to 1-65535"
 msgstr ""
 
 msgid "Are you sure to restore factory Settings"
@@ -623,4 +623,10 @@ msgid "default DNS"
 msgster ""
 
 msgid "standby DNS"
+msgster ""
+
+msgid "defaultDNS error"
+msgster ""
+
+msgid "standbyDNS error"
 msgster ""

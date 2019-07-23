@@ -21,6 +21,7 @@ EOF
 }
 
 next_vlan=3
+apMode=`cat /proc/sfax8_mode_info`
 generate_network() {
 	local vlan
 
@@ -57,6 +58,10 @@ set network.$1.ipaddr='192.168.4.1'
 set network.$1.netmask='255.255.255.0'
 set network.$1.ip6assign='60'
 set network.$1.group='0'
+EOF
+    [ "${apMode}" = "1"  ] &&
+        uci -q batch <<EOF
+        set network.$1.ipaddr='192.168.4.251'
 EOF
 		;;
 	wan)
@@ -185,12 +190,12 @@ EOF
 }
 
 generate_alias_network() {
-	uci -q batch <<EOF
-add network alias
-set network.@alias[-1].interface='lan'
-set network.@alias[-1].proto='static'
-set network.@alias[-1].ipaddr='192.168.5.251'
-set network.@alias[-1].netmask='255.255.255.0'
+		uci -q batch <<EOF
+set network.alias='interface'
+set network.alias.ifname='@lan'
+set network.alias.proto='static'
+set network.alias.ipaddr='192.168.4.252'
+set network.alias.netmask='255.255.255.0'
 EOF
 }
 
@@ -208,6 +213,7 @@ for key in $keys; do generate_switch $key; done
 json_get_keys keys led
 for key in $keys; do generate_led $key; done
 
-generate_alias_network
-
+if [ "${apMode}" = "1"  ]; then
+	generate_alias_network
+fi
 uci commit

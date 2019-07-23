@@ -38,7 +38,7 @@
                         <!--<input type="radio" name="setting-encode" value="GB2312">GB2312-->
                         <input type="radio" name="setting-encode" value="UTF-8" checked>UTF-8
                     </td></tr>
-<tr><td id="setting-is_guest" class="inline-text-L"><%:network type%></td><td class="inline-text-R"><select id="setting-net-type" style="float: left;">
+<tr><td id="setting-is_guest" class="inline-text-L"><%:network type%></td><td class="inline-text-R"><select id="setting-net-type" style="float: left;" onchange="isolateDefault(this);">
 								<option value="1"><%:employee network%></option>
 								<option value="2"><%:visitor network%></option>
                     </select>
@@ -54,7 +54,7 @@
 								<option value="none" valc="<%:not encrypt%>"><%:not encrypt%></option>
                         <option value="psk2+ccmp" valc="psk2+ccmp">psk2+ccmp</option>
                     </select></td></tr>
-					<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input id="password" onkeyup="nStrLimit(this)" maxlength="31"></td></tr>
+					<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input id="password" onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
 					<tr><td class="inline-text-L"><%:wireless internal isolation%></td><td class="inline-text-R"><input type="checkbox" id="setting-isolate"style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
                         <i class="btnHelp" onclick="getHelp('wirDisFeg')" style="margin-left: 20px;margin-top: 0px;"></i>
                         <li class="btnHelp">
@@ -624,6 +624,12 @@
                     errTipDoc = document.getElementById('password');
                     return;
                 }
+                if (password != check(password)){
+                    text.innerText = '<%:input password invalid%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password');
+                    return;
+                }
             }
             /*encode = encode == undefined?'':encode;
             encrypt = encrypt == undefined?'':encrypt;
@@ -693,7 +699,7 @@
                     getWirelessNet();
                     return;
                 }else if (strlen(services.band2[selected_index].name)>32){
-					text.innerText = '<%:the length of the SSID is too long!%>';
+					text.innerText = '<%:wireless name length error%>';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('setting-name');
                     getWirelessNet();
@@ -710,6 +716,13 @@
                 if (encryptSelect[encryptSelectIndex].value!="none"){
                     if (password.length<8){
 						text.innerText = '<%:wireless password error%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                    if (password != check(password)){
+                        text.innerText = '<%:input password invalid%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('password');
                         getWirelessNet();
@@ -753,7 +766,7 @@
                     getWirelessNet();
                     return;
                 }else if (strlen(services.band5[selected_index].name)>32){
-					text.innerText = '<%:the length of the SSID is too long!%>';
+					text.innerText = '<%:wireless name length error%>';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('setting-name');
                     getWirelessNet();
@@ -770,6 +783,13 @@
                 if (encryptSelect[encryptSelectIndex].value!="none"){
                     if (password.length<8){
 						text.innerText = '<%:wireless password error%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                    if (password != check(password)){
+                        text.innerText = '<%:input password invalid%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('password');
                         getWirelessNet();
@@ -972,7 +992,7 @@
                 encryptSelect.selectedIndex = j;
             }
         }
-		if (service_24g[i].encrypt == "<%:no encryption%>"){
+		if (service_24g[i].encrypt == "<%:not encrypt%>"){
             document.getElementById('password').disabled = true;
         }else {
             document.getElementById('password').disabled = false;
@@ -1031,7 +1051,7 @@
                 encryptSelect.selectedIndex = j;
             }
         }
-		if (service_5g[i].encrypt == "<%:no encryption%>"){
+		if (service_5g[i].encrypt == "<%:not encrypt%>"){
             document.getElementById('password').disabled = true;
         }else {
             document.getElementById('password').disabled = false;
@@ -1073,13 +1093,13 @@
             advance_24g.weak_sta_signal = document.getElementById('weak_sta_signal').value;
             var err = document.getElementById('Error');
             var text = err.getElementsByTagName('span')[0];
-            if (advance_24g.beacon_int<40||advance_24g.beacon_int>1000){
+            if (advance_24g.beacon_int<40||advance_24g.beacon_int>1000||advance_24g.beacon_int.search(/\D/g) != -1){
 				text.innerText = '<%:Beacon time slots range from 40 to 1000 milliseconds%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('beacon_int');
                 return;
             }
-            if (advance_24g.maxassoc<1||advance_24g.maxassoc>40){
+            if (advance_24g.maxassoc<1||advance_24g.maxassoc>40||advance_24g.maxassoc.search(/\D/g) != -1){
 				text.innerText = '<%:The client limit is 1-40%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('maxassoc');
@@ -1145,13 +1165,13 @@
             advance_5g.weak_sta_signal = document.getElementById('weak_sta_signal-5').value;
             var err = document.getElementById('Error');
             var text = err.getElementsByTagName('span')[0];
-            if (advance_5g.beacon_int<40||advance_5g.beacon_int>1000){
+            if (advance_5g.beacon_int<40||advance_5g.beacon_int>1000||advance_5g.beacon_int.search(/\D/g) != -1){
 				text.innerText = '<%:Beacon time slots range from 40 to 1000 milliseconds%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('beacon_int-5');
                 return;
             }
-            if (advance_5g.maxassoc<1||advance_5g.maxassoc>40){
+            if (advance_5g.maxassoc<1||advance_5g.maxassoc>40||advance_5g.maxassoc.search(/\D/g) != -1){
 				text.innerText = '<%:The client limit is 1-40%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('maxassoc-5');
@@ -1324,6 +1344,14 @@
             if (e[e.selectedIndex].value == '165') {
                 e.selectedIndex = 0;
             }
+        }
+    }
+
+    function isolateDefault(e) {
+        if (e[e.selectedIndex].text == '<%:visitor network%>'){
+            document.getElementById('setting-isolate').checked = true;
+        } else {
+            document.getElementById('setting-isolate').checked = false;
         }
     }
 

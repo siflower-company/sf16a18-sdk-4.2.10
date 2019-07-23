@@ -444,10 +444,10 @@ msgstr "原始密码不能为空"
 msgid "New password length error"
 msgstr "新密码长度不能少于6位"
 
-msgid "Two password input inconsistent"
+msgid "Two password input inconsistent!"
 msgstr "两次密码输入不一致"
 
-msgid "The original password is wrong, please input again"
+msgid "old password is incorrect"
 msgstr "原密码错误，请重新输入"
 
 msgid "log contents"
@@ -501,8 +501,8 @@ msgstr "发包周期限定在10-300秒内"
 msgid "The startup delay is limited to 60-300 seconds"
 msgstr "启动延迟限定在60-300秒内"
 
-msgid "The number of bags allowed is limited to 1-35535"
-msgstr "允许丢包数限定在1-35535内"
+msgid "The number of bags allowed is limited to 1-65535"
+msgstr "允许丢包数限定在1-65535内"
 
 msgid "Are you sure to restore factory Settings"
 msgstr "是否确定恢复出厂设置"
@@ -514,7 +514,7 @@ msgid "Are you sure to confirm import configuration"
 msgstr "是否确定导入配置"
 
 msgid "setting the IP address confirm"
-msgstr "设置ip地址后，pc必须在统一网段才能访问管理页面，是否确认设置"
+msgstr "设置ip地址后，pc必须在统一网段才能访问管理页面（可设置pc的IP地址为192.168.4.xxx，通过192.168.4.252访问），是否确认设置"
 
 msgid "wireless internal network isolation"
 msgstr "无线内部网络隔离"
@@ -635,3 +635,9 @@ msgster "默认DNS服务器"
 
 msgid "standby DNS"
 msgster "备用DNS服务器"
+
+msgid "defaultDNS error"
+msgster "默认DNS服务器非法"
+
+msgid "standbyDNS error"
+msgster "备用DNS服务器非法"
