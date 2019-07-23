@@ -47,38 +47,32 @@ ifdef CONFIG_TARGET_siflower_sf16a18_fullmask
 NOSTDINC_FLAGS += -DCONFIG_SF16A18_FULL_MASK
 endif
 
-ifdef CONFIG_KERNEL_DEBUG_FS
-ifneq ($(findstring 86V,$(PROFILE)),)
-SFAX8_KO_NAME="86v_sfax8eth_switch.ko"
-else
-SFAX8_KO_NAME="sfax8eth_switch.ko"
-endif
-else
-ifneq ($(findstring 86V,$(PROFILE)),)
-SFAX8_KO_NAME="86v_sfax8eth_switch_nodebugfs.ko"
-else
-SFAX8_KO_NAME="sfax8eth_switch_nodebugfs.ko"
-endif
+ifdef CONFIG_SFAX8_SWITCH_VLAN
+NOSTDINC_FLAGS += -DCONFIG_SFAX8_SWITCH_VLAN
 endif
 
-ifdef CONFIG_SFAX8_SWITCH_VLAN
-ifdef CONFIG_KERNEL_DEBUG_FS
 ifneq ($(findstring 86V,$(PROFILE)),)
-SFAX8_KO_NAME="86v_sfax8eth_vlan.ko"
-else
-SFAX8_KO_NAME="sfax8eth_vlan.ko"
+SFAX8_KO_NAME="86v_V5_sfax8eth.ko"
 endif
-else
-ifneq ($(findstring 86V,$(PROFILE)),)
-SFAX8_KO_NAME="86v_sfax8eth_vlan_nodebugfs.ko"
-else
-SFAX8_KO_NAME="sfax8eth_vlan_nodebugfs.ko"
+
+ifneq ($(findstring REP,$(PROFILE)),)
+SFAX8_KO_NAME="rep_V1_sfax8eth.ko"
 endif
+
+ifneq ($(findstring GMAC,$(PROFILE)),)
+SFAX8_KO_NAME="p10m_sfax8eth.ko"
 endif
+
+ifneq ($(findstring P10H,$(PROFILE)),)
+SFAX8_KO_NAME="p10m_sfax8eth.ko"
 endif
 
 ifdef CONFIG_SFAX8_SWITCH_DPS
 NOSTDINC_FLAGS += -DCONFIG_SFAX8_SWITCH_DPS
+endif
+
+ifdef CONFIG_SFAX8_FACTORY_READ
+NOSTDINC_FLAGS += -DCONFIG_SFAX8_FACTORY_READ
 endif
 
 define Build/Prepare

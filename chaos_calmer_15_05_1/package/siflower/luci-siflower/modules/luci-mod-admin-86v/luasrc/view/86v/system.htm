@@ -235,9 +235,7 @@ var timeTimer;
 function connect_mode() {
 	var sel = document.getElementById("connect_select");
 	var status = sel.options[sel.selectedIndex].value;
-	console.log("status:"+status)
 	if (status == 'dyna') {
-    console.log("dyna")
     document.getElementById("ipaddr").disabled = true;
 	document.getElementById("netmask").disabled = true;
     document.getElementById("gateway").disabled = true;
@@ -250,25 +248,11 @@ function connect_mode() {
     document.getElementById("defaultDNS").disabled = false;
     document.getElementById("standbyDNS").disabled = false;
 	}
-    var dhcp_enable = document.getElementById('dhcpServer_status').checked;
-	console.log("dhcp_enable="+dhcp_enable);
-	if (dhcp_enable){
-		console.log("dhcp_enable=1")
-	}else {
-		console.log("dhcp_enable=0")
-	}
-    var enable = document.getElementById('led').checked;
-	if (enable){
-		console.log("led=1")
-	}else {
-		console.log("led=0")
-	}
 }
 
 function getSysinfo() {
 	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_sysinfo")%>', null,
 				function(x, result){
-				console.log("+++++++++++++++++++++++++++++++="+result);
 				if (result.code == 0) {
 				sysinfo = result.info;
 				inid_ip = result.info.lan_ip;
@@ -280,14 +264,6 @@ function getSysinfo() {
 				inid_connectmode = result.info.connectmode;
 				inid_defaultDNS = result.info.defaultDNS;
 				inid_standbyDNS = result.info.standbyDNS;
-				console.log(inid_ip);
-				console.log(inid_port);
-				console.log(inid_netmask);
-				console.log("inid_getway:"+inid_getway);
-				console.log("inid_connectmode:"+inid_connectmode);
-				console.log("inid_dhcp_enable:"+inid_dhcp_enable);
-				console.log("inid_defaultDNS:"+inid_defaultDNS);
-				console.log("inid_standbyDNS:"+inid_standbyDNS);
 				if (result.info.led == "1") {
 				document.getElementById('led').checked= true;
 				}else {
@@ -295,17 +271,13 @@ function getSysinfo() {
 				}
 				if (result.info.dhcp_enable == "1"){
 				document.getElementById('dhcpServer_status').checked = true;
-				console.log("dhcp_enable=1")
 				}else {
 				document.getElementById('dhcpServer_status').checked = false;
-				console.log("dhcp_enable=0")
 				}
 				if (result.info.connectmode == "0"){
 					document.getElementById("connect_select")[0].selected=true;
-					console.log("connectmode=0")
 				}else if (result.info.connectmode == "1"){
 					document.getElementById("connect_select")[1].selected=true;
-					console.log("connectmode=1")
 				}
 				connect_mode();
 				if (result.info.lan_ip != undefined) {
@@ -341,7 +313,6 @@ function setSysinfo() {
 	sysinfo.defaultDNS = document.getElementById('defaultDNS').value;
 	sysinfo.standbyDNS = document.getElementById('standbyDNS').value;
 	sysinfo.connectmode = document.getElementById('connect_select').selectedIndex;
-	console.log("sysinfo.connectmode:"+sysinfo.connectmode);
 	var enable = document.getElementById('led').checked;
 	if (enable){
 		sysinfo.led = "1";
@@ -349,13 +320,10 @@ function setSysinfo() {
 		sysinfo.led = "0";
 	}
     var dhcp_enable = document.getElementById('dhcpServer_status').checked;
-	console.log("dhcp_enable="+dhcp_enable);
 	if (dhcp_enable){
 		sysinfo.dhcp_enable = "1";
-		console.log("dhcp_enable=1")
 	}else {
 		sysinfo.dhcp_enable = "0";
-		console.log("dhcp_enable=0")
 	}
 	var err = document.getElementById('Error');
 	var text = err.getElementsByTagName('span')[0];
@@ -364,38 +332,51 @@ function setSysinfo() {
 		text.innerText = '<%:Port number cannot be empty%>';
 		return;
 	}
-	if (!isValidIP(sysinfo.lan_ip)) {
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('ipaddr');
-		text.innerText = '<%:IP address is invalid%>';
-		return;
-	}else if (!lannetMaskLimit(sysinfo.mask)){
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('netmask');
-		text.innerText = '<%:Subnet mask is not valid%>';
-		return;
-	} else if (sysinfo.gateway!=""&&!isValidIP(sysinfo.gateway)){
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('gateway');
-		text.innerText = '<%:Gateway error%>';
-		return;
-	}else if (sysinfo.web_port > 65535||sysinfo.web_port < 1){
+	if (sysinfo.connectmode == 1){
+		if (!isValidIP(sysinfo.lan_ip)) {
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ipaddr');
+			text.innerText = '<%:IP address is invalid%>';
+			return;
+		}else if (!lannetMaskLimit(sysinfo.mask)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('netmask');
+			text.innerText = '<%:Subnet mask is not valid%>';
+			return;
+		} else if (!isValidIP(sysinfo.gateway)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('gateway');
+			text.innerText = '<%:Gateway error%>';
+			return;
+		}else if (!isValidIP(sysinfo.defaultDNS)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('defaultDNS');
+			text.innerText = '<%:defaultDNS error%>';
+			return;
+		}else if (sysinfo.standbyDNS !="" && !isValidIP(sysinfo.standbyDNS)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('standbyDNS');
+			text.innerText = '<%:standbyDNS error%>';
+			return;
+		}
+	}
+	if (sysinfo.web_port > 65535||sysinfo.web_port < 1||sysinfo.web_port.search(/\D/g) != -1){
 		err.style.visibility = 'visible';
 		errTipDoc = document.getElementById('web-port');
 		text.innerText = '<%:The port number range error%>';
 		return;
-	} else if (sysinfo.web_timeout>300||sysinfo.web_timeout<30){
+	} else if (sysinfo.web_timeout>300||sysinfo.web_timeout<30||sysinfo.web_timeout.search(/\D/g) != -1){
 		err.style.visibility = 'visible';
 		errTipDoc = document.getElementById('web-timeout');
 		text.innerText = '<%:WEB session timeout error%>';
 		return;
 	}
-
+	if (sysinfo.connectmode == inid_connectmode && sysinfo.dhcp_enable == inid_dhcp_enable && inid_ip == sysinfo.lan_ip && inid_getway == sysinfo.gateway && inid_netmask == sysinfo.mask && inid_defaultDNS == sysinfo.defaultDNS && inid_standbyDNS == sysinfo.standbyDNS){
+		return ;
+	}
 	var params = {'info':sysinfo};
-	console.log(params);
 	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_sysinfo")%>', params,
 				function(x, result){
-				console.log(result);
 				var err = document.getElementById('Error');
 				var text = err.getElementsByTagName('span')[0];
 				if (result==null){
@@ -404,36 +385,7 @@ function setSysinfo() {
 				} else if (result!=null&&result.code == 0) {
 				text.innerText = '<%:set successfully%>';
 				err.style.visibility = 'visible';
-				console.log(inid_ip);
-				console.log(inid_port);
 				inid_connectmode=document.getElementById('connect_select').selectedIndex;
-				console.log("------------------------------------------------>inid_connectmode:"+inid_connectmode);
-				if (inid_ip!=sysinfo.lan_ip||inid_port!=sysinfo.web_port) {
-				var wait = document.getElementById('waiting');
-				wait.getElementsByTagName('p')[0].innerText = '<%:redirecting, please wait%>';
-				document.getElementById("waiting").style.display='';
-				setTimeout(function () {
-					setInterval(function () {
-						pageRedirect("http://"+sysinfo.lan_ip+":"+sysinfo.web_port);
-						},3000)
-					},5000)
-				}else {
-					if (inid_getway!=sysinfo.gateway||inid_netmask!=sysinfo.mask||inid_timeout!=sysinfo.web_timeout){
-						var wait = document.getElementById('waiting');
-						wait.getElementsByTagName('p')[0].innerText = '<%:redirecting, please wait%>';
-						document.getElementById("waiting").style.display='';
-						setTimeout(function () {
-									setInterval(function () {
-										XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
-											function(x, result) {
-											if (x.response!=""&&x.response!=null) {
-											window.location.reload();
-											}
-											});
-										},3000)
-									},3000)
-							}
-					}
 				} else {
 					text.innerText = result.msg;
 					err.style.visibility = 'visible';
@@ -470,7 +422,6 @@ function setPassword() {
 	var params = {'passwordold':passwordold, 'passwordnew':passwordnew};
 	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_password")%>', params,
 				function(x, result){
-				    console.log(result);
 				    var err = document.getElementById('Error');
 				    var text = err.getElementsByTagName('span')[0];
 				    if (result==null){
@@ -488,7 +439,6 @@ function setPassword() {
 function getLog() {
 	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_log")%>', null,
 				function(x, result){
-				console.log(result);
 				if (result.code == 0) {
 				document.getElementById('show-syslog').style.display = '';
 				var html = '<tr><th><%:index%></th><th><%:log contents%></th></tr>';
@@ -812,20 +762,20 @@ function setPing() {
 			errTipDoc = document.getElementById('ping-ip');
 			text.innerText = '<%:IP address is invalid%>';
 			return;
-		}else if (pinginfo.period>300||pinginfo.period<10){
+		}else if (pinginfo.period>300||pinginfo.period<10||pinginfo.period.search(/\D/g) != -1){
 			err.style.visibility = 'visible';
 			errTipDoc = document.getElementById('ping-period');
 			text.innerText = '<%:The contract period is limited to 10-300 seconds%>';
 			return;
-		}else if (pinginfo.delay>300||pinginfo.delay<60){
+		}else if (pinginfo.delay>300||pinginfo.delay<60||pinginfo.delay.search(/\D/g) != -1){
 			err.style.visibility = 'visible';
 			errTipDoc = document.getElementById('ping-delay');
 			text.innerText = '<%:The startup delay is limited to 60-300 seconds%>';
 			return;
-		}else if (pinginfo.miss>65535||pinginfo.miss<1){
+		}else if (pinginfo.miss>65535||pinginfo.miss<1||pinginfo.miss.search(/\D/g) != -1){
 			err.style.visibility = 'visible';
 			errTipDoc = document.getElementById('ping-miss');
-			text.innerText = '<%:The number of bags allowed is limited to 1-35535%>';
+			text.innerText = '<%:The number of bags allowed is limited to 1-65535%>';
 			return;
 		}
 	}
@@ -1035,7 +985,6 @@ function setConfig() {
 	err.style.visibility = 'visible';
 }
 function setIp() {
-    console.log("enter setIp function")
 	sysinfo.lan_ip = document.getElementById('ipaddr').value;
 	sysinfo.mask = document.getElementById('netmask').value;
 	sysinfo.gateway = document.getElementById('gateway').value;
@@ -1044,23 +993,16 @@ function setIp() {
 	sysinfo.web_port = document.getElementById('web-port').value;
 	sysinfo.web_timeout = document.getElementById('web-timeout').value;
 	sysinfo.connectmode = document.getElementById('connect_select').selectedIndex;
-	console.log("-------------------->sysinfo.connectmode:"+sysinfo.connectmode)
-	console.log("-------------------->sysinfo.gateway:"+sysinfo.gateway)
-	console.log("-------------------->sysinfo.defaultDNS:"+sysinfo.defaultDNS)
-	console.log("-------------------->sysinfo.standbyDNS:"+sysinfo.standbyDNS)
 	/*if (inid_connectmode == 1 && sysinfo.connectmode == 0)
 	{
-		console.log("inid_connectmode == 1 && sysinfo.connect_mode == 0")
-		/*XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_ipaddr")%>', null,
+		XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_ipaddr")%>', null,
 				function(x, result){
-				console.log(result);
 				var err = document.getElementById('Error');
 				var text = err.getElementsByTagName('span')[0];
 				if (result==null){
 				text.innerText = '<%:connect failed,please retry%>';
 				err.style.visibility = 'visible';
 				} else if (result!=null && result.code == 0) {
-				console.log("get:tmp_ip.ipaddr:"+result.tmp_ip)
 				tmp_ipaddr = result.tmp_ip;
 				if (inid_ip != tmp_ipaddr){
 					setFunc = 4;
@@ -1072,16 +1014,14 @@ function setIp() {
 						setSysinfo();
 					}
 				}
-			});*/
-	/*	setFunc = 4;
+			});
+		setFunc = 4;
 		var err = document.getElementById('setBtnTip');
 		var text = err.getElementsByTagName('span')[0];
 		text.innerText = '设置之后，ip地址会发生变化，可以通过'+"192.168.5.252"+'进行访问,是否确认设置';
 		err.style.visibility = 'visible';
 	} else {*/
-		console.log("else")
-		if (inid_ip!=sysinfo.lan_ip){
-		console.log("inid_ip!=sysinfo.lan_ip")
+		if (inid_ip!=sysinfo.lan_ip || inid_connectmode != sysinfo.connectmode){
 		setFunc = 4;
 		var err = document.getElementById('setBtnTip');
 		var text = err.getElementsByTagName('span')[0];
@@ -1090,7 +1030,6 @@ function setIp() {
 		} else {
 			setSysinfo();
 		}
-    console.log("exit setIp function")
 //	}
 }
 

@@ -445,10 +445,10 @@ msgstr "The original password cannot be empty"
 msgid "New password length error"
 msgstr "New password should be no less than 6 characters long"
 
-msgid "Two password input inconsistent"
+msgid "Two password input inconsistent!"
 msgstr "Two password input inconsistent"
 
-msgid "The original password is wrong, please input again"
+msgid "old password is incorrect"
 msgstr "The original password is wrong, please input again"
 
 msgid "log contents"
@@ -502,8 +502,8 @@ msgstr "The contract period is limited to 100-300 seconds"
 msgid "The startup delay is limited to 60-300 seconds"
 msgstr "The startup delay is limited to 60-300 seconds"
 
-msgid "The number of bags allowed is limited to 1-35535"
-msgstr "The number of bags allowed is limited to 1-35535"
+msgid "The number of bags allowed is limited to 1-65535"
+msgstr "The number of bags allowed is limited to 1-65535"
 
 msgid "Are you sure to restore factory Settings"
 msgstr "Are you sure to restore factory Settings"
@@ -515,7 +515,7 @@ msgid "Are you sure to confirm import configuration"
 msgstr "Are you sure to confirm import configuration"
 
 msgid "setting the IP address confirm"
-msgstr "After setting the IP address, the PC must visit the management page in the unified network segment"
+msgstr "After setting the IP address, the PC must visit the management page in the unified network segment(You can set the IP address of the pc to 192.168.4.xxx and access it through 192.168.4.252)"
 
 msgid "wireless internal network isolation"
 msgstr "Wireless Internal Network Isolation"
@@ -636,3 +636,9 @@ msgster "default DNS Server"
 
 msgid "standby DNS"
 msgster "Standby DNS Server"
+
+msgid "defaultDNS error"
+msgster "default DNS invalid"
+
+msgid "standbyDNS error"
+msgster "standby DNS invalid"

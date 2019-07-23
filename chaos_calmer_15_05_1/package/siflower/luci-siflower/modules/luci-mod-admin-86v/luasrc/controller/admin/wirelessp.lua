@@ -114,7 +114,7 @@ function set_wireless_net()
 						net:set("ssid", band2["name"])
 						net:set("encryption", band2["encrypt"])
 						if band2["encrypt"] ~= "none" then
-							if #band2["password"] < 8 or #band2["password"] > 31 then
+							if #band2["password"] < 8 or #band2["password"] > 63 then
 								code = sferr.ERROR_NO_INVALID_PASSWORD
 								break
 							else
@@ -146,7 +146,7 @@ function set_wireless_net()
 						net:set("ssid", band5["name"])
 						net:set("encryption", band5["encrypt"])
 						if band5["encrypt"] ~= "none" then
-							if #band5["password"] < 8 or #band5["password"] > 31 then
+							if #band5["password"] < 8 or #band5["password"] > 63 then
 								code = sferr.ERROR_NO_INVALID_PASSWORD
 								break
 							else
@@ -222,7 +222,7 @@ function add_wireless_net()
 	for i=1,1 do
 		if band2 and num_24g < 4 or band5 and num_5g < 4 then
 			if band2 then
-				if band2["encrypt"] ~= "none" and #band2["password"] < 8 or #band2["password"] > 31 then
+				if band2["encrypt"] ~= "none" and #band2["password"] < 8 or #band2["password"] > 63 then
 					code = sferr.ERROR_NO_INVALID_PASSWORD
 					break
 				end
@@ -261,7 +261,7 @@ function add_wireless_net()
 			end
 
 			if band5 then
-				if band5["encrypt"] ~= "none" and #band5["password"] < 8 or #band5["password"] > 31 then
+				if band5["encrypt"] ~= "none" and #band5["password"] < 8 or #band5["password"] > 63 then
 					code = sferr.ERROR_NO_INVALID_PASSWORD
 					break
 				end
