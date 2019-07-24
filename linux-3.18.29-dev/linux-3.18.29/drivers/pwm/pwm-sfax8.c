@@ -296,8 +296,6 @@ static int pwm_sfax8_enable(struct pwm_chip *chip, struct pwm_device *pwm)
 	unsigned long flags;
 	u32 tcon;
 
-	pwm_sfax8_clk_gate(1);
-
 	spin_lock_irqsave(&sfax8_pwm_lock, flags);
 
 	tcon = readl(our_chip->base + REG_TCON);
@@ -327,8 +325,6 @@ static void pwm_sfax8_disable(struct pwm_chip *chip, struct pwm_device *pwm)
 	tcon = readl(our_chip->base + REG_TCON);
 	tcon &= ~TCON_AUTORELOAD(tcon_chan);
 	writel(tcon, our_chip->base + REG_TCON);
-
-	pwm_sfax8_clk_gate(0);
 
 	spin_unlock_irqrestore(&sfax8_pwm_lock, flags);
 }
@@ -510,6 +506,8 @@ static int pwm_sfax8_probe(struct platform_device *pdev)
 	if(release_reset(SF_PWM_SOFT_RESET))
 		return -EFAULT;
 
+	pwm_sfax8_clk_gate(1);
+
 	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL)
 		return -ENOMEM;
@@ -589,6 +587,8 @@ static int pwm_sfax8_remove(struct platform_device *pdev)
 		return ret;
 
 	clk_disable_unprepare(chip->base_clk);
+
+	pwm_sfax8_clk_gate(0);
 
 	if(hold_reset(SF_PWM_SOFT_RESET))
 		return -EFAULT;
