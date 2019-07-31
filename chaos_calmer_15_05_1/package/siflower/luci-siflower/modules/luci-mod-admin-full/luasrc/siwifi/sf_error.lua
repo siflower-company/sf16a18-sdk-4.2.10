@@ -167,6 +167,10 @@ ERROR_AC_NOT_SUPPORT = 1748
 ERROR_NO_AP_UPGRADE = 1749
 ERROR_SEND_CMD_AP_ERR = 1750
 ERROR_NO_AP_VERSION_NOT_NEWEST = 1751
+ERROR_AP_NO_RESPONSE = 1752
+ERROR_CONNECTION_RESET = 1753
+ERROR_ILLEGAL_FILE = 1754
+ERROR_SYNC_PPPOE_TIMEOUT = 1755
 
 function _(str)
     return disp._(str)
@@ -274,6 +278,10 @@ function getErrorMessage(errorCode)
     errorList[1749] = _("no ap need upgrade")
     errorList[1750] = _("send upgrade to ap error")
     errorList[1751] = _("ap version not newest")
+    errorList[1752] = _("ap no response")
+    errorList[1753] = _("connection reset by peer")
+    errorList[1754] = _("Configuration file type illegal")
+    errorList[1755] = _("sync pppoe info from old router timeout")
 
     if (errorList[errorCode] == nil) then
         return translate(_("unknown error"))

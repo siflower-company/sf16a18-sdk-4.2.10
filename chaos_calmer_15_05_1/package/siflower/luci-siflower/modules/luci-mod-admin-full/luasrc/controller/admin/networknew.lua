@@ -57,6 +57,7 @@ function index()
     entry({"admin", "networknew", "get_ip_mac_bind_table"}, call("get_ip_mac_bind_table")).leaf = true;
     entry({"admin", "networknew", "set_ip_mac_bind_table"}, call("set_ip_mac_bind_table")).leaf = true;
 	entry({"admin", "networknew", "disable_guide"}, call("disable_guide")).leaf = true;
+	entry({"admin", "networknew", "sync_pppoe_info"}, call("sync_pppoe_info")).leaf = true;
 end
 
 --将table转化为字符串，用于打印
@@ -1342,4 +1343,45 @@ function disable_guide()
 	}
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(result)
+end
+
+function sync_pppoe_info()
+	local timer = 0
+	local timeout = 15
+	local result = {
+		code = 0,
+		msg = "OK"
+	}
+
+    _uci_real:set("pppoe", "pppoe_server", "enabled", 1)
+    _uci_real:commit("pppoe")
+    luci.util.exec("/etc/init.d/pppoe-server restart")
+    while true
+    do
+        if sysutil.checkFileExist("/tmp/pppoe_info") == 1 then
+            local t = io.popen("cat /tmp/pppoe_info |head -n 1 |tr -d '\n'")
+            result["username"] = t:read("*all")
+            t:close()
+            t = io.popen("cat /tmp/pppoe_info |tail -n 1 |tr -d '\n'")
+            result["password"] = t:read("*all")
+            t:close()
+            break
+        else
+            os.execute("sleep "..1)
+            timer = timer + 1
+        end
+
+        if timer >= timeout then
+            result["code"] = sferr.ERROR_SYNC_PPPOE_TIMEOUT
+            break
+        end
+    end
+
+    _uci_real:set("pppoe", "pppoe_server", "enabled", 0)
+    _uci_real:commit("pppoe")
+    luci.util.exec("/etc/init.d/pppoe-server restart; sleep 1; rm /tmp/pppoe_info")
+
+    result["msg"]  = sferr.getErrorMessage(result["code"])
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(result)
 end

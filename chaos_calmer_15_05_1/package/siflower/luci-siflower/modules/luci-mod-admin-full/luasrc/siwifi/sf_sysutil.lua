@@ -383,18 +383,27 @@ function getOTAInfo()
 	else
 		cloud_code_url = "https://192.168.1.12:8090/v1"..sysconfig.LOOKOTAVERSION2
 	end
-	local romtype = getRomtype()
+    local romtype = _uci_real:get("basic_setting", "ota", "romtype")
+    if romtype == nil then
+        romtype = getRomtype()
+    end
 	local chiptype = getChiptype()
 	local data = {}
 	data.romtype = romtype
 	if (chiptype == 0) then
-		data.chip="fullmask"
+        data.chip=_uci_real:get("basic_setting", "ota", "chip")
+        if data.chip == nil then
+            data.chip = "fullmask"
+        end
 	else
 		data.chip="mpw0"
 	end
 	data.version = get_software_version()
 	data.sn = uci:get("siwifi", "hardware", "sn")
-	data.imagetype = 0
+    data.imagetype = _uci_real:get("basic_setting", "ota", "imagetype")
+    if data.imagetype == nil then
+        data.imagetype = 0
+    end
 	data.env = getImgtype() -- change this for testing release version should be 0
 	--data.version = uci:get("sicloud","cloudcode","version")
 	local json_data = json.encode(data)
@@ -423,9 +432,15 @@ function getApOTAInfo()
 	end
 
 	local data = {}
-	local ap_version = ""
-	data.romtype = 3 --ap
-	data.chip="fullmask"
+    local ap_version = ""
+    data.romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
+    if data.romtype == nil then
+        data.romtype = 3
+    end
+    data.chip=_uci_real:get("basic_setting", "ota", "chip")
+    if data.chip == nil then
+        data.chip = "fullmask"
+    end
 	_uci_real:foreach("capwap_devices","device",
 	function(s)
 		if s.status == "1" then
@@ -437,7 +452,10 @@ function getApOTAInfo()
 	end
 	data.version = ap_version
 	data.sn = uci:get("siwifi", "hardware", "sn")
-	data.imagetype = 0
+    data.imagetype = _uci_real:get("basic_setting", "ota", "imagetype")
+    if data.imagetype == nil then
+        data.imagetype = 0
+    end
 	data.env = getImgtype()
 	local json_data = json.encode(data)
 	nixio.syslog("crit","curl -X POST -k -H \"Content-Type: application/json\" -d \'%s\' \"%s\"" %{json_data,cloud_code_url});
@@ -491,11 +509,20 @@ function getApOTAInfos()
 	data.data = {}
 	for  i = 1, #ap_version do
 		data.data[#data.data+1] = {}
-		data.data[i].romtype = 3 --ap
-		data.data[i].chip="fullmask"
+        data.data[i].romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
+        if data.data[i].romtype == nil then
+            data.data[i].romtype = 3
+        end
+        data.data[i].chip=_uci_real:get("basic_setting", "ota", "chip")
+        if data.data[i].chip == nil then
+            data.data[i].chip = "fullmask"
+        end
 		data.data[i].version = ap_version[i]
 		data.data[i].sn = uci:get("siwifi", "hardware", "sn")
-		data.data[i].imagetype = 0
+        data.data[i].imagetype = _uci_real:get("basic_setting", "ota", "imagetype")
+        if data.data[i].imagetype == nil then
+            data.data[i].imagetype = 0
+        end
 		data.data[i].env = getImgtype()
 	end
 

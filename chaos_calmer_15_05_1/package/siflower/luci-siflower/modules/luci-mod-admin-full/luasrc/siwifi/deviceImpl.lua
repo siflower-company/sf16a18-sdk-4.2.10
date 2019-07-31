@@ -709,7 +709,7 @@ function convert_devinfo_from_uci(s)
 
 	list_item["authority"] = {}
 
-	list_item["authority"]["internet"]      = tonumber(s.internet or -1)
+	list_item["authority"]["internet"]      = tonumber(s.internet or 1)
 	list_item["authority"]["lan"]           = tonumber(s.lan or -1)
 	list_item["authority"]["listfunc"]           = tonumber(s.listfunc or -1)
 	list_item["authority"]["speedlimit"]      = tonumber(s.speedlimit or 0)

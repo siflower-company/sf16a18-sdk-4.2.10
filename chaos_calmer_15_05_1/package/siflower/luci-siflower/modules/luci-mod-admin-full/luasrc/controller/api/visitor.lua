@@ -41,9 +41,21 @@ function get_bindinfo()
 
     local code = 0
     local result = {}
+    local routerkey = {}
+    local checkRouterKey = {}
     local passwdset = 0
     local pwh,pwe = luci.sys.user.getpasswd("root")
     local protocol = sysutil.get_version_from_http()
+    local ret = io.popen("cat /sys/devices/factory-read/product_key")
+    if ret then
+        routerkey = ret:read("*a")
+        ret:close()
+    end
+    ret = io.popen("cat /sys/devices/factory-read/product_key_flag")
+    if ret then
+        checkRouterKey = ret:read("*a")
+        ret:close()
+    end
     if(not protocol) then
         result = sferr.errProtocolNotFound()
     elseif(protocol <=  sysutil.get_version_local()) then
@@ -61,6 +73,11 @@ function get_bindinfo()
         result["code"] = code
         result["msg"]  = sferr.getErrorMessage(code)
 		result["mac"] = uci:get("network", "lan", "macaddr") or ''
+
+        if string.find(checkRouterKey,"pk") then
+            result["routerkey"] = routerkey
+        end
+
     else
         result = sferr.errProtocolNotSupport()
     end

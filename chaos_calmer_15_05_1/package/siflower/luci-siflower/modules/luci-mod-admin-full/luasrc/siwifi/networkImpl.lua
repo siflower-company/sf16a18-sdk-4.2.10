@@ -28,14 +28,6 @@ if (is_ac == true) then
 	ap = require("luci.controller.admin.ap")
 end
 
-local SAVE_MODE = 0
-local NORMAL_MODE = 1
-local PERFORMANCE_MODE = 2
-
-local SAVE_MODE_TXPOWER = 5
-local NORMAL_MODE_TXPOWER = 10
-local PERFORMANCE_MODE_TXPOWER = 20
-
 local reset_interval = 30
 
 function send_ota_upgrade(arg_list_table, ota_type, mode)
@@ -1547,7 +1539,7 @@ function ota_upgrade(arg_list_table)
 					f:close()
 					mode = 1
 					send_ota_upgrade(arg_list_table,0, mode)
-					sysutil.fork_exec("/sbin/otaupgrade")
+					sysutil.fork_exec("/usr/bin/otaupgrade")
 				else
 					luci.util.exec("rm /tmp/upgrade_shortest_time")
 					code = sferr.EEROR_NO_LOCALVERSION_EAQULE_OTAVERSION
@@ -1683,7 +1675,7 @@ function ac_ota_upgrade_impl(check, mode)
 					luci.util.exec("rm /tmp/upgrade_shortest_time")
 					code = sferr.EEROR_NO_LOCALVERSION_EAQULE_OTAVERSION
 				else
-					sysutil.fork_exec("/sbin/otaupgrade")
+					sysutil.fork_exec("/usr/bin/otaupgrade")
 				end
 			end
 		else
@@ -1691,13 +1683,13 @@ function ac_ota_upgrade_impl(check, mode)
 		end
 		result["mode"]  =  mode
 	else
-		local ota_sta = get_ota_update_status()
-		result["status"] = get_web_status(ota_sta.status, mode)
-		result["status_msg"] = get_ota_message(ota_sta.status)
+		local ota_sta = systemnew.get_ota_update_status()
+		result["status"] = systemnew.get_web_status(ota_sta.status, mode)
+		result["status_msg"] = systemnew.get_ota_message(ota_sta.status)
 		if ota_sta.status == 5 or ota_sta.status == 8  or ota_sta.status == 11 then
 			result["status_msg"] = result["status_msg"]..ota_sta.msg
 		end
-		if ota_sta.status == OTA_FLASH and mode == 3 then
+		if ota_sta.status == systemnew.OTA_FLASH and mode == 3 then
 			result["ac_start"] = 1
 		end
 		if result.status == 1 then
@@ -2303,12 +2295,15 @@ function upload_log(arg_list_table)
 		elseif(cmd == "wifi") then
 			local_url = "/tmp/wifi.tar"
 			local file = io.open("/sf16a18", "rb")
+			luci.util.exec("dd if=/dev/mtdblock3 of=/tmp/fac count=1 bs=4096")
 			if file then
 				file:close()
+				luci.util.exec("cp /tmp/fac /sf16a18/")
+				luci.util.exec("tar -zcvf %s /sf16a18/* " %{local_url} )
 			else
-				return nil
+				luci.util.exec("cd /tmp/;tar -zcvf %s fac " %{local_url} )
 			end
-			luci.util.exec("tar -zcvf %s /sf16a18/* " %{local_url} )
+			luci.util.exec("rm /tmp/fac")
 		elseif(cmd == "config") then
 			local_url = "/tmp/config.tar"
 			luci.util.exec("tar -zcvf %s /etc/config/* " %{local_url} )
@@ -2520,7 +2515,7 @@ function new_oray_params()
 	local extraInfo = ""
 	local code = 0
 	local p2pret = {}
-	local ret1 = io.popen("ubus call lepton.network set_cp2p")
+	local ret1 = io.popen("ubus call siwifi_p2p_api.network set_cp2p")
 	if ret1 then
 		p2pret = ret1:read("*a")
 		ret1:close()
@@ -2557,7 +2552,7 @@ function destroy_oray_params(arg_list_table)
 	local sess = arg_list_table["session"]
 	local code = 0
 	local p2pret = {}
-	local ret1 = io.popen("ubus call lepton.network set_dp2p \'\{\"p2p_name\":\"%s\"\}\'"% sess)
+	local ret1 = io.popen("ubus call siwifi_p2p_api.network set_dp2p \'\{\"p2p_name\":\"%s\"\}\'"% sess)
 	if ret1 then
 		p2pret = ret1:read("*a")
 		ret1:close()
@@ -2593,7 +2588,7 @@ function setdevicerestrict(arg_list_table)
 	local op_list = get_list_by_mac(mac)
 	local dev = _uci_real:get(op_list, mac, "dev")
 	if string.find(dev, "lease") then
-		code = ERROR_NO_OPERATION_NOT_PERMIT
+		code = sferr.ERROR_NO_OPERATION_NOT_PERMIT
 	else
 		if social then
 			_uci_real:set(op_list , mac, "social", social)
