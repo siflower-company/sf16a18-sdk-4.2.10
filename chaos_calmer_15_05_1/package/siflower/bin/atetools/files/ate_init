@@ -65,5 +65,9 @@ echo $cmd
 eval $cmd
 fi
 
+if [ -w "/sys/kernel/debug/aetnensis/recalibrate" ];then
 echo 200 > /sys/kernel/debug/aetnensis/recalibrate
+fi
+if [ -w "/sys/kernel/debug/aetnensis/cooling_temp" ];then
 echo 0 > /sys/kernel/debug/aetnensis/cooling_temp
+fi

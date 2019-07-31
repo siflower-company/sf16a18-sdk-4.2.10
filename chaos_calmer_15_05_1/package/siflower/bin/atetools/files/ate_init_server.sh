@@ -50,7 +50,11 @@ ate_cmd wlan0 set ATE = ATESTART
 ate_cmd wlan1 set ATE = ATESTART
 fi
 killall ate_server
+if [ -w "/sys/kernel/debug/aetnensis/recalibrate" ];then
 echo 200 > /sys/kernel/debug/aetnensis/recalibrate
+fi
+if [ -w "/sys/kernel/debug/aetnensis/cooling_temp" ];then
 echo 0 > /sys/kernel/debug/aetnensis/cooling_temp
+fi
 
 ate_server
