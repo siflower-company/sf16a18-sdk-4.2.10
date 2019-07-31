@@ -10,9 +10,9 @@ local SAVE_MODE = 0
 local NORMAL_MODE = 1
 local PERFORMANCE_MODE = 2
 
-local SAVE_MODE_TXPOWER = 5
-local NORMAL_MODE_TXPOWER = 10
-local PERFORMANCE_MODE_TXPOWER = 20
+local SAVE_MODE_TXPOWER = 0
+local NORMAL_MODE_TXPOWER = 1
+local PERFORMANCE_MODE_TXPOWER = 2
 
 module("luci.siwifi.wirelessImpl", package.seeall)
 local nw = require "luci.model.network"
@@ -246,6 +246,12 @@ function wifi_connect(arg_list_table)
 		wifi_if.ifname = "sfi1"
 		result.band = "5G"
 	end
+	local channel_file = io.open("/tmp/wds_channel", "w+")
+	if channel_file ~= nil then
+		channel_file:write(arg_list_table.channel)
+		channel_file:flush()
+		io.close(channel_file)
+	end
 	wifi_if.ssid = arg_list_table.ssid
 	wifi_if.key = arg_list_table.key
 	wifi_if.encryption = arg_list_table.encryption
@@ -256,10 +262,6 @@ function wifi_connect(arg_list_table)
 		wdev:add_wifinet(wifi_if)
 		nw:save("wireless")
 		nw:commit("wireless")
-
-		_uci_real:set("wireless", wifi_if.device, "channel", arg_list_table.channel)
-		_uci_real:save("wireless")
-		_uci_real:commit("wireless")
 
 		nw:add_network(wifi_if.network, { proto = "dhcp", ifname = wifi_if.ifname })
 		nw:save("network")
@@ -280,6 +282,11 @@ function wds_getrelip(arg_list_table)
 		ip = "",
 	}
 	local code = 0
+	local is_radar = arg_list_table["is_radar"]
+	local timeout = 30
+	if is_radar and is_radar == 1 then
+		timeout = 90
+	end
 	local sync_file, waiting
 	sync_file = io.open("/tmp/wds_sync", "r")
 	if sync_file ~= nil then
@@ -288,24 +295,16 @@ function wds_getrelip(arg_list_table)
 		io.close(sync_file)
 	end
 
-	for i = 30, 1, -1 do
+	for i = timeout, 1, -1 do
 		if (waiting == "1") then
-			local bssid
-			_uci_real:foreach("wireless","wifi-iface",
-			function(s)
-				if ((s["ifname"] == "sfi0") or (s["ifname"] == "sfi1")) then
-					bssid = _uci_real:get("wireless", s[".name"], "bssid")
-				end
-			end)
-			if bssid ~= nil then
-				local err = check_wds_passwderr("/tmp/wds_"..bssid)
-				if (err == -1) then
-					code = -1
-					break;
-				elseif (err == -2) then
-					result.ip = "nil"
-					break;
-				end
+			local err = check_wds_passwderr("/tmp/wds_reason_code")
+			if (err == -1) then
+				code = -1
+				result.ip = "nil"
+				break;
+			elseif (err == -2) then
+				result.ip = "nil"
+				break;
 			end
 			if (arg_list_table) then
 				result.ip = wds_getwanip(arg_list_table.band)
@@ -315,12 +314,20 @@ function wds_getrelip(arg_list_table)
 					result.ip = wds_getwanip("5G")
 				end
 			end
-			if result.ip ~= "nil" then
+			local relayd_fd = io.popen("ps|grep relayd|grep grep -vc")
+			local relayd_sta = relayd_fd:read("*n")
+			if result.ip ~= "nil" and relayd_sta ~= 0 then
 				break
 			end
 			luci.sys.call("sleep 1")
 		else
 			luci.sys.call("sleep 1")
+		end
+		sync_file = io.open("/tmp/wds_sync", "r")
+		if sync_file ~= nil then
+			io.input("/tmp/wds_sync")
+			waiting = io.read(1)
+			io.close(sync_file)
 		end
 	end
 	local redirect_ip = ""
@@ -393,28 +400,16 @@ function wds_enable(arg_list_table)
 		io.close(sync_file)
 	end
 
-	local bssid
-	_uci_real:foreach("wireless","wifi-iface",
-	function(s)
-		if ((s["ifname"] == "sfi0") or (s["ifname"] == "sfi1")) then
-			bssid = _uci_real:get("wireless", s[".name"], "bssid")
-		end
-	end)
-
-	if bssid ~= nil then
-		clear_wds_passwderr("/tmp/wds_"..bssid)
-	end
+	clear_wds_passwderr("/tmp/wds_reason_code")
 	for retry = 2, 1, -1 do
 		local passwd_err = 0
 		luci.sys.call("/sbin/wifi restart")
 		for i = 15, 1, -1 do
-			if bssid ~= nil then
-				local err = check_wds_passwderr("/tmp/wds_"..bssid)
-				if ((err == -1) or (err == -2)) then
-					br_ip = "nil"
-					passwd_err = 1
-					break;
-				end
+			local err = check_wds_passwderr("/tmp/wds_reason_code")
+			if ((err == -1) or (err == -2)) then
+				br_ip = "nil"
+				passwd_err = 1
+				break;
 			end
 			if (arg_list_table.ifaces) then
 				br_ip = wds_getwanip(arg_list_table.ifaces.band)
@@ -474,14 +469,18 @@ function wds_enable(arg_list_table)
 
 		if (arg_list_table.ifaces) then
 			local ifname = ""
+			local ifname2 = ""
+			local freq_inter = wirelessnew.get_freq_intergration_impl()
 			if arg_list_table.ifaces.band == "2.4G" then
 				ifname = "wlan0"
+				ifname2 = "wlan1"
 			elseif arg_list_table.ifaces.band == "5G" then
 				ifname = "wlan1"
+				ifname2 = "wlan0"
 			end
 			_uci_real:foreach("wireless","wifi-iface",
 			function(s)
-				if(s["ifname"] == ifname) then
+				if(s["ifname"] == ifname or (freq_inter == 1 and s["ifname"] == ifname2)) then
 					_uci_real:set("wireless", s[".name"], "ssid", arg_list_table.ifaces.ssid)
 					if (arg_list_table.ifaces.key and arg_list_table.ifaces.key ~= "") then
 						_uci_real:set("wireless", s[".name"], "key", arg_list_table.ifaces.key)
@@ -496,6 +495,25 @@ function wds_enable(arg_list_table)
 		end
 
 		luci.sys.call("/etc/init.d/relayd enable")
+		local channel
+		if arg_list_table.channel then
+			channel = arg_list_table.channel
+		else
+			local channel_file = io.open("/tmp/wds_channel", "r")
+			if channel_file ~= nil then
+				channel = channel_file:read("*n")
+				io.close(channel_file)
+			else
+				nixio.syslog("crit","read channel error , wds stop !")
+			end
+		end
+		local radio_num = "radio0"
+		if tonumber(channel) >= 36 then
+			radio_num = "radio1"
+		end
+		_uci_real:set("wireless", radio_num, "channel", channel)
+		_uci_real:save("wireless")
+		_uci_real:commit("wireless")
 		if redirect_ip ~= "" then
 			sysutil.fork_exec("alter_lan %s delay" %{redirect_ip})
 		else
@@ -505,10 +523,16 @@ function wds_enable(arg_list_table)
 		code = 0
 	else
 		code = -1
+
 		nw:del_wifinet("sfi0")
 		nw:del_wifinet("sfi1")
 		nw:save("wireless")
 		nw:commit("wireless")
+
+		nw:del_network("wwan")
+		nw:save("network")
+		nw:commit("network")
+
 		luci.sys.call("/sbin/wifi reload")
 	end
 
@@ -812,20 +836,20 @@ end
 function check_wds_passwderr(filename)
 	local deauth_file, deauth
 	deauth_file = io.open(filename, "r")
-	if sta_status_f ~= nil then
+	if deauth_file ~= nil then
 		io.input(filename)
 		deauth = io.read(1)
 		io.close(deauth_file)
 	end
 	-- deauth/disassoc recieved
 	if (deauth == "1") then
-		return -2;
+		return -2
 	end
 	-- password error
 	if (deauth == "2") then
-		return -1;
+		return -1
 	end
-	return 0;
+	return 0
 end
 
 function clear_wds_passwderr(filename)
@@ -949,13 +973,13 @@ function setwifi(arg_list_table)
 					param_country = setting_param_json[i].country
 				end
 
-				if param_ssid and string.len(param_ssid)>31 then
+				if param_ssid and string.len(param_ssid)>32 then
 					local param_ssid_tmp = param_ssid
-					param_ssid = string.sub(param_ssid_tmp,1,31)
+					param_ssid = string.sub(param_ssid_tmp,1,32)
 				end
-				if param_key and string.len(param_key)>31 then
+				if param_key and string.len(param_key)>63 then
 					local param_key_tmp = param_key
-					param_key = string.sub(param_key_tmp,1,31)
+					param_key = string.sub(param_key_tmp,1,63)
 				end
 
 				if(param_ssid or param_enable or param_key or param_encryption or param_signal_mode or param_channel or param_disableall) then
@@ -986,11 +1010,11 @@ function setwifi(arg_list_table)
 						end
 						if(param_signal_mode) then
 							if param_signal_mode == SAVE_MODE then
-								wifidev:set("txpower", SAVE_MODE_TXPOWER)
+								wifidev:set("txpower_lvl", SAVE_MODE_TXPOWER)
 							elseif param_signal_mode == NORMAL_MODE then
-								wifidev:set("txpower", NORMAL_MODE_TXPOWER)
+								wifidev:set("txpower_lvl", NORMAL_MODE_TXPOWER)
 							elseif param_signal_mode == PERFORMANCE_MODE then
-								wifidev:set("txpower", PERFORMANCE_MODE_TXPOWER)
+								wifidev:set("txpower_lvl", PERFORMANCE_MODE_TXPOWER)
 							else
 								code = sferr.ERROR_NO_UNKNOWN_SIGNAL_MODE
 							end
@@ -1102,11 +1126,11 @@ function setwifi_advanced(arg_list_table)
 
 			if setting_param_json[i].signalmode then
 				if setting_param_json[i].signalmode == SAVE_MODE then
-					wifidev:set("txpower", SAVE_MODE_TXPOWER)
+					wifidev:set("txpower_lvl", SAVE_MODE_TXPOWER)
 				elseif setting_param_json[i].signalmode == NORMAL_MODE then
-					wifidev:set("txpower", NORMAL_MODE_TXPOWER)
+					wifidev:set("txpower_lvl", NORMAL_MODE_TXPOWER)
 				elseif setting_param_json[i].signalmode == PERFORMANCE_MODE then
-					wifidev:set("txpower", PERFORMANCE_MODE_TXPOWER)
+					wifidev:set("txpower_lvl", PERFORMANCE_MODE_TXPOWER)
 				else
 					code = sferr.ERROR_NO_UNKNOWN_SIGNAL_MODE
 				end
@@ -1172,9 +1196,9 @@ function getwifi_advanced()
 		rv[#rv]["distance"]   = tonumber(wifidev:get("distance"))
 		rv[#rv]["fragment"]   = tonumber(wifidev:get("frag"))
 		rv[#rv]["rts"]        = tonumber(wifidev:get("rts"))
-		if tonumber(wifidev:get("txpower")) == SAVE_MODE_TXPOWER then
+		if tonumber(wifidev:get("txpower_lvl")) == SAVE_MODE_TXPOWER then
 			rv[#rv]["signalmode"] = SAVE_MODE
-		elseif tonumber(wifidev:get("txpower")) == NORMAL_MODE_TXPOWER then
+		elseif tonumber(wifidev:get("txpower_lvl")) == NORMAL_MODE_TXPOWER then
 			rv[#rv]["signalmode"] = NORMAL_MODE
 		else
 			rv[#rv]["signalmode"] = PERFORMANCE_MODE
@@ -1223,4 +1247,3 @@ function set_freq_intergration(arg_list_table)
 	wirelessnew.set_freq_intergration_impl(arg_list_table)
 	return code
 end
-

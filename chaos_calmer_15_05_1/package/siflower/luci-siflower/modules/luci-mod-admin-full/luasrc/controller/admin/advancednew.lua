@@ -17,6 +17,7 @@ local sysutil = require("luci.siwifi.sf_sysutil")
 local ipc = require "luci.ip"
 local  networknew = require "luci.controller.admin.networknew"
 local sferr = require "luci.siwifi.sf_error"
+local fs     = require "nixio.fs"
 
 function index()
 	local uci = require("luci.model.uci").cursor()
@@ -596,10 +597,21 @@ end
 function get_devices()
 	--get online device
 	--
-	local wiredev = sfsys.get_wire_assocdev("0")
-	if wiredev then
-		sfsys.set_devlist(wiredev)
-	end
+    local old_time = fs.readfile("/tmp/oldtime")
+    if old_time == nil then
+        old_time = 0
+    end
+
+    local now_time = os.time()
+    if now_time - old_time >= 10 then
+        local oldtime_f = io.open("/tmp/oldtime", "w")
+        oldtime_f:write("%s\n" %{now_time})
+        oldtime_f:close()
+        local wiredev = sfsys.get_wire_assocdev("0")
+        if wiredev then
+            sfsys.set_devlist(wiredev)
+        end
+    end
 	sfsys.update_ts()
 	local devices = {}
 	local dev_list, count = sfsys.get_devinfo_from_devlist(1,nil)
@@ -635,6 +647,7 @@ function get_devices()
 			devices[#devices]["uploadlimit"] = dev_list[i]["authority"]["limitup"]  --上行限速值
 			devices[#devices]["downloadlimit"] = dev_list[i]["authority"]["limitdown"] --下行限速值
 			devices[#devices]["internet"] = dev_list[i]["authority"]["internet"]  --0 禁用网络 1 不禁用
+			devices[#devices]["lan"] = dev_list[i]["authority"]["lan"]  --0 拉黑 1 未拉黑
 		end
 	end
 
@@ -654,6 +667,7 @@ function set_device()
 	local arg_list_table = json.decode(arg_list)
 	local mac = arg_list_table["mac"]
 	local internet = arg_list_table["internet"]
+	local lan = arg_list_table["lan"]
 	local speed_ul = arg_list_table["uploadlimit"]
 	local speed_dl = arg_list_table["downloadlimit"]
 	local code = 0
@@ -667,6 +681,10 @@ function set_device()
 		if internet then
 			luci.util.exec("aclscript c_net %s %s" %{mac_fmt, tostring(internet)})
 			_uci_real:set(op_list, dev_mac, "internet", internet)
+		end
+		if lan then
+			luci.util.exec("aclscript c_lan %s %s" %{mac_fmt, tostring(lan)})
+			_uci_real:set(op_list, dev_mac, "lan", lan)
 		end
 
 		if speed_ul and speed_dl then

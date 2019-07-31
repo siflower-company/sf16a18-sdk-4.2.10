@@ -73,6 +73,8 @@ local wds_enable = false;
     entry({"admin", "systemnew", "ap_upgrade_check"}, call("ap_upgrade_check")).leaf = true;
     entry({"admin", "systemnew", "refresh_ap_table"}, call("refresh_ap_table")).leaf = true;
     entry({"admin", "systemnew", "get_style"}, call("get_style")).leaf = true;
+    entry({"admin", "systemnew", "get_auto_ota"}, call("get_auto_ota")).leaf = true;
+    entry({"admin", "systemnew", "set_auto_ota"}, call("set_auto_ota")).leaf = true;
 end
 
 OTA_DOWNLOAD		= 1
@@ -420,7 +422,7 @@ function upgrade()
         sysutil.resetAllDevice()
         fork_exec("sleep 5; killall dropbear uhttpd; sleep 1; /sbin/sysupgrade %s %q" %{ keep, image_tmp })
     else
-        result.code = ERROR_NO_IMG_TYPE_ERROR
+        result.code = sferr.ERROR_NO_IMG_TYPE_ERROR
 	    result.msg = sferr.getErrorMessage(result["code"])
     end
 
@@ -493,11 +495,8 @@ function stop_diagnostic_tool()
         msg = "OK",
     }
 
-    if arg_table.action == "ping" then
-        sysutil.fork_exec("kill `ps | grep ping | awk '{print $1}'`")
-    elseif arg_table.action == "tracert" then
-        sysutil.fork_exec("kill `ps | grep traceroute | awk '{print $1}'`")
-    end
+    sysutil.fork_exec("kill `ps | grep ping | awk '{print $1}'`")
+    sysutil.fork_exec("kill `ps | grep traceroute | awk '{print $1}'`")
 
     sysutil.nx_syslog(myprint(result), 1)
     luci.http.prepare_content("application/json")
@@ -515,6 +514,8 @@ function start_diagnostic_tool()
             --数组 诊断结果
         }
     }
+    luci.util.exec("kill `ps | grep ping | awk '{print $1}'`")
+    luci.util.exec("kill `ps | grep traceroute | awk '{print $1}'`")
     if arg_table.action == "ping" then
         sysutil.fork_exec("ping %s -c %s -s %s -W %s > /tmp/diagnostic.log" % {arg_table.ipaddr, arg_table.pingamount, arg_table.size, arg_table.timeout})
         log = nixio.fs.readfile("/tmp/diagnostic.log")
@@ -779,23 +780,23 @@ function ap_upgrade()
 
 		if #mac_update_list == 0 then
 				sysutil.nx_syslog("no ap need upgrade: ", nil)
-				code = ERROR_NO_AP_UPGRADE
+				code = sferr.ERROR_NO_AP_UPGRADE
 		else
 			luci.sys.call("killall siupserver")
 			luci.sys.call("siupserver %s &"%{image_tmp})
 			-- 0 means no version
-			ret = luci.sys.call("wtp_update %s %s %s"%{"0" , ap_checksum, download_mac_list})
+			ret = luci.sys.call("wtp_update %s %s %s &"%{"0" , ap_checksum, download_mac_list})
 			if ret ~= 0 then
 				--toDO error
 				sysutil.nx_syslog("send cmd to ap err: "..tostring(ret), 1)
-				code = ERROR_SEND_CMD_AP_ERR
+				code = sferr.ERROR_SEND_CMD_AP_ERR
 			end
 
 			sysutil.nx_syslog("ap updating is start", nil)
 			result["update_list"] = mac_update_list
 		end
 	else
-		code = ERROR_NO_IMG_TYPE_ERROR
+		code = sferr.ERROR_NO_IMG_TYPE_ERROR
 	end
 	sysutil.set_easy_return(code,result)
 end
@@ -858,4 +859,39 @@ function get_style()
     sysutil.nx_syslog(myprint(result), 1)
     luci.http.prepare_content("application/json")
     luci.http.write_json(result)
+end
+
+function get_auto_ota()
+    local result = {}
+    local code = 0
+    local enable = _uci_real:get("basic_setting", "auto_ota", "enable")
+    if enable == nil then
+        result["enable"] = 1
+    else
+        result["enable"] = enable
+    end
+    sysutil.set_easy_return(code, result)
+end
+
+function set_auto_ota()
+	local arg_list_table = get_arg_list()
+    local enable = arg_list_table["enable"]
+    local code = 0
+
+    local sta = _uci_real:get("basic_setting", "auto_ota", "enable")
+    if sta == nil then
+        _uci_real:set("basic_setting", "auto_ota", "setting")
+    end
+    if enable ~= sta then
+        _uci_real:set("basic_setting", "auto_ota", "enable", enable)
+        _uci_real:save("basic_setting")
+        _uci_real:commit("basic_setting")
+    end
+    sysutil.set_easy_return(code, nil)
+end
+
+function get_arg_list()
+	local arg_list, data_len = luci.http.content()
+	local arg_list_table = json.decode(arg_list)
+	return arg_list_table
 end

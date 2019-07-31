@@ -10,9 +10,9 @@ local SAVE_MODE = 0
 local NORMAL_MODE = 1
 local PERFORMANCE_MODE = 2
 
-local SAVE_MODE_TXPOWER = 5
-local NORMAL_MODE_TXPOWER = 10
-local PERFORMANCE_MODE_TXPOWER = 20
+local SAVE_MODE_TXPOWER = 0
+local NORMAL_MODE_TXPOWER = 1
+local PERFORMANCE_MODE_TXPOWER = 2
 
 module("luci.controller.admin.wirelessnew", package.seeall)
 local nw = require "luci.model.network"
@@ -58,6 +58,8 @@ function index()
 
 	entry({"admin", "wirelessnew", "set_freq_intergration"}, call("set_freq_intergration")).leaf = true;
 	entry({"admin", "wirelessnew", "get_freq_intergration"}, call("get_freq_intergration")).leaf = true;
+	entry({"admin", "wirelessnew", "get_monitor"}, call("get_monitor")).leaf = true;
+	entry({"admin", "wirelessnew", "set_monitor"}, call("set_monitor")).leaf = true;
 end
 
 --将table转化为字符串，用于打印
@@ -85,9 +87,9 @@ function get_wifi_iface()
 		ifaces[#ifaces]["enable"]     = wifinet:get("disabled") == nil and true or false
 		ifaces[#ifaces]["ssid"]       = wifinet:get("ssid")
 
-		if tonumber(wifidev:get("txpower")) == SAVE_MODE_TXPOWER then
+		if tonumber(wifidev:get("txpower_lvl")) == SAVE_MODE_TXPOWER then
 			ifaces[#ifaces]["signal"] = SAVE_MODE
-		elseif tonumber(wifidev:get("txpower")) == NORMAL_MODE_TXPOWER then
+		elseif tonumber(wifidev:get("txpower_lvl")) == NORMAL_MODE_TXPOWER then
 			ifaces[#ifaces]["signal"] = NORMAL_MODE
 		else
 			ifaces[#ifaces]["signal"] = PERFORMANCE_MODE
@@ -139,6 +141,36 @@ function get_wifi_iface()
 	luci.http.write_json(result)
 end
 
+function get_monitor()
+    local result = {}
+    local code = 0
+    local enable = _uci_real:get("basic_setting", "kerHealth", "enable")
+    if enable == nil then
+        result["enable"] = 0
+    else
+        result["enable"] = enable
+    end
+    sysutil.set_easy_return(code, result)
+end
+
+function set_monitor()
+	local arg_list_table = get_arg_list()
+    local enable = arg_list_table["enable"]
+
+    local code = 0
+    local sta = _uci_real:get("basic_setting", "kerHealth", "enable")
+    if sta == nil then
+        _uci_real:set("basic_setting", "kerHealth", "setting")
+    end
+    if enable ~= sta then
+        _uci_real:set("basic_setting", "kerHealth", "enable", enable)
+        _uci_real:save("basic_setting")
+        _uci_real:commit("basic_setting")
+        luci.util.exec("/etc/init.d/syncservice restart")
+    end
+    sysutil.set_easy_return(code, nil)
+end
+
 --ifaces
 function set_wifi_iface_local(ifaces)
 	local network = require("luci.model.network").init()
@@ -172,6 +204,11 @@ function set_wifi_iface_local(ifaces)
 					else
 						wifinet:set("disabled",  "1");
 					end
+					if ifaces[i]["broadcast"] then
+						wifinet:set("hidden","0")
+					else
+						wifinet:set("hidden","1")
+					end
 					if freq_inter == 1  then
 						wifinet_24g:set("ssid", ifaces[i]["ssid"])
 						if ifaces[i]["open"] == true then
@@ -184,6 +221,11 @@ function set_wifi_iface_local(ifaces)
 							wifinet_24g:set("disabled",  nil );
 						else
 							wifinet_24g:set("disabled",  "1");
+						end
+						if ifaces[i]["broadcast"] then
+							wifinet_24g:set("hidden","0")
+						else
+							wifinet_24g:set("hidden","1")
 						end
 					end
 				end
@@ -219,16 +261,11 @@ function set_wifi_iface_local(ifaces)
 				end
 
 				if ifaces[i]["signal"] == SAVE_MODE then
-					wifidev:set("txpower", SAVE_MODE_TXPOWER)
+					wifidev:set("txpower_lvl", SAVE_MODE_TXPOWER)
 				elseif ifaces[i]["signal"] == NORMAL_MODE then
-					wifidev:set("txpower", NORMAL_MODE_TXPOWER)
+					wifidev:set("txpower_lvl", NORMAL_MODE_TXPOWER)
 				elseif ifaces[i]["signal"] == PERFORMANCE_MODE then
-					wifidev:set("txpower", PERFORMANCE_MODE_TXPOWER)
-				end
-				if ifaces[i]["broadcast"] then
-					wifinet:set("hidden","0")
-				else
-					wifinet:set("hidden","1")
+					wifidev:set("txpower_lvl", PERFORMANCE_MODE_TXPOWER)
 				end
 				if ifaces[i]["apartheid"] then
 					wifinet:set("isolate","1")
@@ -395,7 +432,7 @@ function set_freq_intergration_impl(arg_list_table)
 	local wifinet_2 = wdev_2:get_wifinet("wlan0")
 	local wifinet_master = wifinet_5
 	local wifinet_slave = wifinet_2
-	local suffix = "-24G"
+	local suffix = "-2.4G"
 	-- mapping interface
 
 	if wds_is_enabled() == 1 then
@@ -439,7 +476,7 @@ function set_freq_intergration_impl(arg_list_table)
 		if(string.len(ssid) < 28) then
 			wifinet_slave:set("ssid",ssid..suffix )
 		else
-			wifinet_slave:set("ssid",string.sub(ssid,0,-4)..suffix)
+			wifinet_slave:set("ssid",string.sub(ssid,0,-6)..suffix)
 		end
 	end
 	local changes = network:changes()
@@ -464,6 +501,10 @@ function get_freq_intergration_impl()
 	local network = require("luci.model.network").init()
 	-- mapping interface
 	local wdev_5= network:get_wifidev("radio1")
+	-- AC wdev_5 is nil
+	if not wdev_5 then
+		return 0
+	end
 	wifinet = wdev_5:get_wifinet("wlan1")
 	if(tonumber(wifinet:get("cond_hidden")) == 1) then
 		return 1
