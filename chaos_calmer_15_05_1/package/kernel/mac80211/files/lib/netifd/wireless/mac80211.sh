@@ -406,10 +406,13 @@ mac80211_generate_mac() {
 
 	macidx=$(($id + 2))
 	[ "$((0x$mask1))" -gt 0 ] && {
-		b1="0x$1"
-		[ "$id" -gt 0 ] && \
-			b1=$(($b1 ^ ((($id - 1) << 2) | 0x2)))
-		printf "%02x:%s:%s:%s:%s:%s" $b1 $2 $3 $4 $5 $6
+#		b1="0x$1"
+#		[ "$id" -gt 0 ] && \
+#			b1=$(($b1 ^ ((($id - 1) << 2) | 0x2)))
+#		printf "%02x:%s:%s:%s:%s:%s" $b1 $2 $3 $4 $5 $6
+#       modified by robert
+#       for if mask is FF:FF:FF:FF:FF:FF, the previous logic will generate a wrong mac-address
+        printf "%s:%s:%s:%s:%s:%02x" $1 $2 $3 $4 $5 $(( 0x$6 ^ $id ))
 		return
 	}
 
@@ -535,7 +538,7 @@ mac80211_prepare_vif() {
 		sta|wds-sta)
 			local wdsflag=
 			[ "$wds" -gt 0 ] && wdsflag="4addr on"
-            mac80211_iw_interface_add "$phy" "$ifname" managed "$wdsflag"
+			mac80211_iw_interface_add "$phy" "$ifname" managed "$wdsflag"
 			[ "$powersave" -gt 0 ] && powersave="on" || powersave="off"
 			iw "$ifname" set power_save "$powersave"
 			# sta not support brctl

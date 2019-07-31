@@ -51,6 +51,8 @@ ifdef CONFIG_SFAX8_SWITCH_VLAN
 NOSTDINC_FLAGS += -DCONFIG_SFAX8_SWITCH_VLAN
 endif
 
+SFAX8_KO_NAME="p10m_sfax8eth.ko"
+
 ifneq ($(findstring 86V,$(PROFILE)),)
 SFAX8_KO_NAME="86v_V5_sfax8eth.ko"
 endif

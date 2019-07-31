@@ -123,6 +123,12 @@ detect_mac80211() {
 		[ -f "/etc/ext_pa_exist" ] && {
 			txpower_lvl=1
 		}
+		if [ "$band" == "2.4G" ]; then
+			rps_cpus=2
+		else
+			rps_cpus=3
+		fi
+
 		cat <<EOF
 config wifi-device  radio$devidx
 	option type     mac80211
@@ -156,6 +162,7 @@ config wifi-iface
 	option disable_input 0
 	option wps_pushbutton '0'
 	option wps_label '0'
+	option rps_cpus $rps_cpus
 
 EOF
 	[ -f "/etc/ignore_guest" ] || {
@@ -175,6 +182,7 @@ config wifi-iface
 	option disable_input 0
 	option wps_pushbutton '0'
 	option wps_label '0'
+	option rps_cpus $rps_cpus
 	option disabled 1
 
 EOF
@@ -193,6 +201,7 @@ config wifi-iface
 	option netisolate 0
 	option maxassoc 40
 	option disable_input 0
+	option rps_cpus $rps_cpus
 	option disabled 1
 
 EOF

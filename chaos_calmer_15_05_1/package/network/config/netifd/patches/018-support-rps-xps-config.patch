@@ -1,0 +1,316 @@
+Index: netifd-2015-12-16/bridge.c
+===================================================================
+--- netifd-2015-12-16.orig/bridge.c	2019-06-27 20:27:33.332297697 +0800
++++ netifd-2015-12-16/bridge.c	2019-06-27 20:29:51.120301760 +0800
+@@ -459,6 +459,14 @@
+ 			memcpy(dev->settings.macaddr,br_dev->settings.macaddr,sizeof(dev->settings.macaddr));
+ 			dev->settings.macaddr[sizeof(dev->settings.macaddr) - 1] = dev->settings.macaddr[sizeof(dev->settings.macaddr) - 1] + index;
+ 		}
++		if(br_dev->settings.flags & DEV_OPT_RPS_CPUS){
++			dev->settings.flags |= DEV_OPT_RPS_CPUS;
++			dev->settings.rps_cpus = br_dev->settings.rps_cpus;
++		}
++		if(br_dev->settings.flags & DEV_OPT_XPS_CPUS){
++			dev->settings.flags |= DEV_OPT_XPS_CPUS;
++			dev->settings.xps_cpus = br_dev->settings.xps_cpus;
++		}
+ 	}
+ 	bridge_create_member(bst, dev, false);
+ }
+Index: netifd-2015-12-16/device.c
+===================================================================
+--- netifd-2015-12-16.orig/device.c	2019-06-27 20:27:33.380297699 +0800
++++ netifd-2015-12-16/device.c	2019-06-27 20:29:46.728301630 +0800
+@@ -55,6 +55,8 @@
+ 	[DEV_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ 	[DEV_ATTR_COND_HIDDEN] = { .name = "cond_hidden", .type = BLOBMSG_TYPE_BOOL },
++	[DEV_ATTR_RPS_CPUS] = { .name = "rps_cpus", .type = BLOBMSG_TYPE_INT32 },
++	[DEV_ATTR_XPS_CPUS] = { .name = "xps_cpus", .type = BLOBMSG_TYPE_INT32 },
+ };
+ 
+ const struct uci_blob_param_list device_attr_list = {
+@@ -185,7 +187,10 @@
+ 	n->group = s->group;
+ 	n->disable_input = s->disable_input;
+ 	n->netisolate = s->netisolate;
++	n->rps_cpus = s->rps_cpus;
++	n->xps_cpus = s->xps_cpus;
+ 	n->flags = s->flags | os->flags | os->valid_flags;
++
+ }
+ 
+ void
+@@ -195,7 +200,6 @@
+ 	struct blob_attr *cur;
+ 	struct ether_addr *ea;
+ 	bool disabled = false;
+-
+ 	s->flags = 0;
+ 	if ((cur = tb[DEV_ATTR_ENABLED]))
+ 		disabled = !blobmsg_get_bool(cur);
+@@ -320,6 +324,16 @@
+ 		s->netisolate = blobmsg_get_bool(cur);
+ 		s->flags |= DEV_OPT_NETISOLATE;
+ 	}
++
++	if ((cur = tb[DEV_ATTR_RPS_CPUS])) {
++		s->rps_cpus = blobmsg_get_u32(cur);
++		s->flags |= DEV_OPT_RPS_CPUS;
++	}
++
++	if ((cur = tb[DEV_ATTR_XPS_CPUS])) {
++		s->xps_cpus = blobmsg_get_u32(cur);
++		s->flags |= DEV_OPT_XPS_CPUS;
++	}
+ 	device_set_disabled(dev, disabled);
+ }
+ 
+@@ -969,6 +983,10 @@
+ 			blobmsg_add_u32(b, "disableinput", st.disable_input);
+ 		if (st.flags & DEV_OPT_NETISOLATE)
+ 			blobmsg_add_u32(b, "netisolate", st.netisolate);
++		if (st.flags & DEV_OPT_RPS_CPUS)
++			blobmsg_add_u32(b, "rps_cpus", st.rps_cpus);
++		if (st.flags & DEV_OPT_XPS_CPUS)
++			blobmsg_add_u32(b, "xps_cpus", st.xps_cpus);
+ 	}
+ 
+ 	s = blobmsg_open_table(b, "statistics");
+Index: netifd-2015-12-16/device.h
+===================================================================
+--- netifd-2015-12-16.orig/device.h	2019-06-27 20:27:33.380297699 +0800
++++ netifd-2015-12-16/device.h	2019-06-27 20:29:44.436301562 +0800
+@@ -49,6 +49,8 @@
+ 	DEV_ATTR_BRINPUT_DISABLE,
+ 	DEV_ATTR_NETISOLATE,
+ 	DEV_ATTR_COND_HIDDEN,
++	DEV_ATTR_RPS_CPUS,
++	DEV_ATTR_XPS_CPUS,
+ 	__DEV_ATTR_MAX,
+ };
+ 
+@@ -91,11 +93,13 @@
+ 	DEV_OPT_DADTRANSMITS		= (1 << 13),
+ 	DEV_OPT_MULTICAST_TO_UNICAST	= (1 << 14),
+ 	DEV_OPT_MULTICAST_ROUTER	= (1 << 15),
+-	DEV_OPT_GROUP	= (1 << 16),
+-	DEV_OPT_BRINPUT_DISABLE	= (1 << 17),
+-	DEV_OPT_NETISOLATE	= (1 << 18),
+-	DEV_OPT_COND_HIDDEN	= (1 << 19),
+-	DEV_OPT_SPEED	= (1 << 20),
++	DEV_OPT_GROUP			= (1 << 16),
++	DEV_OPT_BRINPUT_DISABLE		= (1 << 17),
++	DEV_OPT_NETISOLATE		= (1 << 18),
++	DEV_OPT_COND_HIDDEN		= (1 << 19),
++	DEV_OPT_SPEED			= (1 << 20),
++	DEV_OPT_RPS_CPUS		= (1 << 21),
++	DEV_OPT_XPS_CPUS		= (1 << 22),
+ };
+ 
+ /* events broadcasted to all users of a device */
+@@ -161,6 +165,8 @@
+ 	bool disable_input;
+ 	bool netisolate;
+ 	bool cond_hidden;
++	unsigned int rps_cpus;
++	unsigned int xps_cpus;
+ };
+ 
+ /*
+Index: netifd-2015-12-16/system-linux.c
+===================================================================
+--- netifd-2015-12-16.orig/system-linux.c	2019-06-27 20:27:33.412297700 +0800
++++ netifd-2015-12-16/system-linux.c	2019-06-27 20:29:54.824301869 +0800
+@@ -724,6 +724,60 @@
+ 	system_bridge_set_hairpin_mode(dev, hairpin ? "1" : "0");
+ }
+ 
++static void
++system_if_set_rps_xps_val(const char *path, int val)
++{
++	char val_buf[8];
++	glob_t gl;
++	int i;
++
++	if (glob(path, 0, NULL, &gl))
++		return;
++
++	snprintf(val_buf, sizeof(val_buf), "%x", val);
++	for (i = 0; i < gl.gl_pathc; i++)
++		system_set_sysctl(gl.gl_pathv[i], val_buf);
++	globfree(&gl);
++}
++
++static void
++system_bridge_set_rps_cpus(struct device *dev, int val, unsigned int cpus)
++{
++	long n_cpus = sysconf(_SC_NPROCESSORS_ONLN);
++
++	if (n_cpus < 2)
++	      return;
++
++	if (val) {
++		if (n_cpus < 4)
++		      val = (1 << n_cpus) - 1;
++		else
++		      val = 1 << cpus;
++	}
++
++	snprintf(dev_buf, sizeof(dev_buf), "/sys/class/net/%s/queues/*/rps_cpus", dev->ifname);
++	system_if_set_rps_xps_val(dev_buf, val);
++}
++
++static void
++system_bridge_set_xps_cpus(struct device *dev, int val, unsigned int cpus)
++{
++	long n_cpus = sysconf(_SC_NPROCESSORS_ONLN);
++
++	if (n_cpus < 2)
++	      return;
++
++	if (val) {
++		if (n_cpus < 4)
++		      val = (1 << n_cpus) - 1;
++		else
++		      val = 1 << cpus;
++	}
++
++	snprintf(dev_buf, sizeof(dev_buf), "/sys/class/net/%s/queues/*/xps_cpus", dev->ifname);
++	system_if_set_rps_xps_val(dev_buf, val);
++}
++
+ int system_bridge_addif(struct device *bridge, struct device *dev)
+ {
+ 	char buf[64];
+@@ -755,6 +809,14 @@
+ 		system_bridge_set_netisolate(dev, dev->settings.netisolate ? "1" : "0");
+ 	}
+ 
++	if (dev->settings.flags & DEV_OPT_RPS_CPUS) {
++		system_bridge_set_rps_cpus(dev, dev->settings.rps ? 1 : 0, dev->settings.rps_cpus);
++	}
++
++	if (dev->settings.flags & DEV_OPT_XPS_CPUS) {
++		system_bridge_set_xps_cpus(dev, dev->settings.xps ? 1 : 0, dev->settings.xps_cpus);
++	}
++
+ 	return ret;
+ }
+ 
+@@ -1275,22 +1337,6 @@
+ }
+ 
+ static void
+-system_if_set_rps_xps_val(const char *path, int val)
+-{
+-	char val_buf[8];
+-	glob_t gl;
+-	int i;
+-
+-	if (glob(path, 0, NULL, &gl))
+-		return;
+-
+-	snprintf(val_buf, sizeof(val_buf), "%x", val);
+-	for (i = 0; i < gl.gl_pathc; i++)
+-		system_set_sysctl(gl.gl_pathv[i], val_buf);
+-	globfree(&gl);
+-}
+-
+-static void
+ system_if_apply_rps_xps(struct device *dev, struct device_settings *s)
+ {
+ 	long n_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+@@ -1298,11 +1344,15 @@
+ 
+ 	if (n_cpus < 2)
+ 		return;
+-
+ 	val = (1 << n_cpus) - 1;
++	if (s->flags & DEV_OPT_RPS_CPUS && n_cpus >= 4)
++	      val = 1 << s->rps_cpus;
+ 	snprintf(dev_buf, sizeof(dev_buf), "/sys/class/net/%s/queues/*/rps_cpus", dev->ifname);
+ 	system_if_set_rps_xps_val(dev_buf, s->rps ? val : 0);
+ 
++	val = (1 << n_cpus) - 1;
++	if (s->flags & DEV_OPT_XPS_CPUS && n_cpus >= 4)
++	      val = 1 << s->xps_cpus;
+ 	snprintf(dev_buf, sizeof(dev_buf), "/sys/class/net/%s/queues/*/xps_cpus", dev->ifname);
+ 	system_if_set_rps_xps_val(dev_buf, s->xps ? val : 0);
+ }
+Index: netifd-2015-12-16/wireless.c
+===================================================================
+--- netifd-2015-12-16.orig/wireless.c	2019-06-27 20:27:33.404297699 +0800
++++ netifd-2015-12-16/wireless.c	2019-06-27 20:29:40.020301432 +0800
+@@ -41,6 +41,8 @@
+ 	VIF_ATTR_BRINPUT_DISABLE,
+ 	VIF_ATTR_NETISOLATE,
+ 	VIF_ATTR_NAME,
++	VIF_ATTR_RPS_CPUS,
++	VIF_ATTR_XPS_CPUS,
+ 	__VIF_ATTR_MAX,
+ };
+ 
+@@ -53,6 +55,8 @@
+ 	[VIF_ATTR_BRINPUT_DISABLE] = { .name = "disable_input", .type = BLOBMSG_TYPE_BOOL },
+ 	[VIF_ATTR_NETISOLATE] = { .name = "netisolate", .type = BLOBMSG_TYPE_BOOL },
+ 	[VIF_ATTR_NAME] = { .name = "ifname", .type = BLOBMSG_TYPE_STRING  },
++	[VIF_ATTR_RPS_CPUS] = { .name = "rps_cpus", .type = BLOBMSG_TYPE_INT32 },
++	[VIF_ATTR_XPS_CPUS] = { .name = "xps_cpus", .type = BLOBMSG_TYPE_INT32 },
+ };
+ 
+ static const struct uci_blob_param_list vif_param = {
+@@ -306,9 +310,12 @@
+ 			dev->settings.group = vif->group;
+ 			dev->settings.disable_input = vif->disable_input;
+ 			dev->settings.netisolate = vif->netisolate;
++			dev->settings.rps_cpus = vif->rps_cpus;
++			dev->settings.xps_cpus = vif->xps_cpus;
+ 			dev->settings.flags |= DEV_OPT_GROUP;
+ 			dev->settings.flags |= DEV_OPT_BRINPUT_DISABLE;
+ 			dev->settings.flags |= DEV_OPT_NETISOLATE;
++			dev->settings.flags |= vif->flags;
+ 		}
+ 	}
+ 	blobmsg_for_each_attr(cur, vif->network, rem) {
+@@ -907,6 +914,7 @@
+ 	struct blob_attr *cur;
+ 
+ 	vif->network = NULL;
++	vif->flags = 0;
+ 	blobmsg_parse(vif_policy, __VIF_ATTR_MAX, tb, blob_data(vif->config), blob_len(vif->config));
+ 
+ 	if ((cur = tb[VIF_ATTR_NETWORK]))
+@@ -931,6 +939,18 @@
+ 	cur = tb[VIF_ATTR_NETISOLATE];
+ 	if (cur)
+ 		vif->netisolate = blobmsg_get_bool(cur);
++
++	cur = tb[VIF_ATTR_RPS_CPUS];
++	if (cur) {
++		vif->rps_cpus = blobmsg_get_u32(cur);
++		vif->flags |= DEV_OPT_RPS_CPUS;
++	}
++
++	cur = tb[VIF_ATTR_XPS_CPUS];
++	if (cur) {
++		vif->xps_cpus = blobmsg_get_u32(cur);
++		vif->flags |= DEV_OPT_XPS_CPUS;
++	}
+ }
+ 
+ static void
+Index: netifd-2015-12-16/wireless.h
+===================================================================
+--- netifd-2015-12-16.orig/wireless.h	2019-06-27 20:27:33.388297699 +0800
++++ netifd-2015-12-16/wireless.h	2019-06-27 20:29:37.804301367 +0800
+@@ -106,6 +106,9 @@
+ 	unsigned int group;
+ 	bool disable_input;
+ 	bool netisolate;
++	unsigned int rps_cpus;
++	unsigned int xps_cpus;
++	unsigned int flags;
+ };
+ 
+ struct wireless_process {
