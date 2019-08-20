@@ -168,6 +168,15 @@ config SFAX8_PINCTRL
 		definitions and pin control functions for each available multiplex
 		function.
 
+config SF19A28_PINCTRL
+    bool "Sf19a28 pin control driver"
+	depends on DM
+	help
+		Support pin multiplexing control on sfax8 SoCs. The driver is
+		controlled by a device tree node which contains both the GPIO
+		definitions and pin control functions for each available multiplex
+		function.
+
 endif
 
 source "drivers/pinctrl/nxp/Kconfig"

@@ -23,14 +23,14 @@ custom_ddr="0"
 
 show_help() {
 	echo "Usage: $0"
-	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h|evb_v5|air001|cpe"
+	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h|evb_v5|air001|cpe|ott_router"
 	echo "    ver=mpw0|mpw1|fullmask"
 	echo "    mode=r|d"
 	echo "    [cmd=dmake|distclean|clean|make]"
 	echo "    [ddr3=m15t1g1664a|nt5cc128m16ip]"
 	echo "    [ddr2=em68b16cwqh]"
 	echo "    [sign=true|false]"
-	echo "    [odt=0] #disable ODT"
+	echo "    [odt=0] #disable ODT|By default the odt=1"
 	echo "    [pcba=0|1]"
 	echo "    [use_mti=0|1]"
 	echo "    [patch_file=board/siflower/sfa18_common/irom_patch_default.txt]"
@@ -60,12 +60,18 @@ get_ddr_size() {
 			size=0x4000000;;
 		n2tu51216dg)
 			size=0x4000000;;
+		pme809416dbr)
+			size=0x4000000;;
+		ct54v321601a)
+			size=0x4000000;;
 	esac
 
 	case $ddr3 in
 		m15t1g1664a)
 			size=0x8000000;;
 		nt5cc128m16ip)
+			size=0x10000000;;
+		em6gd16ewbh)
 			size=0x10000000;;
 	esac
 
@@ -173,17 +179,30 @@ case $prj in
 		DEFCONFIG="sfa18_"$ver"_ac"
 		add_sfbl_flag rgmii=1
 		add_sfbl_flag poe=1
+		[ -z $ddr3 ] && ddr3=em6gd16ewbh
 		;;
 	evb_v5)
 		DEFCONFIG="sfa18_"$ver"_p20b"
 		add_sfbl_flag rgmii=1
 		[ -z $ddr3 ] && ddr3=m15t1g1664a
 		;;
+	ott_router)
+		DEFCONFIG="sfa18_"$ver"_p10h"
+		[ -z $ddr2 ] && ddr2=m14d5121632a
+		add_sfbl_flag rgmii=1
+		;;
 	air001)
 		DEFCONFIG="sfa18_"$ver"_air001"
 		[ -z $ddr3 ] && ddr3=m15t1g1664a
 		nand=1
 		;;
+	sf19a28_fpga)
+		DEFCONFIG="sf19a28_fullmask_fpga"
+		add_sfbl_flag fpga=1
+		add_sfbl_flag sf19a28=1
+		[ -z $ddr3 ] && ddr3=m15t1g1664a
+		;;
+
 	*)
 		echo "unsupport prj $prj"
 		show_help
@@ -223,6 +242,7 @@ fi
 if [[ "$prj" = "rep" ]]; then
 	add_sfbl_flag odt=0
 fi
+
 [ "$sign" = "true" ] && add_sfbl_flag "security_boot=1"
 
 DEFCONFIG=${DEFCONFIG}_defconfig

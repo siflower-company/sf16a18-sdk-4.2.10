@@ -58,13 +58,29 @@ static int sf_gpio_set_value(struct udevice *dev, unsigned offset, int value)
 static int sf_gpio_direction(struct udevice *dev,unsigned offset, u32 io)
 {
 	u8 tmp;
-	int fun_cnt = 0;
-	int fun_num = 0;
-	u32 reg = 0;
 	struct sfax8_gpio_priv *priv = dev_get_priv(dev);
 
 	if(offset > PAD_INDEX_MAX)
 		return -EINVAL;
+#ifdef CONFIG_SOC_SF19A28_FULLMASK
+	tmp = readb((void *)PAD_IO_REG1(priv->pad_base, offset));
+	if( io == GPIOF_INPUT )
+		tmp |= (SW_IE | SW_OEN);
+	else if( io == GPIOF_OUTPUT )
+		tmp &= ~(SW_IE | SW_OEN);
+	else {
+		printf("sf_gpio_direction error! offset:%d io:%d \n", offset, io);
+		return -EINVAL;
+	}
+	writeb(tmp, (void *)PAD_IO_REG1(priv->pad_base, offset));
+
+	tmp = readb((void *)PAD_IO_REG2(priv->pad_base, offset));
+	tmp |= (FUNC_SW_SEL | FMUX_SEL);
+	writeb(tmp, (void *)PAD_IO_REG2(priv->pad_base, offset));
+#else
+	int fun_cnt = 0;
+	int fun_num = 0;
+	u32 reg = 0;
 
 	fun_cnt = offset / PAD_FUN_SEL_REG_WID;
 	fun_num = offset % PAD_FUN_SEL_REG_WID;
@@ -83,7 +99,7 @@ static int sf_gpio_direction(struct udevice *dev,unsigned offset, u32 io)
 	tmp = readb((const void *)reg);
 	tmp |= 1 << fun_num;
 	writeb(tmp, (volatile void *)reg);
-
+#endif
 	if(io == GPIOF_INPUT)
 	{
 		writeb(1, (volatile void *)(GPIO_DIR(priv->gpio_base, offset)));

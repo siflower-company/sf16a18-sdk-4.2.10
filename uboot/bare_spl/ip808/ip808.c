@@ -1,8 +1,11 @@
 #include <common.h>
 #include <io.h>
 #include <stdio.h>
+#ifdef SF19A28
+#include <pad_a28.h>
+#else
 #include <pad.h>
-
+#endif
 #include "i2c.h"
 
 #include "ip808.h"

@@ -226,7 +226,7 @@ struct spi_nand_chip {
 	u8		write_cache_rdm_op;
 
 	u8		*oobbuf;
-	u64		size;
+	u32		size;
 	u32		block_size;
 	u16		page_size;
 	u16		oob_size;

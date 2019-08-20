@@ -25,7 +25,11 @@
 #include <sf_mmap.h>
 #include <errorno.h>
 #include <irq_handle.h>
+#ifdef SF19A28
+#include <pad_a28.h>
+#else
 #include <pad.h>
+#endif
 #include "uart.h"
 
 #ifdef CLIB

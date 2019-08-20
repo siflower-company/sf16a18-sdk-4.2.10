@@ -925,7 +925,7 @@ static int spi_nand_read_pages(struct spi_nand_chip *chip,
 	unsigned int failed = 0;
 	int lun_num;
 
-	spi_nand_debug("%s: from = 0x%012llx, len = %i\n",
+	spi_nand_debug("%s: from = 0x%012lx, len = %i\n",
 			 __func__, from, readlen);
 
 	page_addr = from >> chip->page_shift;
@@ -1004,7 +1004,7 @@ static int spi_nand_do_read_ops(struct spi_nand_chip *chip, loff_t from,
 	int ooblen = (ops->mode == MTD_OPS_AUTO_OOB) ?
 		chip->ecclayout->oobavail : chip->oob_size;
 
-	spi_nand_debug("%s: from = 0x%012llx, len = %i\n",
+	spi_nand_debug("%s: from = 0x%012lx, len = %i\n",
 			 __func__, from, (int)ops->len);
 	/* Do not allow reads past end of device */
 	if (from >= chip->size) {
@@ -1063,7 +1063,7 @@ static int spi_nand_do_write_ops(struct spi_nand_chip *chip, loff_t to,
 	bool clr_cache = true;
 	int lun_num;
 
-	spi_nand_debug("%s: to = 0x%012llx, len = %i\n",
+	spi_nand_debug("%s: to = 0x%012lx, len = %i\n",
 			 __func__, to, writelen);
 	/* Do not allow reads past end of device */
 	if (to >= chip->size) {
@@ -1224,7 +1224,7 @@ static int spi_nand_do_read_oob(struct spi_nand_chip *chip, loff_t from,
 	int ret = 0;
 	int lun_num;
 
-	spi_nand_debug("%s: from = 0x%012llx, len = %i\n",
+	spi_nand_debug("%s: from = 0x%012lx, len = %i\n",
 			 __func__, from, readlen);
 	if (ooboffs >= max_len) {
 		spi_nand_error("%s: attempt to read outside oob\n",
@@ -1307,7 +1307,7 @@ static int spi_nand_do_write_oob(struct spi_nand_chip *chip, loff_t to,
 	int writelen = ops->ooblen;
 	int lun_num;
 
-	spi_nand_debug("%s: to = 0x%012llx, len = %i\n",
+	spi_nand_debug("%s: to = 0x%012lx, len = %i\n",
 			 __func__, to, writelen);
 
 	/* Do not allow write past end of page */
@@ -1526,7 +1526,7 @@ int spi_nand_erase(struct spi_nand_chip *chip, uint64_t addr, uint64_t len)
 	int ret = 0;
 	int lun_num;
 
-	spi_nand_debug("%s: address = 0x%012llx, len = %llu\n",
+	spi_nand_debug("%s: address = 0x%012lx, len = %llu\n",
 			 __func__, addr, len);
 	/* check address align on block boundary */
 	if (addr & (chip->block_size - 1)) {
@@ -1556,7 +1556,7 @@ int spi_nand_erase(struct spi_nand_chip *chip, uint64_t addr, uint64_t len)
 		/* Check if we have a bad block, we do not erase bad blocks! */
 		if (spi_nand_block_isbad(chip, ((loff_t) page_addr) <<
 					chip->page_shift)) {
-			spi_nand_error("%s: attempt to erase a bad block at 0x%012llx\n",
+			spi_nand_error("%s: attempt to erase a bad block at 0x%012lx\n",
 			__func__, ((loff_t) page_addr) << chip->page_shift);
 			goto erase_exit;
 		}
@@ -1568,7 +1568,7 @@ int spi_nand_erase(struct spi_nand_chip *chip, uint64_t addr, uint64_t len)
 			goto erase_exit;
 		}
 		if ((status & STATUS_E_FAIL_MASK) == STATUS_E_FAIL) {
-			spi_nand_error("erase block 0x%012llx failed\n",
+			spi_nand_error("erase block 0x%012lx failed\n",
 				((loff_t) page_addr) << chip->page_shift);
 			ret = -EIO;
 			goto erase_exit;

@@ -687,10 +687,12 @@ int sys_init(void)
 	sys_wifi_reset();
 	sys_usb_reset();
 	sys_gmac_reset();
+#ifndef SF19A28
 	sys_emmc_reset();
 	sys_sdio_reset();
 	// sys_gdu_reset();
 	sys_crypto_reset();
+#endif
 	sys_gpio_reset();
 	sys_remap_n_enable();
 

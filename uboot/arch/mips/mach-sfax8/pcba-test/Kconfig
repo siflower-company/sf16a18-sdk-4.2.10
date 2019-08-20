@@ -66,6 +66,13 @@ config SFAX8_WIFI_EXPA
 	help
 	  WIFI use extern PA.
 
+config SFAX8_UPDATE_GAIN_TABLE
+    bool "Update tx gain table for EXPA"
+        depends on SFAX8_WIFI_EXPA
+	default y
+	help
+	  Update tx gain table for extern PA.
+
 config SFA18_PCBA_STATIC_IP
 	bool "static IP addr for WIFI test"
         depends on SFAX8_WIFI_TEST
@@ -86,11 +93,5 @@ config SFAX8_GMAC_TEST
 	default y
 	help
 	  GMAC pcba test.
-
-config PCBA_NPU_PORTS
-	string "NPU TEST PORTS"
-	default "0x11"
-	help
-	  This option is for configuring which port_list will be test.
 
 endmenu

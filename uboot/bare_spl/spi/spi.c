@@ -24,7 +24,11 @@
 #include <clk.h>
 #include <errorno.h>
 #include <sys_manager.h>
+#ifdef SF19A28
+#include <pad_a28.h>
+#else
 #include <pad.h>
+#endif
 #ifdef TIMER
 #include <timer/timer.h>
 #endif

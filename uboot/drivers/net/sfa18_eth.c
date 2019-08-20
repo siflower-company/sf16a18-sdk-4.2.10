@@ -613,8 +613,6 @@ int sf_add_tx_header(char * buf,int txport) {
 	txhdr->ctrl = SF_TX_PKT_INJECT_EN;
 #ifdef CONFIG_SFA18_PCBA_TEST
 	txhdr->txport_map = g_priv->txport;
-#elif defined CONFIG_TARGET_SFA18_REP
-	txhdr->txport_map = 0x8;
 #else
 	txhdr->txport_map = txport;
 #endif
@@ -644,8 +642,7 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 	int ctrl_word = 0;
 	int i = 0;
 #ifndef CONFIG_SFA18_PCBA_TEST
-	char ports_buf[5];
-	int ports_len = 0;
+	unsigned long port_list;
 #endif
 	struct sf_priv* priv = (struct sf_priv *)dev->priv;
 	// check_padding(packet, &length);
@@ -655,11 +652,9 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 	}
 	// don't do the loop in pcba test!
 #ifndef CONFIG_SFA18_PCBA_TEST
-	ports_len = strlen(CONFIG_SFA18_ETH_PORTS);
-	if (ports_len <= 5) {
-		strncpy(ports_buf, CONFIG_SFA18_ETH_PORTS, ports_len);
-		for (i = 0; i < ports_len; i++) {
-			if (ports_buf[i] == '1') {
+	port_list = CONFIG_SFA18_ETH_PORTS;
+	for (i = 0; i < SF_MAC_PORTS; i++) {
+		if (port_list & (1 << i)) {
 #endif
 				txd = priv->tx_bd_tbl_align + priv->txd_index;
 				ptr = phys_to_virt(txd->bd_bufptr);
@@ -693,7 +688,6 @@ int sf_eth_send(struct eth_device *dev, void *packet, int length) {
 				// error("pnext txd index  is %d\n",priv->txd_index);
 				// sf_writel(hif_int_src,REG_HIF_INT_SRC);
 #ifndef CONFIG_SFA18_PCBA_TEST
-			}
 		}
 	}
 #endif
@@ -983,7 +977,7 @@ int sf_eth_register(void){
 	sf_init_switch_hw(&priv->sf_switch);
 
 #ifdef CONFIG_SFA18_PCBA_TEST
-	port_list = simple_strtoul(CONFIG_PCBA_NPU_PORTS, NULL, 16);
+	port_list = CONFIG_SFA18_ETH_PORTS;
 	//printf("get config portlist %lx\n", port_list);
 
 #ifdef CONFIG_TARGET_SFA18_86V
@@ -998,11 +992,10 @@ int sf_eth_register(void){
 	sf_writel( ((port_list | 1<<SF_HOST_PORT)|1<<BRENTRY_UCAST_MISS_ACT_START_POS|1<<BRENTRY_MCAST_MISS_ACT_START_POS) << 1, REG_CLASS_GLOBAL_CFG);
 	writeb(port_list, (void*)(OMINI_PHY_ENABLE));
 
-#ifdef CONFIG_TARGET_SFA18_REP
-	priv->txport = 1 << 3;
-#else
-	priv->txport = 1 << 4;
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
+	priv->txport = 1 << CONFIG_SFAX8_DEFAULT_TX_PORT;
 #endif
+
 	priv->dev = dev;
 	g_priv = priv;
 #endif

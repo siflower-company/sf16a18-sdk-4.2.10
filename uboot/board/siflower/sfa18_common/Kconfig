@@ -70,7 +70,7 @@ if SFA18_PCBA_TEST
 choice
 	prompt "Siflower wlan choise"
 	default SFAX8_WLAN_GMAC if SFA18_GMAC
-	default SFAX8_WLAN_NPU if SFA18_NPU
+	default SFAX8_WLAN_NPU if SFA18_ETH
 	help
 	  Select Siflower wlan port.
 
@@ -79,6 +79,11 @@ choice
 
 	config SFAX8_WLAN_NPU
 	bool "select npu as wlan port"
+
+	config SFAX8_DEFAULT_TX_PORT
+	int "select npu default tx port"
+	depends on SFAX8_WLAN_NPU
+	default 4
 endchoice
 endif
 source "board/siflower/sfa18_p20b/Kconfig"
@@ -90,5 +95,6 @@ source "board/siflower/sfa18_x10/Kconfig"
 source "board/siflower/sfa18_p10h/Kconfig"
 source "board/siflower/sfa18_rep/Kconfig"
 source "board/siflower/sfa18_air001/Kconfig"
+source "board/siflower/sf19a28_fpga/Kconfig"
 
 endif

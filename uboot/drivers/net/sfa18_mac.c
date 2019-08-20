@@ -286,15 +286,13 @@ int sf_phy_a5_tx_config(int phy_idx, struct sf_priv *priv, unsigned int value){
  */
 void sf_low_power(void){
 	int i = 0, phy_value = 0;
-	int port_list = simple_strtoul(CONFIG_PCBA_NPU_PORTS, NULL, 16);
+	int port_list = CONFIG_SFA18_ETH_PORTS;
 
 	for(i = 0 ; i < SF_MAC_PORTS; i++){
 		if (port_list & (1 << i)){
-#ifdef CONFIG_TARGET_SFA18_86V
-			// 86v use port 4 to communicate with pc, should not set to power save
-			if (i != 4) {
-#elif defined CONFIG_TARGET_SFA18_REP
-			if (i != 3) {
+			// communicate pc with default tx port, should not set to power save
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
+			if (i != CONFIG_SFAX8_DEFAULT_TX_PORT) {
 #endif
 				//set phy 10M duplex half to save power
 				phy_value = read_phy_reg(i, PHY_BASE_CONTROL_REGISTER, g_priv->phy_dev);
@@ -303,7 +301,7 @@ void sf_low_power(void){
 				//config phy to test mode, use a5 analog register to reduce tx power
 				sf_phy_init_test_mode(i, g_priv);
 				sf_phy_a5_tx_config(i, g_priv, OMINI_PHY_ANALOG_A5_CONFIG_TX_IDLE);
-#if defined CONFIG_TARGET_SFA18_86V || defined CONFIG_TARGET_SFA18_REP
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
 			}
 #endif
 		}
@@ -317,17 +315,17 @@ void sf_low_power(void){
  */
 int sf_phy_reset_for_low_power(void){
 	int i, status, timer;
-	unsigned long port_list = simple_strtoul(CONFIG_PCBA_NPU_PORTS, NULL, 16);
+	int port_list = CONFIG_SFA18_ETH_PORTS;
 
 	// reset all phy normal first
 	for(i = 0; i < SF_MAC_PORTS; i++)
-	  if (port_list & (1 << i))
+	  if (port_list & (1 << i) && i != CONFIG_SFAX8_DEFAULT_TX_PORT)
 		sf_phy_reset(i, g_priv);
 
 	// set self connect MDI and MDIX, like p10m and ac
-	if (port_list == 0xf || port_list == 0x1f || port_list == 0x3){
+	if (port_list == 0xf || port_list == 0x1f || port_list == 0x3 || port_list == 0x13){
 		for(i = 0; i < SF_MAC_PORTS; i++){
-			if (port_list & (1 << i)){
+			if (port_list & (1 << i) && i != CONFIG_SFAX8_DEFAULT_TX_PORT){
 				if ((i + 1) % 2)
 				  sf_phy_mode_init(i, g_priv->phy_dev, OMINI_PHY_MODEL_CTRL_MDIX);
 				else

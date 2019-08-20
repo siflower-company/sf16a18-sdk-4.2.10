@@ -13,7 +13,7 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
 */
-typedef long long loff_t;
+typedef long loff_t;
 typedef int bool;
 
 typedef unsigned char		u_char;

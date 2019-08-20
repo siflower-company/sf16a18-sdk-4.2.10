@@ -22,10 +22,10 @@ config SOC_SFA18_FULLMASK
 	help
 	  This supports Siflower sfa18 full mask SOC.
 
-config SOC_SFA28
-	bool "SFA28 soc"
+config SOC_SF19A28_FULLMASK
+	bool "SF19A28 fullmask soc"
 	help
-	  This supports Siflower sfa28 SOC.
+	  This supports Siflower sf19a28 fullmask SOC.
 endchoice
 
 choice
@@ -58,6 +58,8 @@ config TARGET_SFA18_REP
 config TARGET_SFA18_AIR001
 	bool "SFA18 air001 board"
 
+config TARGET_SF19A28_FPGA
+	bool "SF19A28 FPGA board"
 endchoice
 
 source "board/siflower/sfa18_common/Kconfig"

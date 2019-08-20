@@ -75,9 +75,11 @@ int clk_gating_init(void)
 	writeb(0x4, MEM_PHY_CLK_DIV);
 	writeb(0xFF, AUDIO_EXTCLK_ENABLE);
 	writeb(0xFF, UART_EXTCLK_ENABLE);
+#ifndef SF19A28
 	writeb(0xFF, SPDIF_EXTCLK_ENABLE);
 	writeb(0xFF, SDHC_EXT_CLK_ENABLE);
 	writeb(0xFF, EMMC_EXT_CLK_ENABLE);
+#endif
 	// writeb(0xFF, GDU0_CLK_ENABLE);
 	// writeb(0xFF, GDU0_EITF_CLK_ENABLE);
 	// writeb(0xFF, TVIF0_CLK_ENABLE);
@@ -100,7 +102,9 @@ int clk_gating_init(void)
 	writeb(0xFF, USBPHY_REF_CLK_ENABLE);
 	/* close tclk to avoid clk output in GPIO62. */
 	writeb(0x00, TCLK_ENABLE);
+#ifndef SF19A28
 	writeb(0xFF, CRYPTO_CLK_ENABLE);
+#endif
 
 	return 0;
 }

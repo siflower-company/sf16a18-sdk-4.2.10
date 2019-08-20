@@ -149,8 +149,10 @@ int npu_test(void *d){
 			break;
 	}
 
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
+	g_priv->txport = 1 << CONFIG_SFAX8_DEFAULT_TX_PORT;
+#endif
 	g_priv->pcba_npu_test = 0;
-	g_priv->txport = 0x1 << 4;
 
 	if (result == 0){
 		printf("======== End npu test, test success =========\n");

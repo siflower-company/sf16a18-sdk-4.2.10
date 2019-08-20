@@ -21,6 +21,7 @@ enum periph_id {
 	PERIPH_ID_I2C1,
 	PERIPH_ID_I2C2,
 	PERIPH_ID_SPI1,
+	PERIPH_ID_SPI2,
 	PERIPH_ID_I2S0,
 	PERIPH_ID_PCM0,
 	PERIPH_ID_UART1,
@@ -42,9 +43,27 @@ enum periph_id {
 };
 
 //#define PAD_BASE            (SIFLOWER_SYSCTL_BASE+0x30000)
+#ifdef CONFIG_TARGET_SF19A28_FPGA
+#define FUNC_SW_SEL (1 << 3)
+#define FMUX_SEL	(1 << 2)
+#define MODE_BIT1	(1 << 1)
+#define MODE_BIT0	(1 << 0)
+
+#define SW_OEN		(1 << 7)
+#define SW_ST		(1 << 6)
+#define SW_IE		(1 << 5)
+#define SW_PD		(1 << 4)
+#define SW_PU		(1 << 3)
+#define SW_DS2		(1 << 2)
+#define SW_DS1		(1 << 1)
+#define SW_DS0		(1 << 0)
+#endif
 
 #define PAD_FUCN_SEL(pbase, n)        (pbase + (n < 8 ? (0xFF60 + (n)*(0x4)) : (0xFB60 + (n - 8)*(0x4))))
 #define PAD_MODE_SEL(pbase, n)        (pbase + (n < 16 ? (0xFC00 + (n)*(0x4)) : (0xF800 + (n - 16) * (0x4))))
+
+#define PAD_IO_REG1(pbase, n)		(pbase + 0x8*n)
+#define PAD_IO_REG2(pbase, n)		(pbase + 0x8*n + 0x4)
 
 #define PAD_REG_OFFSET             (4)//4 bytes,only low 8bit valid
 #define PAD_FUN_SEL_REG_WID        (8)//1 bit for one pin, total 8 bit 
@@ -71,6 +90,8 @@ enum periph_id {
 
 #ifdef CONFIG_TARGET_SFA18_MPW0
 #define PAD_INDEX_MAX        62
+#elif defined CONFIG_TARGET_SF19A28_FPGA
+#define PAD_INDEX_MAX        48
 #else
 #define FUNC_SW_SEL(pbase, n)		(pbase + (n < 8 ? (0xFC40 + (n)*(0x4)) : 0xF840))
 #define FUNC_SW_OEN(pbase, n)		(pbase + (n < 8 ? (0xFC80 + (n)*(0x4)) : 0xF880))

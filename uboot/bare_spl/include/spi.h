@@ -34,9 +34,16 @@
 
 #define SPI0_BASE		(SIFLOWER_SPI_BASE)
 #define SPI1_BASE		(SIFLOWER_SPI_BASE + SIFLOWER_SPI_OFFSET)
-#define	SPI0_CS0		5
+#define SPI2_BASE		(SIFLOWER_SPI_BASE + 2*SIFLOWER_SPI_OFFSET)
+#define SPI0_CS0		5
+#define SPI2_CS0		8
+#ifdef SF19A28
+#define SPI_BASE		SPI2_BASE
+#define SPI_CS			SPI2_CS0
+#else
 #define SPI_BASE		SPI0_BASE
 #define SPI_CS			SPI0_CS0
+#endif
 
 #define SSPCR0			0x0000
 #define SSPCR0_MODE_SHIFT	6

@@ -34,6 +34,7 @@ enum sys_con {
 	SYSCON_A18_FULLMASK_P10H,
 	SYSCON_A18_FULLMASK_REP,
 	SYSCON_A18_FULLMASK_AIR001,
+	SYSCON_A28_FULLMASK_FPGA,
 };
 
 //todo remove when gpio is ready
@@ -85,6 +86,10 @@ static enum sys_con sfa18_sys_con(void)
 
 #ifdef CONFIG_TARGET_SFA18_AIR001
 	return SYSCON_A18_FULLMASK_AIR001;
+#endif
+
+#ifdef CONFIG_TARGET_SF19A28_FPGA
+	return SYSCON_A28_FULLMASK_FPGA;
 #endif
 
 	return SYSCON_UNKNOWN;
@@ -146,6 +151,10 @@ int checkboard(void)
 
 		case SYSCON_A18_FULLMASK_AIR001:
 			puts(" FULLMASK AIR001");
+			break;
+
+		case SYSCON_A28_FULLMASK_FPGA:
+			puts(" A28 FULLMASK FPGA");
 			break;
 
 		default:
@@ -230,7 +239,6 @@ int board_eth_init(bd_t *bis)
 int board_eth_init(bd_t *bis)
 {
 	int rc = -1;
-	printf("Registering sfa18 net\n");
 	printf("Registering sfa18 gmac\n");
 	rc = sf_gmac_register();
 	return rc;

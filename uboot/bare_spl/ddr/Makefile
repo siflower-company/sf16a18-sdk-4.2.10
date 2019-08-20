@@ -28,7 +28,8 @@ obj-$(a3r12e40dbf) += ddr2_a3r12e40dbf.c
 obj-$(n2tu51216dg) += ddr2_n2tu51216dg.c
 obj-$(nt5tu32m16eg) += ddr2_nt5tu32m16eg.c
 obj-$(w9751g6kb) += ddr2_w9751g6kb.c
-
+obj-$(pme809416dbr) += ddr2_pme809416dbr.c
+obj-$(ct54v321601a) += ddr2_ct54v321601a.c
 
 obj-$(nt5cc128m16ip) += ddr3_nt5cc128m16ip.c
 obj-$(em6gd16ewkg) += ddr3_nt5cc128m16ip.c

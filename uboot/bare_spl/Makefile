@@ -47,8 +47,13 @@ $(ARCH)/lib/init_caches.S
 CSOURCES= \
 $(BASE)/main.c \
 $(BASE)/common/sys_manager.c \
-$(BASE)/common/pad.c \
 $(BASE)/common/clk.c
+
+ifdef sf19a28
+CSOURCES += $(BASE)/common/pad_a28.c
+else
+CSOURCES += $(BASE)/common/pad.c
+endif
 
 ifdef small
 CFLAGS +=-DCONFIG_SFA18_UBOOT_LITE
@@ -66,6 +71,10 @@ ifdef fullmask
 CFLAGS += -DFULLMASK
 endif
 
+ifdef sf19a28
+CFLAGS +=-DSF19A28
+endif
+
 ifdef fpga
 CFLAGS +=-DFPGA
 CFLAGS +=-DDDR -I $(BASE)/ddr_fpga
@@ -73,12 +82,6 @@ CSOURCES += $(BASE)/ddr_fpga/ddr_init.c
 else
 include $(BASE)/ddr/Makefile
 CSOURCES += $(addprefix $(BASE)/ddr/, $(obj-y))
-endif
-
-ifdef rmii
-CFLAGS +=-DRMII_GMAC
-else
-CFLAGS +=-DRGMII_GMAC
 endif
 
 ifeq ($(skip), 1)
@@ -107,8 +110,10 @@ CSOURCES += $(wildcard spi/*.c)
 CFLAGS +=-DUART -I $(BASE)/uart
 CSOURCES += $(BASE)/uart/uart.c
 
+ifdef mmc
 CFLAGS +=-DMMC -I $(BASE)/mmc
 CSOURCES += $(BASE)/mmc/mmc.c
+endif
 
 ifdef security_boot
 CSOURCES += $(wildcard security_boot/*.c)

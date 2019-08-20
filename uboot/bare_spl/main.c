@@ -9,7 +9,11 @@
 #include <common/stdiol.h>
 #include <sys_manager.h>
 #include <clk.h>
+#ifdef SF19A28
+#include <pad_a28.h>
+#else
 #include <pad.h>
+#endif
 #include <errorno.h>
 #include <ddr_init.h>
 #include <uart.h>
@@ -102,12 +106,14 @@ static int flash_read(int bldev, unsigned int off, unsigned char *buf, u32 sz)
 		return SPI_FLASH_Read(DL_SPI_CTRL_NO, off, buf, sz);
 	case BOOT_SPI_NAND:
 		return SPI_NAND_read(off, buf, DL_SPI_CTRL_NO, sz);
+#ifdef MMC
 	case BOOT_EMMC:
 		mmc_data_read(off, buf, DL_EMMC_BLKSIZ, sz);
 		break;
 	case BOOT_SD:
 		mmc_data_read(off, buf, DL_SDIO_BLKSIZ, sz);
 		break;
+#endif
 	default:
 		return -EINVAL;
 	}
@@ -196,7 +202,11 @@ static boot_dev get_boot_dev(void)
 	u32 devid = 0;
 
 #ifndef SKIP_SPI_FLASH
+#ifdef SF19A28
+	sf_module_set_pad_func(SF_SPI2);
+#else
 	sf_module_set_pad_func(SF_SPI0);
+#endif
 	devid = SPI_FLASH_GetDeviceID(0);
 #endif
 
@@ -208,6 +218,7 @@ static boot_dev get_boot_dev(void)
 			printf("Boot from spi-flash\n");
 			return BOOT_SPI_FLASH;
 		}
+#ifdef MMC
 	} else {
 		devid = (u32)mmc_initialization(1);
 
@@ -225,6 +236,7 @@ static boot_dev get_boot_dev(void)
 				printf("Error: No booting device!!!\n");
 			}
 		}
+#endif
 	}
 
 	return -ENODEV;

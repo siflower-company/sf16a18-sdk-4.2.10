@@ -1,0 +1,12 @@
+if TARGET_SF19A28_FPGA
+
+config SYS_BOARD
+	default "sf19a28_fpga"
+
+config SYS_VENDOR
+	default "siflower"
+
+config SYS_CONFIG_NAME
+	default "sfa18"
+
+endif

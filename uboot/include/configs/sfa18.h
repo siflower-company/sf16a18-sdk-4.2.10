@@ -34,9 +34,11 @@
 /*
  *  MMC/SD IP block
  */
+#ifndef CONFIG_SOC_SF19A28_FULLMASK
 #define CONFIG_MMC
 #define CONFIG_GENERIC_MMC
 #define CONFIG_DWMMC
+#endif
 #define CONFIG_BOUNCE_BUFFER
 /* RAW SD card / eMMC locations. */
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR 256

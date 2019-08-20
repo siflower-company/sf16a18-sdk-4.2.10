@@ -160,7 +160,7 @@ config SFA18_ETH
 
 config SFA18_ETH_PORTS
 	depends on SFA18_ETH
-	string "SFA18 Enable one or more lan ports. For example 11000, set the first and second ports"
+	hex "SFA18 Enable one or more ports. For example 0x3, enable the first and second ports"
 	help
 	  This driver supports sfa18 series ethernet switch
 

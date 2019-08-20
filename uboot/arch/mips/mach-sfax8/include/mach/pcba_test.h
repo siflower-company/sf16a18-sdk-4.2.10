@@ -64,6 +64,7 @@ enum result_header {
 	CMD_CONTINUE,
 	CMD_TIMEOUT,
 	ERROR_CMD,
+	// value 50-150 is used for wifi temp test result
 };
 
 /*
