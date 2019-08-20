@@ -76,7 +76,7 @@ config SFAX8_UPDATE_GAIN_TABLE
 config SFA18_PCBA_STATIC_IP
 	bool "static IP addr for WIFI test"
         depends on SFAX8_WIFI_TEST
-	default n
+	default y
 	help
 	  Use static IP addr 192.168.4.1 for WIFI ITEST device.
 
