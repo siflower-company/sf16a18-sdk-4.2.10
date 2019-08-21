@@ -319,13 +319,21 @@ int sf_phy_reset_for_low_power(void){
 
 	// reset all phy normal first
 	for(i = 0; i < SF_MAC_PORTS; i++)
-	  if (port_list & (1 << i) && i != CONFIG_SFAX8_DEFAULT_TX_PORT)
+		if (port_list & (1 << i)
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
+				&& i != CONFIG_SFAX8_DEFAULT_TX_PORT
+#endif
+				)
 		sf_phy_reset(i, g_priv);
 
 	// set self connect MDI and MDIX, like p10m and ac
 	if (port_list == 0xf || port_list == 0x1f || port_list == 0x3 || port_list == 0x13){
 		for(i = 0; i < SF_MAC_PORTS; i++){
-			if (port_list & (1 << i) && i != CONFIG_SFAX8_DEFAULT_TX_PORT){
+			if (port_list & (1 << i)
+#ifdef CONFIG_SFAX8_DEFAULT_TX_PORT
+				       	&& i != CONFIG_SFAX8_DEFAULT_TX_PORT
+#endif
+					) {
 				if ((i + 1) % 2)
 				  sf_phy_mode_init(i, g_priv->phy_dev, OMINI_PHY_MODEL_CTRL_MDIX);
 				else
