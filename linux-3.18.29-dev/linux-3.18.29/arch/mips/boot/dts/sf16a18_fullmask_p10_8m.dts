@@ -12,7 +12,7 @@
 
 &ethernet {
 	shutdown-portlist = "llll*";
-        led-on-off-time = /bits/ 16 <0xff 0x1ff>;
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
 	status = "okay";
 };
 

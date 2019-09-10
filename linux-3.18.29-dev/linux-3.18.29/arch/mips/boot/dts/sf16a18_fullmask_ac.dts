@@ -12,17 +12,20 @@
 
 &ethernet {
 	shutdown-portlist = "lllll";
-        led-on-off-time = /bits/ 16 <0xff 0x1ff>;
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
 	status = "okay";
+	smp-affinity = <2>;
 };
 
 &switch{
 	sfax8,port-map = "lllll";
 	status = "okay";
+	smp-affinity = <2>;
 };
 
 &gmac {
 	status = "okay";
+	smp-affinity = <0>;
 };
 
 &gdma {
@@ -142,10 +145,12 @@
 
 &wifi_lb {
 	status = "okay";
+	smp-affinity = <2>;
 };
 
 &wifi_hb {
 	status = "okay";
+	smp-affinity = <3>;
 };
 
 &ip6103_vdd18 {

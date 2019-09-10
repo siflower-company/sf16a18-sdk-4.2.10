@@ -532,6 +532,8 @@
 			mtd-product-key = <&factory 121>;
 			mtd-login-info-flag = <&factory 153>;
 			mtd-login-info = <&factory 155>;
+			mtd-rom-type-flag = <&factory 159>;
+			mtd-rom-type = <&factory 161>;
 			mtd-wifi-version = <&factory 2048>;
 			mtd-wifi-info = <&factory 2050>;
 			status = "okay";

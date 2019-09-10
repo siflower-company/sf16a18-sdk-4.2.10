@@ -27,7 +27,7 @@
 	thermal-zones {
 		rf_zone: rf_zone {
 			polling-delay-passive = <2000>; /* milliseconds */
-			polling-delay = <3000>; /* milliseconds */
+			polling-delay = <4000>; /* milliseconds */
 
 					/* sensor	ID */
 		        thermal-sensors = <&wifi_rf	0>;

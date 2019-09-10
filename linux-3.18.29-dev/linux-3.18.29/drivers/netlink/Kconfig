@@ -9,4 +9,10 @@ config SFAX8_GENL
 	help
 	  Use generic netlink socket to connect user space and kernel.
 
+config SEND_ERR
+	bool "send err to user interface"
+    default n
+	help
+	  Use generic netlink socket to connect user space and kernel.
+
 endmenu

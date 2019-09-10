@@ -23,6 +23,9 @@
 #ifdef CONFIG_SOC_SF16A18
 #include <sf16a18int.h>
 #include <sf16a18.h>
+#elif defined CONFIG_SOC_SF19A28
+#include <sf16a18int.h>
+#include <sf16a18.h>
 #endif
 
 static struct irq_chip *irq_gic;

@@ -62,7 +62,7 @@
         <div class="hsVigApGroup">
             <p class="hsVigTtop"><i class="hsVigClose" onclick="closeNewGroup()"></i></p>
             <table id="new-group-table" class="tb-no-border">
-                <tr><td class="wan-td-left"><%:Group Name%></td><td class="wan-td-right"><input id="group-name" maxlength="31" onkeyup="numLetterLimit(this)"></td></tr>
+                <tr><td class="wan-td-left"><%:Group Name%></td><td class="wan-td-right"><input id="group-name" maxlength="32" onkeyup="numLetterLimit(this)"></td></tr>
                 <tr class="border-line dualHide"><td class="wan-td-left"></td><td class="wan-td-right">2.4G</td></tr>
                 <tr class="dualHide">
                     <td class="wan-td-left"><%:Wireless Status%></td>
@@ -71,7 +71,7 @@
                         <input type="radio" name="wireless-status" value="0"><%:forbid%>
                     </td>
                 </tr>
-                <tr class="dualHide"><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"><input id="ssid" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>) <input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td></tr>
+                <tr class="dualHide"><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"><input id="ssid" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>) <input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td></tr>
                 <!--<tr>
                     <td class="wan-td-left"><%:Wireless isolation%></td>
                     <td class="wan-td-right">
@@ -95,12 +95,13 @@
                 </tr>
                 <tr class="dualHide" id="encryption-password" style="display: none">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left channelText24g"><%:channel%></td>
                     <td class="wan-td-right">
                         <select class="channel">
+                            <option value="0"><%:auto%></option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -114,6 +115,16 @@
                             <option value="11">11</option>
                             <option value="12">12</option>
                             <option value="13">13</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="wan-td-left bandwidthText24g"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="HT20">20MHZ</option>
+                            <option value="HT40">40MHZ</option>
                         </select>
                     </td>
                 </tr>
@@ -142,7 +153,7 @@
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:SSID%></td>
-                    <td class="wan-td-right"><input id="ssid-5" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>) <input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                    <td class="wan-td-right"><input id="ssid-5" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>) <input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                 </tr>
                 <!--<tr>
                     <td class="wan-td-left"><%:Wireless isolation%></td>
@@ -167,12 +178,13 @@
                 </tr>
                 <tr id="encryption-5-password" style="display: none">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="password-5" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="password-5" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left channelText5g"><%:channel%></td>
                     <td class="wan-td-right">
-                        <select class="channel-5">
+                        <select class="channel-5" onchange="channel165(this,'new-group-table')">
+                            <option value="0"><%:auto%></option>
                             <option value="36">36</option>
                             <option value="40">40</option>
                             <option value="44">44</option>
@@ -188,6 +200,17 @@
                             <option value="157">157</option>
                             <option value="161">161</option>
                             <option value="165">165</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="wan-td-left bandwidthText5g"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth-5">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="VHT20">20MHZ</option>
+                            <option value="VHT40">40MHZ</option>
+                            <option value="VHT80">80MHZ</option>
                         </select>
                     </td>
                 </tr>
@@ -217,7 +240,7 @@
         <div class="hsVigApGroup">
             <p class="hsVigTtop"><i class="hsVigClose" onclick="closeEditGroup()"></i></p>
             <table id="edit-group-table" class="tb-no-border">
-                   <tr><td class="wan-td-left"><%:Group Name%></td><td class="wan-td-right"><input id="edit-group-name" maxlength="31" onkeyup="numLetterLimit(this)" style="ime-mode:disabled"></td></tr>
+                   <tr><td class="wan-td-left"><%:Group Name%></td><td class="wan-td-right"><input id="edit-group-name" maxlength="32" onkeyup="numLetterLimit(this)" style="ime-mode:disabled"></td></tr>
                 <tr class="border-line dualHide"><td class="wan-td-left"></td><td class="wan-td-right">2.4G</td></tr>
                 <tr class="dualHide">
                     <td class="wan-td-left"><%:Wireless Status%></td>
@@ -226,7 +249,7 @@
                         <input type="radio" name="edit-wireless-status" value="0"><%:forbid%>
                     </td>
                 </tr>
-                <tr class="dualHide"><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"><input id="edit-ssid" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td></tr>
+                <tr class="dualHide"><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"><input id="edit-ssid" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td></tr>
                 <!--<tr>
                     <td class="wan-td-left"><%:Wireless isolation%></td>
                     <td class="wan-td-right">
@@ -250,12 +273,13 @@
                 </tr>
                 <tr class="dualHide" id="edit-encryption-password" style="display: none">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="edit-password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="edit-password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left channelText24g"><%:channel%></td>
                     <td class="wan-td-right">
                         <select class="channel">
+                            <option value="0"><%:auto%></option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -269,6 +293,16 @@
                             <option value="11">11</option>
                             <option value="12">12</option>
                             <option value="13">13</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="wan-td-left bandwidthText24g"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="HT20">20MHZ</option>
+                            <option value="HT40">40MHZ</option>
                         </select>
                     </td>
                 </tr>
@@ -297,7 +331,7 @@
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:SSID%></td>
-                    <td class="wan-td-right"><input id="edit-ssid-5" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                    <td class="wan-td-right"><input id="edit-ssid-5" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                 </tr>
                 <!--<tr>
                     <td class="wan-td-left"><%:Wireless isolation%></td>
@@ -323,12 +357,13 @@
                 </tr>
                 <tr id="edit-encryption-5-password">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="edit-password-5" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="edit-password-5" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left channelText5g"><%:channel%></td>
                     <td class="wan-td-right">
-                        <select class="channel-5">
+                        <select class="channel-5" onchange="channel165(this,'edit-group-table')">
+                            <option value="0"><%:auto%></option>
                             <option value="36">36</option>
                             <option value="40">40</option>
                             <option value="44">44</option>
@@ -344,6 +379,17 @@
                             <option value="157">157</option>
                             <option value="161">161</option>
                             <option value="165">165</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="wan-td-left bandwidthText5g"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth-5">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="VHT20">20MHZ</option>
+                            <option value="VHT40">40MHZ</option>
+                            <option value="VHT80">80MHZ</option>
                         </select>
                     </td>
                 </tr>
@@ -376,7 +422,7 @@
             <tr>
                 <td colspan="10">
                     <button onclick="hideParts(['group-info']);showParts(['groups-info']);getApGroups();"><%:return group%></button>
-                    <button id="changeGroup" onclick="showParts(['ap-groups-modify'])" disabled><%:change group%></button>
+                    <button id="changeGroup" onclick="showGroupSelect()" disabled><%:change group%></button>
                     <button id="batchGroup" onclick="showBatchInfo()" disabled><%:bulk edit%></button>
                     <button onclick="showGroupInfo(0)"><%:refresh%></button>
                     <button id="delGroup" onclick="delBatch()" disabled><%:delete%></button>
@@ -413,7 +459,7 @@
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:SSID%></td>
-                    <td class="wan-td-right"><input id="ap-info-public-ssid2" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                    <td class="wan-td-right"><input id="ap-info-public-ssid2" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:Security options%></td>
@@ -426,12 +472,13 @@
                 </tr>
                 <tr id="ap-info-public-encryption-password" style="display: none">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="ap-info-public-password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="ap-info-public-password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:channel%></td>
                     <td class="wan-td-right">
                         <select class="channel">
+                            <option value="0"><%:auto%></option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -448,6 +495,16 @@
                         </select>
                     </td>
                 </tr>
+                <tr>
+                    <td class="wan-td-left"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="HT20">20MHZ</option>
+                            <option value="HT40">40MHZ</option>
+                        </select>
+                    </td>
+                </tr>
             </table>
             <table id="ap-info-5G" class="tb-no-border" style="display: none">
                 <tr>
@@ -459,7 +516,7 @@
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:SSID%></td>
-                    <td class="wan-td-right"><input id="ap-info-public-ssid5" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                    <td class="wan-td-right"><input id="ap-info-public-ssid5" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:Security options%></td>
@@ -470,12 +527,13 @@
                 </tr>
                 <tr id="ap-info-public-encryption-5-password" style="display: none">
                     <td class="wan-td-left"><%:wireless password%></td>
-                    <td class="wan-td-right"><input id="ap-info-public-5-password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                    <td class="wan-td-right"><input id="ap-info-public-5-password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left channelText5g"><%:channel%></td>
                     <td class="wan-td-right">
-                        <select class="channel-5">
+                        <select class="channel-5" onchange="channel165(this,'ap-info-5G')">
+                            <option value="0"><%:auto%></option>
                             <option value="36">36</option>
                             <option value="40">40</option>
                             <option value="44">44</option>
@@ -494,10 +552,22 @@
                         </select>
                     </td>
                 </tr>
-                 <tr class="dualShow" style="display: none;">
+                <tr>
+                    <td class="wan-td-left bandwidthText5g"><%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth-5">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="VHT20">20MHZ</option>
+                            <option value="VHT40">40MHZ</option>
+                            <option value="VHT80">80MHZ</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class="dualShow" style="display: none;">
                     <td class="wan-td-left">2.4G<%:channel%></td>
                     <td class="wan-td-right">
                         <select class="channel">
+                            <option value="0"><%:auto%></option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -514,6 +584,16 @@
                         </select>
                     </td>
                 </tr>
+                <tr class="dualShow" style="display: none;">
+                    <td class="wan-td-left">2.4G<%:Spectrum bandwidth%></td>
+                    <td class="wan-td-right">
+                        <select class="bandwidth">
+                            <!--<option value="auto"><%:auto%></option>-->
+                            <option value="HT20">20MHZ</option>
+                            <option value="HT40">40MHZ</option>
+                        </select>
+                    </td>
+                </tr>
             </table>
             <table id="ap-info-public" class="tb-no-border">
                 <tr>
@@ -523,7 +603,7 @@
                 <tr>
                     <td class="wan-td-left"><%:AP alive-time%></td>
                     <td class="wan-td-right">
-                        <input id="apAliveTime"><%:(20-80 seconds)%></td>
+                        <input id="apAliveTime" maxlength=2 onkeyup="numLimit(this)"><%:(20-80 seconds)%></td>
                 </tr>
                 <tr>
                     <td class="wan-td-left"><%:LED%></td>
@@ -576,7 +656,7 @@
                     </tr>
                     <tr>
                         <td class="wan-td-left"><%:SSID%></td>
-                        <td class="wan-td-right"><input id="batch-edit-group-ssid-2.4" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                        <td class="wan-td-right"><input id="batch-edit-group-ssid-2.4" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                     </tr>
                     <tr>
                         <td class="wan-td-left"><%:Security options%></td>
@@ -588,12 +668,13 @@
                     </tr>
                     <tr id="batch-edit-group-info-public-encryption-2.4-password" style="display: none">
                         <td class="wan-td-left"><%:wireless password%></td>
-                        <td class="wan-td-right"><input id="batch-edit-group-2.4-password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                        <td class="wan-td-right"><input id="batch-edit-group-2.4-password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                     </tr>
                     <tr>
                         <td class="wan-td-left"><%:channel%></td>
                         <td class="wan-td-right">
                             <select class="channel">
+                                <option value="0"><%:auto%></option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -607,6 +688,16 @@
                                 <option value="11">11</option>
                                 <option value="12">12</option>
                                 <option value="13">13</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="wan-td-left"><%:Spectrum bandwidth%></td>
+                        <td class="wan-td-right">
+                            <select class="bandwidth">
+                                <!--<option value="auto"><%:auto%></option>-->
+                                <option value="HT20">20MHZ</option>
+                                <option value="HT40">40MHZ</option>
                             </select>
                         </td>
                     </tr>
@@ -621,7 +712,7 @@
                     </tr>
                     <tr>
                         <td class="wan-td-left"><%:SSID%></td>
-                        <td class="wan-td-right"><input id="batch-edit-group-ssid-5" maxlength="31" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
+                        <td class="wan-td-right"><input id="batch-edit-group-ssid-5" maxlength="32" onkeyup="noSpaceWord(this)">(<%:1-32 characters%>)<input class="wirelessRadio hideSSID-5" type="CHECKBOX" checked/><%:Turn on wireless radio%></td>
                     </tr>
                     <tr>
                         <td class="wan-td-left"><%:Security options%></td>
@@ -632,12 +723,13 @@
                     </tr>
                     <tr id="batch-edit-group-encryption-5-password" style="display: none">
                         <td class="wan-td-left"><%:wireless password%></td>
-                        <td class="wan-td-right"><input id="batch-edit-group-5-password" maxlength="31" onkeyup="nStrLimit(this)"></td>
+                        <td class="wan-td-right"><input id="batch-edit-group-5-password" maxlength="63" onkeyup="nStrLimit(this)"></td>
                     </tr>
                     <tr class="dualShow" style="display: none;">
                         <td class="wan-td-left">2.4G<%:channel%></td>
                         <td class="wan-td-right">
                             <select class="channel">
+                                <option value="0"><%:auto%></option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -654,10 +746,21 @@
                             </select>
                         </td>
                     </tr>
+                    <tr class="dualShow" style="display: none;">
+                        <td class="wan-td-left">2.4G<%:Spectrum bandwidth%></td>
+                        <td class="wan-td-right">
+                            <select class="bandwidth">
+                                <!--<option value="auto"><%:auto%></option>-->
+                                <option value="HT20">20MHZ</option>
+                                <option value="HT40">40MHZ</option>
+                            </select>
+                        </td>
+                    </tr>
                     <tr>
                         <td class="wan-td-left channelText5g"><%:channel%></td>
                         <td class="wan-td-right">
-                            <select class="channel-5">
+                            <select class="channel-5" onchange="channel165(this,'batch-edit-group-ap-info-5G')">
+                                <option value="0"><%:auto%></option>
                                 <option value="36">36</option>
                                 <option value="40">40</option>
                                 <option value="44">44</option>
@@ -673,6 +776,17 @@
                                 <option value="157">157</option>
                                 <option value="161">161</option>
                                 <option value="165">165</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="wan-td-left bandwidthText5g"><%:Spectrum bandwidth%></td>
+                        <td class="wan-td-right">
+                            <select class="bandwidth-5">
+                                <!--<option value="auto"><%:auto%></option>-->
+                                <option value="VHT20">20MHZ</option>
+                                <option value="VHT40">40MHZ</option>
+                                <option value="VHT80">80MHZ</option>
                             </select>
                         </td>
                     </tr>
@@ -758,15 +872,6 @@
             }else if(result.code == 0) {
                     console.log(result);
                     apGroups = result.ap_group_list;
-                    var apGroupsSelect = document.getElementById('ap-groups-select');
-                    var options = apGroupsSelect.options;
-                    var optLen = options.length;
-                    for(var i=0; i<optLen ; i++){//delete all options
-                        apGroupsSelect.removeChild(options[0]);
-                    }
-                    for (var i=0; i<apGroups.length; i++) {
-                        apGroupsSelect.options[i] = new Option(apGroups[i].name,apGroups[i].name);
-                    }
                     var html = '<tr><td><input id="choose-all-or-not" onchange="chooseAllOrNot()" type="checkbox"></td><td><%:index%></td><td><%:Group Name%></td><td><%:group-info%></td><td><%:Set%></td></tr>';
                     for (var i=0; i<apGroups.length; i++) {
                         if (i == 0) {
@@ -802,6 +907,12 @@
             }
             if (strlen(name)>32) {
                 text.innerText = '<%:The character length cannot be more than 32 bits!%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('group-name');
+                return;
+            }
+            if (name.search(/[^a-zA-Z0-9]/g) != -1){
+                text.innerText = '<%:group name contain invalid character%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('group-name');
                 return;
@@ -868,9 +979,17 @@
                         errTipDoc = document.getElementById('password');
                         return;
                     }
+                    if (password != check(password)){
+                        text.innerText = '<%:password contain invalid character%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        return;
+                    }
                 }
                 var channel = table.querySelector('.channel');
                 ifaces_24g.channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                ifaces_24g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
 
                 ifaces_24g.enable_prevent = table.querySelector('.enable_prevent').checked?'1':'0';
                 ifaces_24g.sta_min_dbm = table.querySelector('.sta_min_dbm').value;
@@ -931,9 +1050,17 @@
                     errTipDoc = document.getElementById('password-5');
                     return;
                 }
+                if (password5 != check(password5)){
+                    text.innerText = '<%:password contain invalid character%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password-5');
+                    return;
+                }
             }
             var channel = table.querySelector('.channel-5');
             ifaces_5g.channel = channel[channel.selectedIndex].value;
+            var bandwidth = table.querySelector('.bandwidth-5');
+            ifaces_5g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
 
             ifaces_5g.enable_prevent = table.querySelector('.enable_prevent').checked?'1':'0';
             ifaces_5g.sta_min_dbm = table.querySelector('.sta_min_dbm').value;
@@ -950,6 +1077,8 @@
                 ifaces_24g.band = 0;
                 var channel = table.querySelector('.channel');
                 ifaces_24g.channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                ifaces_24g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 ifaces.push(ifaces_24g);
             }
             ifaces.push(ifaces_5g);
@@ -977,6 +1106,12 @@
             var table = document.querySelector('#edit-group table');
             if (name == ''||name == null) {
                 text.innerText = '<%:Please input group name%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('edit-group-name');
+                return;
+            }
+            if (name.search(/[^a-zA-Z0-9]/g) != -1){
+                text.innerText = '<%:group name contain invalid character%>';
                 err.style.visibility = 'visible';
                 errTipDoc = document.getElementById('edit-group-name');
                 return;
@@ -1035,9 +1170,17 @@
                         errTipDoc = document.getElementById('edit-password');
                         return;
                     }
+                    if (password != check(password)){
+                        text.innerText = '<%:password contain invalid character%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('edit-password');
+                        return;
+                    }
                 }
                 var channel = table.querySelector('.channel');
                 ifaces_24g.channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                ifaces_24g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
 
                 ifaces_24g.enable_prevent = table.querySelector('.enable_prevent').checked?'1':'0';
                 ifaces_24g.sta_min_dbm = table.querySelector('.sta_min_dbm').value;
@@ -1098,9 +1241,17 @@
                     errTipDoc = document.getElementById('edit-password-5');
                     return;
                 }
+                if (password5 != check(password5)){
+                    text.innerText = '<%:password contain invalid character%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('edit-password-5');
+                    return;
+                }
             }
             var channel = table.querySelector('.channel-5');
             ifaces_5g.channel = channel[channel.selectedIndex].value;
+            var bandwidth = table.querySelector('.bandwidth-5');
+            ifaces_5g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
 
             ifaces_5g.enable_prevent = table.querySelector('.enable_prevent').checked?'1':'0';
             ifaces_5g.sta_min_dbm = table.querySelector('.sta_min_dbm').value;
@@ -1117,6 +1268,8 @@
                 ifaces_24g.band = 0;
                 var channel = table.querySelector('.channel');
                 ifaces_24g.channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                ifaces_24g.bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 ifaces.push(ifaces_24g);
             }
             ifaces.push(ifaces_5g);
@@ -1200,6 +1353,8 @@
                 var table = document.getElementById('ap-info-24G');
                 var channel = table.querySelector('.channel');
                 apListInfoToSet.ifaces[i].channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                apListInfoToSet.ifaces[i].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 apListInfoToSet.ifaces[i].hide = table.querySelector('.hideSSID').checked?'0':'1';
                 /*radios = document.getElementsByName('ap-info-public-band-width-limit');
                 for (var j=0; j<radios.length; j++) {
@@ -1215,17 +1370,15 @@
                     }
                 }
 */
+                var apInfoSelect = document.getElementById('ap-info-select');
+                apInfoSelect.selectedIndex = 0;
                 if (apListInfoToSet.ifaces[i].ssid==null||apListInfoToSet.ifaces[i].ssid==''){
-                    var apInfoSelect = document.getElementById('ap-info-select');
-                    apInfoSelect.selectedIndex = 0;
                     changeApInfo();
                     text.innerText = '<%:Please input 2.4g network SSID!%>！';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('ap-info-public-ssid2');
                     return;
                 }else if (strlen(apListInfoToSet.ifaces[i].ssid)>32){
-                    var apInfoSelect = document.getElementById('ap-info-select');
-                    apInfoSelect.selectedIndex = 0;
                     changeApInfo();
                     text.innerText = '<%:The SSID character length cannot be more than 32 bits!%>';
                     err.style.visibility = 'visible';
@@ -1234,10 +1387,15 @@
                 }
                 if (apListInfoToSet.ifaces[i].encryption!='open'){
                     if (apListInfoToSet.ifaces[i].password.length<8){
-                        var apInfoSelect = document.getElementById('ap-info-select');
-                        apInfoSelect.selectedIndex = 0;
                         changeApInfo();
                         text.innerText = '<%:The password length is no less than 8 bits!%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ap-info-public-password');
+                        return;
+                    }
+                    if (apListInfoToSet.ifaces[i].password != check(apListInfoToSet.ifaces[i].password)){
+                        changeApInfo();
+                        text.innerText = '<%:password contain invalid character%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('ap-info-public-password');
                         return;
@@ -1284,6 +1442,8 @@
                 var table = document.getElementById('ap-info-5G');
                 var channel = table.querySelector('.channel-5');
                 apListInfoToSet.ifaces[i].channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth-5');
+                apListInfoToSet.ifaces[i].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 apListInfoToSet.ifaces[i].hide = table.querySelector('.hideSSID-5').checked?'0':'1';
                 /*radios = document.getElementsByName('ap-info-band-width-limit-5');
                 for (var j=0; j<radios.length; j++) {
@@ -1299,17 +1459,15 @@
                     }
                 }*/
 
+                var apInfoSelect = document.getElementById('ap-info-select');
+                apInfoSelect.selectedIndex = 1;
                 if (apListInfoToSet.ifaces[i].ssid==null||apListInfoToSet.ifaces[i].ssid==''){
-                    var apInfoSelect = document.getElementById('ap-info-select');
-                    apInfoSelect.selectedIndex = 1;
                     changeApInfo();
                     text.innerText = '<%:Please input 5g network SSID!%>！';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('ap-info-public-ssid5');
                     return;
                 }else if (strlen(apListInfoToSet.ifaces[i].ssid)>32){
-                    var apInfoSelect = document.getElementById('ap-info-select');
-                    apInfoSelect.selectedIndex = 1;
                     changeApInfo();
                     text.innerText = '<%:The SSID character length cannot be more than 32 bits!%>';
                     err.style.visibility = 'visible';
@@ -1318,10 +1476,15 @@
                 }
                 if (apListInfoToSet.ifaces[i].encryption!='open'){
                     if (apListInfoToSet.ifaces[i].password.length<8){
-                        var apInfoSelect = document.getElementById('ap-info-select');
-                        apInfoSelect.selectedIndex = 1;
                         changeApInfo();
                         text.innerText = '<%:The password length is no less than 8 bits!%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ap-info-public-5-password');
+                        return;
+                    }
+                    if (apListInfoToSet.ifaces[i].password != check(apListInfoToSet.ifaces[i].password)){
+                        changeApInfo();
+                        text.innerText = '<%:password contain invalid character%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('ap-info-public-5-password');
                         return;
@@ -1344,6 +1507,8 @@
                             apListInfoToSet.ifaces[j].band = 0;
                             var channel = table.querySelector('.channel');
                             apListInfoToSet.ifaces[j].channel = channel[channel.selectedIndex].value;
+                            var bandwidth = table.querySelector('.bandwidth');
+                            apListInfoToSet.ifaces[j].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                         }
                     }
                 }
@@ -1360,7 +1525,7 @@
             errTipDoc = document.getElementById('ap-info-public-name');
             return;
         }
-        if (ap_alive_time<20||ap_alive_time>80){
+        if (ap_alive_time<20||ap_alive_time>80||ap_alive_time.search(/\D/g) != -1){
             text.innerText = '<%:The ap_alive_time limit is 20-80 seconds!%>';
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('apAliveTime');
@@ -1456,13 +1621,19 @@
         document.getElementById('password-5').value = '';
         document.getElementById('encryption-5-password').style.display = 'none';
         var table = document.querySelector('#new-group table');
-        var channel = table.querySelector('.channel-5');
-        for (var e=0; e<channel.length;e++){
-            if (channel[e].value=='161'){
-                channel.selectedIndex = e;
-                break;
-            }
+        table.querySelector('.channel').selectedIndex = 0;
+        table.querySelector('.bandwidth').selectedIndex = 0;
+        table.querySelector('.channel-5').selectedIndex = 0;
+        var bandwidth = table.querySelector('.bandwidth-5');
+        if (bandwidth.length == 1){
+            bandwidth.options[1] = new Option('40MHZ','VHT40');
+            bandwidth.options[2] = new Option('80MHZ','VHT80');
         }
+        bandwidth.selectedIndex = 2;
+        table.querySelector('.enable_prevent').checked = false;
+        changeStatus({checked: false}, 'new-group', 'sta_min_dbm');
+        table.querySelector('.enable_kick').checked = false;
+        changeStatus({checked: false}, 'new-group', 'weak_sta_signal');
     }
 
     function delGroup() {
@@ -1549,12 +1720,12 @@
                     }
                     if (apList[i].status == '1') {
                         html += '<tr><td><input id="ap-cb-' + i + '" type="checkbox" onchange="apGoupDelChange(this,2)"></td><td>' + (i + 1) + '</td><td class="version-td">' + apList[i].name +
-                            '</td><td>' + apList[i].model + '</td><td>' + apList[i].hardware_version + '</td><td class="version-td">' + apList[i].firmware_version +
+                            '</td><td>' + apList[i].model + '</td><td class="version-td">' + apList[i].hardware_version + '</td><td class="version-td">' + apList[i].firmware_version +
                             '</td><td>' + apList[i].mac + '</td><td>' + apList[i].led_t + '</td><td>' + apList[i].status_t +
                             '</td><td><button onclick="showApInfo(' + i + ')"><%:Set%></button></td></tr>';
                     } else {
                         html += '<tr><td><input id="ap-cb-' + i + '" type="checkbox" onchange="apGoupDelChange(this,2)"></td><td>' + (i + 1) + '</td><td class="version-td">' + apList[i].name +
-                            '</td><td>' + apList[i].model + '</td><td>' + apList[i].hardware_version + '</td><td class="version-td">' + apList[i].firmware_version +
+                            '</td><td>' + apList[i].model + '</td><td class="version-td">' + apList[i].hardware_version + '</td><td class="version-td">' + apList[i].firmware_version +
                             '</td><td>' + apList[i].mac + '</td><td>' + apList[i].led_t + '</td><td>' + apList[i].status_t +
                             '</td><td><button onclick="showApInfo(' + i + ')" disabled><%:Set%></button></td></tr>';
                     }
@@ -1562,9 +1733,10 @@
                 }
                 var apListTable = document.getElementById('ap-list');
                 setTableInnerHTML(apListTable, html);
-                document.getElementById('groups-info').style.display = 'none';
-                if (isRealNextPage)
+                if (isRealNextPage){
                     document.getElementById('group-info').style.display = '';
+                    document.getElementById('groups-info').style.display = 'none';
+                }
                 isRealNextPage = false;
             }
         });
@@ -1649,6 +1821,17 @@
                     }
                 } else {
                     channel.selectedIndex = 0;
+                }
+                var bandwidth = table.querySelector('.bandwidth');
+                if (apGroups[i].ifaces[j].bandwidth!=undefined){
+                    for (var e=0; e<bandwidth.length;e++){
+                        if (bandwidth[e].value==apGroups[i].ifaces[j].bandwidth){
+                            bandwidth.selectedIndex = e;
+                            break;
+                        }
+                    }
+                } else {
+                    bandwidth.selectedIndex = 0;
                 }
 
                 if (apGroups[i].ifaces[j].enable_prevent!=undefined){
@@ -1788,6 +1971,18 @@
                 } else {
                     channel.selectedIndex = 0;
                 }
+                var bandwidth = table.querySelector('.bandwidth-5');
+                if (apGroups[i].ifaces[j].bandwidth!=undefined){
+                    for (var e=0; e<bandwidth.length;e++){
+                        if (bandwidth[e].value==apGroups[i].ifaces[j].bandwidth){
+                            bandwidth.selectedIndex = e;
+                            break;
+                        }
+                    }
+                } else {
+                    bandwidth.selectedIndex = 2;
+                }
+                channel165(channel, table.id);
 
                 if (apGroups[i].ifaces[j].enable_prevent!=undefined){
                     if(apGroups[i].ifaces[j].enable_prevent=='1'){
@@ -1968,15 +2163,26 @@
                 //display channel
                 var table = document.getElementById('ap-info-24G');
                 var channel = table.querySelector('.channel');
-                console.log('channel is ',channel);
                 if (apList[i].ifaces[j].channel != undefined) {
                     for (var k=0; k<channel.options.length; k++) {
                         if (channel[k].value == apList[i].ifaces[j].channel) {
                             channel.selectedIndex = k;
+                            break;
                         }
                     }
                 }else {
                     channel.selectedIndex = 0;
+                }
+                var bandwidth = table.querySelector('.bandwidth');
+                if (apList[i].ifaces[j].bandwidth != undefined) {
+                    for (var k=0; k<bandwidth.options.length; k++) {
+                        if (bandwidth[k].value == apList[i].ifaces[j].bandwidth) {
+                            bandwidth.selectedIndex = k;
+                            break;
+                        }
+                    }
+                }else {
+                    bandwidth.selectedIndex = 0;
                 }
                 if (apList[i].ifaces[j].hide!=undefined && apList[i].ifaces[j].hide=='1'){
                     table.querySelector('.hideSSID').checked = false;
@@ -1986,6 +2192,8 @@
                 var table5g = document.getElementById('ap-info-5G');
                 var channelDual24g = table5g.querySelector('.channel');
                 channelDual24g.selectedIndex = channel.selectedIndex;
+                var bandwidthDual24g = table5g.querySelector('.bandwidth');
+                bandwidthDual24g.selectedIndex = bandwidth.selectedIndex;
                /* if (apList[i].ifaces[j].band_width_limit.upload != undefined) {
                     document.getElementById('ap-info-public-upload').value = apList[i].ifaces[j].band_width_limit.upload;
                 }else {
@@ -2058,11 +2266,24 @@
                     for (var k=0; k<channel.options.length; k++) {
                         if (channel[k].value == apList[i].ifaces[j].channel) {
                             channel.selectedIndex = k;
+                            break;
                         }
                     }
                 }else {
                     channel.selectedIndex = 0;
                 }
+                var bandwidth = table.querySelector('.bandwidth-5');
+                if (apList[i].ifaces[j].bandwidth != undefined) {
+                    for (var k=0; k<bandwidth.options.length; k++) {
+                        if (bandwidth[k].value == apList[i].ifaces[j].bandwidth) {
+                            bandwidth.selectedIndex = k;
+                            break;
+                        }
+                    }
+                }else {
+                    bandwidth.selectedIndex = 2;
+                }
+                channel165(channel, table.id);
                 if (apList[i].ifaces[j].hide!=undefined && apList[i].ifaces[j].hide=='1'){
                     table.querySelector('.hideSSID-5').checked = false;
                 }else{
@@ -2326,7 +2547,7 @@
                 if (apList[i].status=='0'){
                     var err = document.getElementById('Error');
                     var text = err.getElementsByTagName('span')[0];
-                    text.innerText = '<%:AP number '+(i+1)+' is abnomal，cannot join bulk edit!%>';
+                    text.innerText = '<%:AP number%>'+' '+(i+1)+' '+'<%:is abnormal,cannot join bulk edit!%>';
                     err.style.visibility = 'visible';
                     return;
                 }
@@ -2412,10 +2633,22 @@
                     for (var k=0; k<channel.options.length; k++) {
                         if (channel[k].value == apList[batchEditApInfoShowIndex].ifaces[j].channel) {
                             channel.selectedIndex = k;
+                            break;
                         }
                     }
                 }else {
                     channel.selectedIndex = 0;
+                }
+                var bandwidth = table.querySelector('.bandwidth');
+                if (apList[batchEditApInfoShowIndex].ifaces[j].bandwidth != undefined) {
+                    for (var k=0; k<bandwidth.options.length; k++) {
+                        if (bandwidth[k].value == apList[batchEditApInfoShowIndex].ifaces[j].bandwidth) {
+                            bandwidth.selectedIndex = k;
+                            break;
+                        }
+                    }
+                }else {
+                    bandwidth.selectedIndex = 0;
                 }
                 if (apList[batchEditApInfoShowIndex].ifaces[j].hide!=undefined && apList[batchEditApInfoShowIndex].ifaces[j].hide=='1'){
                     table.querySelector('.hideSSID').checked = false;
@@ -2425,6 +2658,8 @@
                 var table5g = document.getElementById('batch-edit-group-ap-info-5G');
                 var channelDual24g = table5g.querySelector('.channel');
                 channelDual24g.selectedIndex = channel.selectedIndex;
+                var bandwidthDual24g = table5g.querySelector('.bandwidth');
+                bandwidthDual24g.selectedIndex = bandwidth.selectedIndex;
                 /*//带宽控制
                 var bandWidthLimit = document.getElementsByName('batch-edit-group-band-width-limit-2.4');
                 for (var e=0; e<bandWidthLimit.length; e++) {
@@ -2541,11 +2776,24 @@
                     for (var k=0; k<channel.options.length; k++) {
                         if (channel[k].value == apList[batchEditApInfoShowIndex].ifaces[j].channel) {
                             channel.selectedIndex = k;
+                            break;
                         }
                     }
                 }else {
                     channel.selectedIndex = 0;
                 }
+                var bandwidth = table.querySelector('.bandwidth-5');
+                if (apList[batchEditApInfoShowIndex].ifaces[j].bandwidth != undefined) {
+                    for (var k=0; k<bandwidth.options.length; k++) {
+                        if (bandwidth[k].value == apList[batchEditApInfoShowIndex].ifaces[j].bandwidth) {
+                            bandwidth.selectedIndex = k;
+                            break;
+                        }
+                    }
+                }else {
+                    bandwidth.selectedIndex = 2;
+                }
+                channel165(channel, table.id);
                 if (apList[batchEditApInfoShowIndex].ifaces[j].hide!=undefined && apList[batchEditApInfoShowIndex].ifaces[j].hide=='1'){
                     table.querySelector('.hideSSID-5').checked = false;
                 }else{
@@ -2719,19 +2967,19 @@
                 var table = document.getElementById('batch-edit-group-ap-info-24G');
                 var channel = table.querySelector('.channel');
                 batchListInfoToSet.ifaces[i].channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth');
+                batchListInfoToSet.ifaces[i].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 batchListInfoToSet.ifaces[i].hide = table.querySelector('.hideSSID').checked?'0':'1';
 
+                var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
+                apGroupInfoSelect.selectedIndex = 0;
                 if (batchListInfoToSet.ifaces[i].ssid==null||batchListInfoToSet.ifaces[i].ssid==''){
-                    var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                    apGroupInfoSelect.selectedIndex = 0;
                     changebatchInfo();
                     text.innerText = '<%:Please input 2.4g network SSID!%>';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('batch-edit-group-ssid-2.4');
                     return;
                 }else if (strlen(batchListInfoToSet.ifaces[i].ssid)>32){
-                    var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                    apGroupInfoSelect.selectedIndex = 0;
                     changebatchInfo();
 					text.innerText = "<%:The SSID character length cannot be more than 32 bits!%>";
                     err.style.visibility = 'visible';
@@ -2740,10 +2988,15 @@
                 }
                 if (batchListInfoToSet.ifaces[i].encryption!='open'){
                     if (batchListInfoToSet.ifaces[i].password.length<8){
-                        var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                        apGroupInfoSelect.selectedIndex = 0;
                         changebatchInfo();
                         text.innerText = '<%:The password length is no less than 8 bits!%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('batch-edit-group-2.4-password');
+                        return;
+                    }
+                    if (batchListInfoToSet.ifaces[i].password != check(batchListInfoToSet.ifaces[i].password)){
+                        changebatchInfo();
+                        text.innerText = '<%:password contain invalid character%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('batch-edit-group-2.4-password');
                         return;
@@ -2790,6 +3043,8 @@
                 var table = document.getElementById('batch-edit-group-ap-info-5G');
                 var channel = table.querySelector('.channel-5');
                 batchListInfoToSet.ifaces[i].channel = channel[channel.selectedIndex].value;
+                var bandwidth = table.querySelector('.bandwidth-5');
+                batchListInfoToSet.ifaces[i].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                 batchListInfoToSet.ifaces[i].hide = table.querySelector('.hideSSID-5').checked?'0':'1';
                 /*radios = document.getElementsByName('batch-edit-group-band-width-limit-5');
                 for (var j=0; j<radios.length; j++) {
@@ -2806,17 +3061,15 @@
                     }
                 }*/
 
+                var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
+                apGroupInfoSelect.selectedIndex = 1;
                 if (batchListInfoToSet.ifaces[i].ssid==null||batchListInfoToSet.ifaces[i].ssid==''){
-                    var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                    apGroupInfoSelect.selectedIndex = 1;
                     changebatchInfo();
                     text.innerText = '<%:Please input 5g network SSID!%>';
                     err.style.visibility = 'visible';
                     errTipDoc = document.getElementById('batch-edit-group-ssid-5');
                     return;
                 }else if (strlen(batchListInfoToSet.ifaces[i].ssid)>32){
-                    var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                    apGroupInfoSelect.selectedIndex = 1;
                     changebatchInfo();
                     text.innerText = '<%:The SSID character length cannot be more than 32 bits!%>';
                     err.style.visibility = 'visible';
@@ -2825,10 +3078,14 @@
                 }
                 if (batchListInfoToSet.ifaces[i].encryption!='open'){
                     if (batchListInfoToSet.ifaces[i].password.length<8){
-                        var apGroupInfoSelect = document.getElementById('batch-edit-group-info-select');
-                        apGroupInfoSelect.selectedIndex = 1;
                         changebatchInfo();
                         text.innerText = '<%:The password length is no less than 8 bits!%>';
+                        err.style.visibility = 'visible';
+                        return;
+                    }
+                    if (batchListInfoToSet.ifaces[i].password != check(batchListInfoToSet.ifaces[i].password)){
+                        changebatchInfo();
+                        text.innerText = '<%:password contain invalid character%>';
                         err.style.visibility = 'visible';
                         errTipDoc = document.getElementById('batch-edit-group-5-password');
                         return;
@@ -2851,6 +3108,8 @@
                             batchListInfoToSet.ifaces[j].band = 0;
                             var channel = table.querySelector('.channel');
                             batchListInfoToSet.ifaces[j].channel = channel[channel.selectedIndex].value;
+                            var bandwidth = table.querySelector('.bandwidth');
+                            batchListInfoToSet.ifaces[j].bandwidth = bandwidth[bandwidth.selectedIndex].value;
                         }
                     }
                 }
@@ -2867,7 +3126,7 @@
             errTipDoc = document.getElementById('batch-edit-group-ap-info-public-name');
             return;
         }
-        if (ap_alive_time<20||ap_alive_time>80){
+        if (ap_alive_time<20||ap_alive_time>80||ap_alive_time.search(/\D/g) != -1){
             text.innerText = '<%:The ap_alive_time limit is 20-80 seconds!%>';
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('batch-edit-group-alive-time');
@@ -2913,6 +3172,31 @@
                 }
             });
     }
+
+function showGroupSelect() {
+    var apGroupsSelect = document.getElementById('ap-groups-select');
+    var apGroupName;
+    for (var i = 0; i < apGroups.length; i++) {
+        if (apGroups[i].index == apInfoGroupIndex) {
+            apGroupName = apGroups[i].name;
+        }
+    }
+    var options = apGroupsSelect.options;
+    var optLen = options.length;
+    for(var i=0; i<optLen ; i++){//delete all options
+        apGroupsSelect.removeChild(options[0]);
+    }
+    for (var i=0; i<apGroups.length; i++) {
+        apGroupsSelect.options[i] = new Option(apGroups[i].name,apGroups[i].name);
+    }
+    for (var i = 0; i < apGroupsSelect.length; i++) {
+        if (apGroupsSelect[i].value == apGroupName) {
+            apGroupsSelect.remove(i);
+        }
+    }
+
+    showParts(['ap-groups-modify']);
+}
 
 function changeApGroup() {
     document.getElementById("waiting").style.display = '';
@@ -3116,6 +3400,22 @@ function changeApGroup() {
         };
     }
     function switchDualChange() {
+        var editGroupDiv = document.getElementById('edit-group').style.display;
+        var newGroupDiv = document.getElementById('new-group').style.display;
+        var apInfosDiv = document.getElementById("ap-infos").style.display;
+        var batchEditGroupDiv = document.getElementById("batch-edit-group").style.display;
+        if (newGroupDiv != 'none'){
+            closeNewGroup();
+        }
+        if (editGroupDiv != 'none'){
+            closeEditGroup();
+        }
+        if (apInfosDiv != 'none'){
+            hideParts(['ap-infos']);
+        }
+        if(batchEditGroupDiv != 'none'){
+            hideParts(['batch-edit-group']);
+        }
         document.getElementById("waiting").style.display = '';
         var status = document.getElementById("switchDualSpan").innerHTML;
         var flag = true;
@@ -3144,6 +3444,9 @@ function changeApGroup() {
                         switchEnableDual('switchDualCon');
                     }else if (result!=null||result.code==0){
                         setTimeout(function (){
+                            if (apInfoGroupIndex){
+                                showGroupInfo(0);
+                            }
                             getApGroups();
                             document.getElementById("waiting").style.display = 'none';
                             switchEnableDual('switchDualCon');
@@ -3211,6 +3514,16 @@ function changeApGroup() {
                 channelTextTd5g[i].innerText = '5G<%:channel%>';
             }
 
+            var bandwidthTextTd24g = document.querySelectorAll(".bandwidthText24g");
+            for(var i=0; i<bandwidthTextTd24g.length; i++){
+                bandwidthTextTd24g[i].innerText = '2.4G<%:Spectrum bandwidth%>';
+            }
+
+            var bandwidthTextTd5g = document.querySelectorAll(".bandwidthText5g");
+            for(var i=0; i<bandwidthTextTd5g.length; i++){
+                bandwidthTextTd5g[i].innerText = '5G<%:Spectrum bandwidth%>';
+            }
+
             document.getElementById("switchDualSpan").innerText = '<%:enabled%>';
 	        document.getElementById("switchDualOn").style.display = "";
             document.getElementById("switchDualOff").style.display = "none"
@@ -3238,6 +3551,16 @@ function changeApGroup() {
             var channelTextTd5g = document.querySelectorAll(".channelText5g");
             for(var i=0; i<channelTextTd5g.length; i++){
                 channelTextTd5g[i].innerText = '<%:channel%>';
+            }
+
+            var bandwidthTextTd24g = document.querySelectorAll(".bandwidthText24g");
+            for(var i=0; i<bandwidthTextTd24g.length; i++){
+                bandwidthTextTd24g[i].innerText = '<%:Spectrum bandwidth%>';
+            }
+
+            var bandwidthTextTd5g = document.querySelectorAll(".bandwidthText5g");
+            for(var i=0; i<bandwidthTextTd5g.length; i++){
+                bandwidthTextTd5g[i].innerText = '<%:Spectrum bandwidth%>';
             }
 
 	        document.getElementById("switchDualSpan").innerText = '<%:disabled%>';
@@ -3315,5 +3638,17 @@ function changeApGroup() {
             return 1;
         }
         return 0;
+    }
+
+    function channel165(channel5g, tableId){
+        var table = document.getElementById(tableId);
+        var bandwidth5g = table.querySelector('.bandwidth-5');
+        if (channel5g[channel5g.selectedIndex].value == '165'){
+            bandwidth5g.length = 1;
+        } else if (bandwidth5g.length == 1) {
+            bandwidth5g.options[1] = new Option('40MHZ','VHT40');
+            bandwidth5g.options[2] = new Option('80MHZ','VHT80');
+            bandwidth5g.selectedIndex = 2;
+        }
     }
 </script>

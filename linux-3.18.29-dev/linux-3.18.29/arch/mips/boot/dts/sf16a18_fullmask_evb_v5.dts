@@ -1,0 +1,323 @@
+/dts-v1/;
+
+#include "sf16a18_full_mask.dtsi"
+#include "sf16a18-thermal.dtsi"
+
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "siflower,sf16a18-soc";
+
+	eth0-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth0_led>;
+		pinctrl-1 = <&eth0_led_gpio>;
+		eth0 {
+			label = "eth_led0";
+			gpios = <&gpio 55 1>;
+			default-state = "on";
+		};
+	};
+
+	eth1-led {
+		compatible = "eth-led";
+		pinctrl-names = "default",  "gpio";
+		pinctrl-0 = <&eth1_led>;
+		pinctrl-1 = <&eth1_led_gpio>;
+		eth1 {
+			label = "eth_led1";
+			gpios = <&gpio 56 1>;
+			default-state = "on";
+		};
+	};
+
+	spdif_codec: spdif-codec@0 {
+		compatible = "linux,spdif-dit";
+	};
+
+	codec_es7149: codec-es7149@0 {
+		compatible = "es7149";
+		speaker-gpio = <&gpio 45 0>;
+		boot-gpio = <&gpio 53 0>;
+		reset-gpio = <&gpio 54 0>;
+	};
+
+	sf_mm_led: sf-mm-led {
+		compatible = "sf-mm-led";
+		blue-led-gpio = <&gpio 55 0>;
+		green-led-gpio = <&gpio 56 0>;
+		red-led-gpio = <&gpio 59 0>;
+		default-mode = <0x39>;
+		default-interval = <500>;
+	};
+
+	w18_wifi_rf: w18_wifi-rf@7A00000{
+		compatible = "siflower,pistachio-uccp";
+		phy = <&phy1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy1: w18_wifi-phy@1 {
+			reg = <1>;
+			max-speed = <100>;
+		};
+	};
+
+	spdif-audio@0 {
+		compatible = "siflower,siflower-audio";
+		model = "Siflower Spdif Audio";
+		audio-controller = <&spdif>;
+		audio-codec = <&spdif_codec>;
+		audio-out;
+	};
+
+};
+
+&usb_phy{
+	status = "okay";
+};
+
+&ethernet {
+	shutdown-portlist = "ll***";
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
+	status = "okay";
+	smp-affinity = <2>;
+};
+
+&switch{
+	sfax8,port-map = "ll***";
+	status = "okay";
+	smp-affinity = <2>;
+};
+
+&gmac {
+	status = "okay";
+	smp-affinity = <0>;
+};
+
+&gdu {
+	status = "okay";
+	num-windows = <2>;
+	rgb_order = <0 1 2>;
+	power_gpio = <26 37>;
+	bpp-mode = "RGB888";
+
+	display-timings {
+		native-mode = <&timing0>;
+		timing0: gm05004001q {
+			clock-frequency = <34539600>;
+			hactive = <800>;
+			vactive = <480>;
+			hback-porch = <46>;
+			hfront-porch = <210>;
+			vback-porch = <23>;
+			vfront-porch = <22>;
+			hsync-len = <20>;
+			vsync-len = <10>;
+		};
+	};
+};
+
+&sham {
+	status = "okay";
+};
+
+&cipher {
+	status = "okay";
+};
+
+&rng {
+	status = "okay";
+};
+
+&gdma {
+	status = "okay";
+};
+
+&usb {
+	status = "okay";
+};
+
+&emmc {
+	status = "disabled";
+};
+
+&sdio {
+	status = "okay";
+};
+
+&i2s_master {
+	status = "okay";
+};
+
+&i2s_slave {
+	status = "okay";
+};
+
+/* This is used to set voltage during dvfs.
+ * You should first know which pmu is in use, and
+ * remove the default core-voltage set in pmu dts.
+ */
+/*
+&cpu0 {
+       cpu0-supply = <&rn5t567_core>;
+       dcdc0-maxv = <1000000>;
+};
+*/
+
+
+&i2c0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	/include/	"sf16a18_pmu.dtsi"
+};
+
+&i2c1 {
+	status = "disabled";
+	#address-cells = <1>;
+	#size-cells = <0>;
+/*
+	codec: es8388s@11{
+		compatible = "ambarella,es8388s";
+		reg = <0x11>;
+	};
+*/
+	es8316@11{
+		compatible = "ESSX8316";
+		reg = <0x11>;
+	};
+
+	rt5631@1a{
+		compatible = "rt5631";
+		reg = <0x1a>;
+	};
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
+&spi0 {
+	status = "okay";
+	//use-dma;
+	dmas = <&gdma 10
+	&gdma 11>;
+	dma-names = "tx", "rx";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	w25q128@0 {
+		compatible = "w25q128";
+		reg = <0>;	/* chip select */
+		spi-max-frequency = <33000000>;
+
+		bank-width = <2>;
+		device-width = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "spl-loader";
+			reg = <0x0 0x20000>; /* 128k */
+			read-only;
+		};
+
+		partition@20000 {
+			label = "u-boot";
+			reg = <0x20000 0x60000>; /* 384k */
+		};
+
+		partition@80000 {
+			label = "u-boot-env";
+			reg = <0x80000 0x10000>; /* 64k */
+		};
+
+		factory:partition@90000 {
+			label = "factory";
+			reg = <0x90000 0x10000>; /* 64k */
+		};
+
+		partition@a0000 {
+			label = "firmware";
+			reg = <0xa0000 0xf60000>; /* 640k-16M */
+		};
+	};
+
+	spidev: spi@8200000 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		clock = <50000000>;
+		spi-cpha;
+		spi-cpol;
+		spi-max-frequency=<12000000>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+&uart3 {
+	status = "disabled";
+};
+
+&pcm0 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+};
+
+&pwm1 {
+	status = "okay";
+};
+
+&timer0 {
+	status = "okay";
+};
+
+&watchdog {
+	status = "okay";
+};
+
+&spdif
+{
+	status = "okay";
+};
+
+&wifi_rf {
+	status = "okay";
+	gpio-expa = <&gpio 51 0>;
+	/*for new evb board,gpio use different map with that in p10h board*/
+	expa_map_type = <2>;
+};
+
+&wifi_lb {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	gpio-leds = <&gpio 61 0>;
+	smp-affinity = <2>;
+};
+
+&wifi_hb {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	gpio-leds = <&gpio 36 0>;
+	smp-affinity = <3>;
+};

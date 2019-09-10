@@ -34,6 +34,9 @@
 #ifdef CONFIG_SOC_SF16A18
 #include <sf16a18.h>
 #include <sf16a18int.h>
+#elif defined CONFIG_SOC_SF19A28
+#include <sf16a18.h>
+#include <sf16a18int.h>
 #endif
 
 extern int sf16a18_be_handler(struct pt_regs *regs, int is_fixup);

@@ -58,6 +58,8 @@ set network.$1.ipaddr='192.168.4.1'
 set network.$1.netmask='255.255.255.0'
 set network.$1.ip6assign='60'
 set network.$1.group='0'
+set network.$1.rps_cpus='2'
+set network.$1.xps_cpus='2'
 EOF
     [ "${apMode}" = "1"  ] &&
         uci -q batch <<EOF
@@ -65,6 +67,10 @@ EOF
 EOF
 		;;
 	wan)
+	uci -q batch <<EOF
+	set network.$1.rps_cpus='1'
+	set network.$1.xps_cpus='0'
+EOF
 	ifgmac=`grep -E 'gmac|acctl'  /etc/openwrt_release `
 	[ -n "$ifgmac" ] &&
 		uci -q batch <<EOF
@@ -198,12 +204,10 @@ set network.alias.ipaddr='192.168.4.252'
 set network.alias.netmask='255.255.255.0'
 EOF
 }
-
 json_init
 json_load "$(cat ${CFG})"
 
 generate_static_network
-
 json_get_keys keys network
 for key in $keys; do generate_network $key; done
 

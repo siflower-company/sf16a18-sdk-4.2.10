@@ -516,7 +516,11 @@ struct devkmsg_user {
 	u32 idx;
 	enum log_flags prev;
 	struct mutex lock;
+#ifdef CONFIG_SF_KERNEL_LITE
+	char buf[8160];
+#else
 	char buf[8192];
+#endif
 };
 
 static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)

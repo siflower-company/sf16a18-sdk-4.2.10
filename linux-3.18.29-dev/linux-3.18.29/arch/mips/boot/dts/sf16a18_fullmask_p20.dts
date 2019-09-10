@@ -54,13 +54,13 @@
 };
 
 &ethernet {
-	shutdown-portlist = "ll***";
-        led-on-off-time = /bits/ 16 <0xff 0x1ff>;
+	shutdown-portlist = "llllw";
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
 	status = "okay";
 };
 
 &switch{
-	sfax8,port-map = "ll***";
+	sfax8,port-map = "llllw";
 	status = "okay";
 };
 

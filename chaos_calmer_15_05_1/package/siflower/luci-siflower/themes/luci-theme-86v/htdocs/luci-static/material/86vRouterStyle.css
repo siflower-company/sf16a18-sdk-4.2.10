@@ -320,7 +320,7 @@ span.loginHelp {
 
 #loginFeg {
 	width: 27rem;
-	height: 50px;
+	height: auto;
 	color: white;
 	border-radius: 3px;
 	margin-top: 10px;

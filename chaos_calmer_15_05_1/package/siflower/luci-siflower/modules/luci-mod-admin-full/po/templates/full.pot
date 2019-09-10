@@ -109,6 +109,9 @@ msgstr ""
 msgid "The password length error"
 msgstr ""
 
+msgid "password contain invalid character"
+msgstr ""
+
 msgid "password strength"
 msgstr ""
 
@@ -122,6 +125,21 @@ msgid "Setting failed!"
 msgstr ""
 
 msgid "Please select your access method"
+msgstr ""
+
+msgid "Obtained from the old router"
+msgstr ""
+
+msgid "pppoe transplant intro"
+msgstr ""
+
+msgid "start obtain"
+msgstr ""
+
+msgid "sync pppoe info from old router timeout"
+msgstr ""
+
+msgid "failed to get network configuration from old router"
 msgstr ""
 
 msgid "skip the guide"
@@ -142,10 +160,34 @@ msgstr ""
 msgid "previous"
 msgstr ""
 
-msgid "Click the “confirm” button"
+msgid "Welcome to sirouter"
 msgstr ""
 
-msgid "Complete the setup guide"
+msgid "I have read and agreed"
+msgstr ""
+
+msgid "user license agreement"
+msgstr ""
+
+msgid "and"
+msgstr ""
+
+msgid "statement about siflower smart routers and privacy"
+msgstr ""
+
+msgid "join"
+msgstr ""
+
+msgid "user experience improvement program"
+msgstr ""
+
+msgid "/proto.htm"
+msgstr ""
+
+msgid "/private.htm"
+msgstr ""
+
+msgid "/project.htm"
 msgstr ""
 
 msgid "Please encrypt your wireless network"
@@ -610,6 +652,9 @@ msgstr ""
 msgid "LAN set confirm"
 msgstr ""
 
+msgid "alter need input address confirm"
+msgstr ""
+
 msgid "The network segment of IP address is illegal"
 msgstr ""
 
@@ -730,6 +775,9 @@ msgstr ""
 msgid "Packet maximum transmission unit"
 msgstr ""
 
+msgid "Packet maximum transmission unit for pppoe"
+msgstr ""
+
 msgid "Manually set the DNS server in dhcp"
 msgstr ""
 
@@ -829,7 +877,7 @@ msgstr ""
 msgid "Long account length"
 msgstr ""
 
-msgid "The password length is not less than 6"
+msgid "Long password length"
 msgstr ""
 
 msgid "Successful connection!"
@@ -1750,7 +1798,7 @@ msgstr ""
 msgid "router connection failure"
 msgstr ""
 
-msgid "password should be no more than 31 bits long"
+msgid "password should be no more than 63 bits long"
 msgstr ""
 
 msgid "router function"
@@ -1822,6 +1870,12 @@ msgstr ""
 msgid "If you forget your password, please resume the factory settings. Recovery: When the device  is powered on, hold down the Reset button until all the lights are on at the same time and release"
 msgstr ""
 
+msgid "scan me to download the app"
+msgstr ""
+
+msgid "experience more features"
+msgstr ""
+
 msgid "parameters"
 msgstr ""
 
@@ -1838,6 +1892,9 @@ msgid "upgrading"
 msgstr ""
 
 msgid "OTA"
+msgstr ""
+
+msgid "whether auto OTA"
 msgstr ""
 
 msgid "Export"
@@ -2116,6 +2173,12 @@ msgstr ""
 msgid "device online, can not be remove"
 msgstr ""
 
+msgid "ap no response"
+msgstr ""
+
+msgid "connection reset by peer"
+msgstr ""
+
 msgid "protocol version not support"
 msgstr ""
 
@@ -2312,6 +2375,9 @@ msgid "OTA not run"
 msgstr ""
 
 msgid "frequence intergration"
+msgstr ""
+
+msgid "confirm to alter wifi"
 msgstr ""
 
 msgid "input netmask is illegal"

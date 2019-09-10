@@ -35,6 +35,8 @@
 #define PMU_RESET_EN		0x01
 #define RESET_EN_MASK		0x80
 #define RESET_DISABLE		0x00
+#define LED_ON				0
+#define LED_OFF				1
 
 
 static struct sfax8_data *data;
@@ -183,7 +185,7 @@ int sfax8_ip6103_rb_probe(struct platform_device *pdev)
 	regcache_cache_bypass(parent_data->regmap, true);
 
 	ops->init = sfax8_ip6103_recovery_init;
-    ops->clear_interrupt = sfax8_ip6103_recovery_clear_interrupt;
+	ops->clear_interrupt = sfax8_ip6103_recovery_clear_interrupt;
 	ops->set_interrupt_mask = sfax8_ip6103_set_interrupt_mask;
 	dev_set_drvdata(&pdev->dev, ops);
 

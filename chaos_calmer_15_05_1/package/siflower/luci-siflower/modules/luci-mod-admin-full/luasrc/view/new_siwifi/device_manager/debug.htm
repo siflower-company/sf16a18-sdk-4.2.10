@@ -137,6 +137,7 @@
                                 html += '<tr><td>'+(i+1)+'</td><td>'+result.info[i]+'</td></tr>';
                             }
                             document.getElementById('diagnostic-result').innerHTML = html;*/
+                            var time_out_count = 0;
                             timer = setInterval(function () {
                                 XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_diagnostic_result")%>', null,
                                     function(x, result){
@@ -146,7 +147,16 @@
                                             timeout--;
                                             if (infoArray[0] != 'Destination Host Unreachable!') {
                                                 document.getElementById('diagnostic-result').value = result.info[0];
-                                            }
+                                                }else{
+                                                    if(time_out_count == 5){
+                                                        document.getElementById('diagnostic-result').value = result.info[0];
+                                                        clearInterval(timer);
+                                                        document.getElementById('btn-start').style.display = '';
+                                                        document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+                                                        document.getElementById('btn-stop').style.display = 'none';
+                                                    }
+                                                    time_out_count++;
+                                                }
                                             if (infoArray.length >= (parseInt(extraline) + parseInt(lines))) {
                                                 clearInterval(timer);
                                                 document.getElementById('btn-start').style.display = '';

@@ -180,10 +180,11 @@ hostapd_common_add_bss_config() {
 
 	config_add_int \
 		wep_rekey eap_reauth_period \
-		wpa_group_rekey wpa_pair_rekey wpa_master_rekey
+		wpa_group_rekey wpa_pair_rekey wpa_master_rekey \
+		wpa_group_update_count
 
 	config_add_boolean rsn_preauth auth_cache
-	config_add_int ieee80211w
+	config_add_int ieee80211w disable_network
 
 	config_add_string 'auth_server:host' 'server:host'
 	config_add_string auth_secret
@@ -241,7 +242,8 @@ hostapd_set_bss_options() {
 	wireless_vif_parse_encryption
 
 	local bss_conf
-	local wep_rekey wpa_group_rekey wpa_pair_rekey wpa_master_rekey wpa_key_mgmt
+	local wep_rekey wpa_group_rekey wpa_pair_rekey wpa_master_rekey wpa_key_mgmt \
+		wpa_group_update_count
 
 	json_get_vars \
 		wep_rekey wpa_group_rekey wpa_pair_rekey wpa_master_rekey \
@@ -249,7 +251,8 @@ hostapd_set_bss_options() {
 		wps_pushbutton wps_label ext_registrar wps_pbc_in_m1 \
 		wps_device_type wps_device_name wps_manufacturer wps_pin \
 		macfilter ssid wmm uapsd hidden short_preamble rsn_preauth \
-		iapp_interface vlan_id_enable vlan_id cond_hidden
+		iapp_interface vlan_id_enable vlan_id cond_hidden \
+		wpa_group_update_count
 
 	set_default isolate 0
 	set_default maxassoc 0
@@ -288,6 +291,7 @@ hostapd_set_bss_options() {
 		[ -n "$wpa_group_rekey"  ] && append bss_conf "wpa_group_rekey=$wpa_group_rekey" "$N"
 		[ -n "$wpa_pair_rekey"   ] && append bss_conf "wpa_ptk_rekey=$wpa_pair_rekey"    "$N"
 		[ -n "$wpa_master_rekey" ] && append bss_conf "wpa_gmk_rekey=$wpa_master_rekey"  "$N"
+		[ -n "$wpa_group_update_count" ] && append bss_conf "wpa_group_update_count=$wpa_group_update_count"  "$N"
 	}
 
 	case "$auth_type" in

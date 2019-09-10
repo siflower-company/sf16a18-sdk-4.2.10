@@ -16,6 +16,8 @@
 
 #ifdef CONFIG_SOC_SF16A18
 #include <sf16a18int.h>
+#elif defined CONFIG_SOC_SF19A28
+#include <sf16a18int.h>
 #endif
 
 DEFINE_PER_CPU(struct clock_event_device, gic_clockevent_device);

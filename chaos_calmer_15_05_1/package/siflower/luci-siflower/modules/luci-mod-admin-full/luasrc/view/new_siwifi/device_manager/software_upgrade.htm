@@ -56,6 +56,7 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
     <div class="file-box">
         <form id="apUploadForm">
             <input type="button" onclick="apUpgradeClick(1)" class="btn lbtn" value="<%:OTA online upgrade%>" style="width:130px;"/>
+            <p><input id="auto-ota" type="checkbox" onclick="autoOTAswitch(this);"><span style="position: relative;bottom: 2px;"><%:whether auto OTA%></span></p>
         </form>
         <div class="pointDiv" id="otaPointDiv" style="display: none;">
             <div id="otaBar" class="chlidValue"></div>
@@ -90,6 +91,7 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
 	var errTipDoc;
     getVersion();
     refreshApTable();
+    getAutoOTAswitch();
     function setFileName(fileid,textid) {
         var value = document.getElementById(fileid).value;
         var arr = value.split('\\');
@@ -185,7 +187,7 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
                                     }
                                 });
                         } else {
-                            pageRedirect("http://siwifi.cn");
+                            pageRedirect(document.location.protocol+"//siwifi.cn");
                         }
                     },3000)
                 },10000)
@@ -200,7 +202,10 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
             var pg=document.getElementById('bar');
             pg.style.width = x;
             if (x == "100%"){
-                document.getElementById("waiting").style.display='';
+                var waiting = document.getElementById('waiting');
+                var waitingP = waiting.getElementsByTagName('p')[0];
+                waiting.style.display = '';
+                waitingP.innerText = '<%:Upgrade is in progress%>';
                 document.getElementById('pointDiv').style.display='none'
             }
 
@@ -261,7 +266,7 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
 											clearInterval(downloadTimer);
 											setTimeout(function () {
 														setInterval(function () {
-															pageRedirect("http://siwifi.cn");
+															pageRedirect(document.location.protocol+"//siwifi.cn");
 															},2000)
 														},10000);
 										}
@@ -271,7 +276,7 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
 												clearInterval(downloadTimer);
 												setTimeout(function () {
 													setInterval(function () {
-														pageRedirect("http://siwifi.cn");
+														pageRedirect(document.location.protocol+"//siwifi.cn");
 													},2000)
 													//TODO: base device num decide how long to wait
 												},10000);
@@ -381,7 +386,10 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
 			var pg=document.getElementById('apBar');
 			pg.style.width = x;
 			if (x == "100%"){
-                document.getElementById("waiting").style.display='';
+                var waiting = document.getElementById('waiting');
+                var waitingP = waiting.getElementsByTagName('p')[0];
+                waiting.style.display = '';
+                waitingP.innerText = '<%:Upgrade is in progress%>';
                 document.getElementById('apPointDiv').style.display='none'
             }
 
@@ -442,6 +450,55 @@ local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or 
             return false;//返回false，不为空对象
         }
         return true;//返回true，为空对象
+    }
+
+    function autoOTAswitch(ele) {
+        var enable = ele.checked?1:0;
+        var params = {"enable": enable};
+        var waiting = document.getElementById('waiting');
+        var waitingP = waiting.getElementsByTagName('p')[0];
+        waiting.style.display = '';
+        waitingP.innerText = '<%:Setting up，please wait a moment...%>';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","set_auto_ota")%>', params,
+            function(x, result) {
+                console.log(result);
+                document.getElementById("waiting").style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:set successfully%>';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function getAutoOTAswitch() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_auto_ota")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    document.getElementById('auto-ota').checked = !!parseInt(result.enable,10);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
     }
 
 </script>

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2010 Vertical Communications
+
+. /lib/switch_config.sh
+
+do_switch_config() {
+	 mode=`cat  /proc/sfax8_mode_info`
+	if [ "$mode" = "0" ]; then
+		switch_to_fit
+	else
+		switch_to_fat
+	fi
+}
+
+boot_hook_add preinit_main do_switch_config

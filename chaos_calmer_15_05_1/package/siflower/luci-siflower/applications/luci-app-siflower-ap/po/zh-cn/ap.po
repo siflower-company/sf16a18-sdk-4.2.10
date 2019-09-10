@@ -76,14 +76,20 @@ msgstr "请输入AP名称！"
 msgid "this group name is already exist"
 msgstr "该分组名已存在！"
 
+msgid "group name contain invalid character"
+msgstr "分组名称包含非法字符"
+
 msgid "The AP name cannot be more than 45 characters!"
 msgstr "AP名称不超过45个字符！"
 
 msgid "The ap_alive_time limit is 20-80 seconds!"
 msgstr "AP保活时间限制在20-80秒内！"
 
-msgid "AP number '+（i+1）+' is abnomal，cannot join bulk edit!"
-msgstr "序号为'+(i+1)+'的AP状态异常，不可加入批量编辑！"
+msgid "AP number"
+msgstr "序号为"
+
+msgid "is abnormal,cannot join bulk edit!"
+msgstr "的AP状态异常，不可加入批量编辑！"
 
 msgid "bulk edit"
 msgstr "批量编辑"

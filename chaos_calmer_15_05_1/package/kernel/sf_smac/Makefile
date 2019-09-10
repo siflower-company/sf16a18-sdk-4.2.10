@@ -6,11 +6,18 @@ PKG_RELEASE=1
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk
 
+
 define KernelPackage/sf_smac
   SUBMENU:=Wireless Drivers
   TITLE:=SIFLOWER sf16a18 wireless driver
   DEPENDS:=+kmod-mac80211 +@DRIVER_11N_SUPPORT
 ifdef CONFIG_TARGET_siflower_sf16a18_fullmask_SF16A18-86V-V5
+	FILES:=\
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_rf.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_smac.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/startcore.ko
+else
+ifdef CONFIG_TARGET_siflower_sf16a18_fullmask_SF16A18-86V-C2
 	FILES:=\
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_rf.ko \
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/86v/sf16a18_smac.ko \
@@ -22,10 +29,18 @@ ifdef CONFIG_FLASH_OPTIMIZE
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/flash-opt/sf16a18_smac.ko \
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/flash-opt/startcore.ko
 else
+ifdef CONFIG_POWER_OPTIMIZE
+	FILES:=\
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full-power/sf16a18_rf.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full-power/sf16a18_smac.ko \
+		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full-power/startcore.ko
+else
 	FILES:=\
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full/sf16a18_rf.ko \
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full/sf16a18_smac.ko \
 		$(PKG_BUILD_DIR)/config/$(SF_ARCH)/umac/full/startcore.ko
+endif
+endif
 endif
 endif
 endef

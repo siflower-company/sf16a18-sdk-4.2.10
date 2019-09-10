@@ -35,6 +35,8 @@
 #define PRODUCT_KEY_SIZE        32
 #define LOGIN_INFO_FLAG_SIZE    2
 #define LOGIN_INFO_SIZE         4
+#define ROM_TYPE_FLAG_SIZE      2
+#define ROM_TYPE_SIZE           4
 #define WIFI_VERSION_SIZE       2
 #define WIFI_INFO_SIZE          2046
 #define XO_CONFIG_SIZE          2
@@ -102,6 +104,8 @@ enum sfax8_factory_read_action {
 	READ_PRODUCT_KEY,
 	READ_LOGIN_INFO_FLAG,
 	READ_LOGIN_INFO,
+	READ_ROM_TYPE_FLAG,
+	READ_ROM_TYPE,
 	READ_WIFI_VERSION,
 	READ_RF_XO_CONFIG,
 	READ_WIFI_INFO,

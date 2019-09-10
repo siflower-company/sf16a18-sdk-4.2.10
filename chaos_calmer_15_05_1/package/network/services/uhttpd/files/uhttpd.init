@@ -157,3 +157,12 @@ start_service() {
 		logger -t uhttpd not start in fit mode
 	fi
 }
+
+stop_service() {
+	local pid=`ps |grep "/usr/sbin/uhttpd"|grep -v "grep"|awk -F' ' '{print $1}'`
+	if [ -n "$pid" ]; then
+		logger -t kill uhttpd pid=$pid
+		# workaround for can not stop uhttpd
+		kill $pid
+	fi
+}

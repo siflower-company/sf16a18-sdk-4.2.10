@@ -19,13 +19,14 @@ connection_check()
 
 	[ $check_time -lt 60  ] || {
 		echo "~wds~failed~exit~" > /dev/ttyS0
+		[ -f /tmp/wps_status  ] && rm /tmp/wps_status
 		exit 0
 	}
 }
 
 prepare_config()
 {
-	psk=$(cat  /var/run/wpa_supplicant-$wds_if.conf | grep "$ssid" -A5 |grep psk | awk -F '"' '{print $2}')
+	psk=$(cat  /var/run/wpa_supplicant-$wds_if.conf | grep "$ssid" -A5 |grep psk |tail -1| awk -F '"' '{print $2}')
 	encription=$(cat  /var/run/wpa_supplicant-$wds_if.conf | grep "$ssid" -A5 |grep key_mgmt | awk -F '=' '{print $2}')
 	proto=$(cat  /var/run/wpa_supplicant-$wds_if.conf | grep "$ssid" -A5 |grep proto | awk -F '=' '{print $2}')
 	case $encription in

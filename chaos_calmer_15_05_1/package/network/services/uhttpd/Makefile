@@ -125,13 +125,6 @@ define Package/uhttpd/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) ./files/uhttpd.crt $(1)/etc/uhttpd.crt
 	$(INSTALL_DATA) ./files/uhttpd.key $(1)/etc/uhttpd.key
-	$(INSTALL_DIR) $(1)/www
-	$(INSTALL_BIN) ./files/xhr.js $(1)/www/xhr.js
-	$(INSTALL_BIN) ./files/json2.js $(1)/www/json2.js
-	$(INSTALL_BIN) ./files/mobile.css $(1)/www/mobile.css
-	$(INSTALL_BIN) ./files/pc.css $(1)/www/pc.css
-	$(INSTALL_DIR) $(1)/www/img
-	$(INSTALL_BIN) ./files/img/* $(1)/www/img/
 endef
 
 define Package/uhttpd-mod-tls/install

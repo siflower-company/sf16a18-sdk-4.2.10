@@ -27,12 +27,61 @@ system_config() {
 #add mac for suffix
 	hostnameset=`uci -q get system.@system[0].hostnameset`
 	[ -z "$hostnameset" ] && {
+		[ `uci -q get basic_setting.product.type` = "repeater" ] && {
+			# set rep config network
+			local lan_mac=$(cat /sys/class/net/eth0/address)
+			[ -f /etc/config/network_conf ] && mv /etc/config/network_conf /etc/config/network
+			uci set network.lan.macaddr="$lan_mac"
+			uci commit network
+			# set rep config dhcp, for auto redirect to web
+			uci set dhcp.lan.dhcp_option="3,192.168.5.5"
+			local lanip=`uci get -q network.lan.ipaddr`
+			uci del -q dhcp.@dnsmasq[0].address
+			if [ -n "$lanip" ]; then
+				# all dns request response lanip
+				uci add_list dhcp.@dnsmasq[0].address="/#/$lanip"
+			fi
+			uci commit dhcp
+			# set rep config uhttpd, reduce resource use
+			uci del -q uhttpd.main.listen_https
+			uci del -q uhttpd.main.key
+			uci del -q uhttpd.main.cert
+			uci set uhttpd.main.max_requests='2'
+			uci set uhttpd.main.max_connections='10'
+			uci commit uhttpd
+		}
+
 		mac=`uci get network.wan.macaddr`
 		[ -z "$mac"  ] && mac=`uci get network.lan.macaddr`
 		hostname=$hostname${mac:12:2}${mac:15:2}
 		eval "uci -q set system.@system[0].hostname=${hostname}"
 		eval "uci -q set system.@system[0].hostnameset=1"
 		uci commit system
+	}
+	local product_type=`uci -q get basic_setting.product.type`
+	local auto_to_web=`uci -q get basic_setting.auto_to_web.enable`
+	local guide=`uci -q get basic_setting.guide.enable`
+	[ "$product_type" = "router" ] && {
+		if [ "$auto_to_web" = "1" -a "$guide" = "1" ]; then
+			# auto show login page
+			# alias_ip should not in dhcp range
+			local alias_ip="192.168.4.5"
+			uci -q batch <<EOF
+add network alias
+set network.@alias[0].interface='lan'
+set network.@alias[0].proto='static'
+set network.@alias[0].ipaddr="$alias_ip"
+set network.@alias[0].netmask='255.255.255.0'
+EOF
+			uci commit network
+			uci del -q dhcp.@dnsmasq[0].address
+			[ -e /www/cgi-bin/first.lua ] && uci add_list dhcp.@dnsmasq[0].address="/#/$alias_ip"
+			uci commit dhcp
+		else
+			uci set uhttpd.main.index_page='cgi-bin/luci'
+			uci commit uhttpd
+			rm -f /www/cgi-bin/first.lua
+		fi
 	}
 
 	echo "$hostname" > /proc/sys/kernel/hostname

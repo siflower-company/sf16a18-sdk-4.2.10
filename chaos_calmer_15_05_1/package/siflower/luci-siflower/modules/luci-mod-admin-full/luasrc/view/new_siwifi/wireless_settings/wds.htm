@@ -80,7 +80,7 @@
                 <li class="textConA textCon" style="">
                     <input id="key" class="textA text hoverBd"  onkeyup="nStrLimit(this)" maxlength="63">
                 </li>
-				<input id="WDSMHPwd" value="<%:next%>" class="btnA subBtn" type="button" onclick="wifiConnect()">
+				<input id="WDSMHPwd" value="<%:next%>" class="btnA subBtn" type="button" onclick="goToSetWifiIface()">
             </ul>
         </div>
     </div>
@@ -89,7 +89,7 @@
             <p class="hsVigTtop"><i class="hsVigClose" onclick="hideParts(['inputNonePwd'])"></i></p>
 			<p class="hsVigWDSPWD"><%:The router is not encrypted and confirm the connection. Please click next.%></p>
             <ul class="gridLine gridLineA hsVigWDSPWD">
-                <input id="WDSMHPwd" value="<%:next%>" class="btnA subBtn" type="button" onclick="wifiConnect()">
+                <input id="WDSMHPwd" value="<%:next%>" class="btnA subBtn" type="button" onclick="goToSetWifiIface()">
             </ul>
         </div>
     </div>
@@ -112,7 +112,7 @@
         <table class="tb-no-border">
 			<tr><td class="wds-td2-left"><%:SSID%></td><td class="wds-td2-right"><input id="settings-ssid" maxlength="32"></td></tr>
 			<tr><td class="wds-td2-left"><%:wireless password%></td><td class="wds-td2-right"><input id="settings-key" onkeyup="nStrLimit(this)" maxlength="63"><input id="open" type="checkbox" onchange="isEncoded(['open','settings-key'])"><%:No encryption%></td></tr>
-			<tr><td class="wds-td2-left"><button onclick="hideParts(['wds-this-settings']);showParts(['band-select'])"><%:previous%></button></td><td class="wds-td2-right"><button onclick="setWifiIfaceAndEnableWDS()"><%:next%></button></td></tr>
+			<tr><td class="wds-td2-left"><button onclick="hideParts(['wds-this-settings']);showParts(['band-select'])"><%:previous%></button></td><td class="wds-td2-right"><button onclick="wifiConnect()"><%:next%></button></td></tr>
         </table>
     </div>
     <div style="display: none" id="wds-infos" class="wds-infos">
@@ -388,40 +388,76 @@
         }
     }
 
-    function wifiConnect() {
+    function goToSetWifiIface() {
         document.getElementById('wait-close-btn').disabled = 'disabled';
         var key = document.getElementById('key').value;
-	if (document.getElementById('key').value != '' && strlen(document.getElementById('key').value)<8) {
-		var err = document.getElementById('Error');
-		var text = err.getElementsByTagName('span')[0];
-		text.innerText = '<%:The password length error%>';
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('key');
-		return;
-	} else if (document.getElementById('key').value != '' && strlen(document.getElementById('key').value)>31) {
-		var err = document.getElementById('Error');
-		var text = err.getElementsByTagName('span')[0];
-		text.innerText ='<%:password shoud be no more than 31 bits long%>';
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('key');
-		return;
-	}
-        var params = {'ssid':ssid, 'key':key, 'encryption':encryption, 'channel':channel, 'bssid':bssid};
-        var need_redirect = {'redirect':0};
-        console.log(params);
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (encryption != 'open' && strlen(document.getElementById('key').value)<8) {
+            text.innerText = '<%:The password length error%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('key');
+            return;
+        } else if (document.getElementById('key').value != '' && strlen(document.getElementById('key').value)>63) {
+            text.innerText ='<%:password should be no more than 63 bits long%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('key');
+            return;
+        }
+        if (key != check(key)) {
+            text.innerText = '<%:password contain invalid character%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('key');
+            return;
+        }
         document.getElementById('inputPwd').style.display = 'none';
-		document.getElementById('inputNonePwd').style.display = 'none';
-		document.getElementById("waitTipNote").innerText = "<%:connecting, please wait a moment...%>";
-        document.getElementById('waiting').style.display = '';
+        document.getElementById('inputNonePwd').style.display = 'none';
         document.getElementById('settings-ssid').value = ssid;
         document.getElementById('settings-key').value = key;
         /*document.getElementById('main-ssid-display').value = ssid;
         document.getElementById('main-key-display').value = key;
         document.getElementById('main-channel-display').value = channel;*/
+        document.getElementById('wds-this-settings').style.display = '';
+        document.getElementById("logTblpagIngList").style.display = 'none';
+        document.getElementById('24g').style.display = 'none';
+        document.getElementById('5g').style.display = 'none';
+    }
+    function wifiConnect() {
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (document.getElementById('settings-key').value != '' && strlen(document.getElementById('settings-key').value)<8) {
+            text.innerText = '<%:The password length error%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('settings-key');
+            return;
+        } else if (document.getElementById('settings-key').value != '' && strlen(document.getElementById('settings-key').value)>63) {
+            text.innerText = '<%:password should be no more than 63 bits long%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('settings-key');
+            return;
+        }
+        var settingKey = document.getElementById('settings-key').value;
+        if (settingKey != check(settingKey)) {
+            text.innerText = '<%:password contain invalid character%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('settings-key');
+            return;
+        }
+        if (document.getElementById('settings-ssid').value != '' && strlen(document.getElementById('settings-ssid').value)>32) {
+            text.innerText = '<%:the length of the SSID is too long！%>';;
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('settings-ssid');
+            return;
+        }
+        var key = document.getElementById('key').value;
+        var params = {'ssid':ssid, 'key':key, 'encryption':encryption, 'channel':channel, 'bssid':bssid};
+        var need_redirect = {'redirect':0};
+        console.log(params);
+		document.getElementById("waitTipNote").innerText = "<%:connecting, please wait a moment...%>";
+        document.getElementById('waiting').style.display = '';
         XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wifi_connect")%>', params,
             function(x, result){
                 console.log(result);
-                document.getElementById('waiting').style.display = 'none';
                 wanip = result.ip;
                 if (wanip == 'nil') {
                     XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_disable")%>', need_redirect,
@@ -433,10 +469,7 @@
                     err.style.visibility = 'visible';
                     text.innerText = '<%:router connection failure%>';
                 } else {
-                    document.getElementById('wds-this-settings').style.display = '';
-                    document.getElementById("logTblpagIngList").style.display = 'none';
-                    document.getElementById('24g').style.display = 'none';
-                    document.getElementById('5g').style.display = 'none';
+                    setWifiIfaceAndEnableWDS();
                 }
             });
         document.getElementById('wait-close-btn').disabled = '';
@@ -448,29 +481,6 @@
         ifaces.band = global_band;
         ifaces.ssid = document.getElementById('settings-ssid').value;
         ifaces.key = document.getElementById('settings-key').value;
-	if (document.getElementById('settings-key').value != '' && strlen(document.getElementById('settings-key').value)<8) {
-		var err = document.getElementById('Error');
-		var text = err.getElementsByTagName('span')[0];
-		text.innerText = '<%:The password length error%>';
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('settings-key');
-		return;
-	} else if (document.getElementById('settings-key').value != '' && strlen(document.getElementById('settings-key').value)>31) {
-		var err = document.getElementById('Error');
-		var text = err.getElementsByTagName('span')[0]
-		text.innerText = '<%:Password should be no more than 31 bits long%>';
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('settings-key');
-		return;
-	}
-	if (document.getElementById('settings-ssid').value != '' && strlen(document.getElementById('settings-ssid').value)>31) {
-		var err = document.getElementById('Error');
-		var text = err.getElementsByTagName('span')[0]
-		text.innerText = '<%:the length of the SSID is too long！%>';;
-		err.style.visibility = 'visible';
-		errTipDoc = document.getElementById('settings-ssid');
-		return;
-	}
         XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wds_info")%>', null,
             function(x, result) {
                 console.log(result);
@@ -481,7 +491,7 @@
                 document.getElementById('this-ssid').innerText = ifaces.ssid;
                 document.getElementById('this-key').innerText = ifaces.key;
                 document.getElementById('wds-infos').style.display = '';
-                var params = {'ip':wanip, 'ifaces':ifaces};
+                var params = {'ip':wanip, 'ifaces':ifaces, 'channel':channel};
                 XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_enable")%>', params,
                     function(x, result){
                         console.log(result);
@@ -497,16 +507,29 @@
                     });
                 document.getElementById("waitTipNote").innerText = "<%:connecting, please wait a moment...%>";
                 document.getElementById('waiting').style.display = '';
-                var params_band = {'band':global_band};
+                var is_radar = 0;
+                if (channel >= 48 && channel <= 64){
+                    is_radar = 1;
+                }
+                var params_band = {'band':global_band ,'is_radar':is_radar};
                 var interval = setInterval(function () {
-                    XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_getrelip")%>',  params_band,
+                    XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_getrelip")%>',  params_band,
                         function(x, result) {
                             if (result != null && result.ip != 'nil') {
                                 clearInterval(interval);
+                                var redirectIp = result.ip;
                                 /* wait eth driver set phy link down */
-                                setTimeout(function(){
-                                    location.href = 'http://'+result.ip;
-                                },200);
+                                var intervalAccess = setInterval(function () {
+                                    XHR.get_with_host(redirectIp, '<%=luci.dispatcher.build_url("api", "visitor","welcome_wds")%>', null,
+                                        function(x, result) {
+                                            if (result != null && result.msg == 'welcome to sf-system') {
+                                                clearInterval(intervalAccess);
+                                                setTimeout(function(){
+                                                    location.href = document.location.protocol+'//'+redirectIp;
+                                                },200);
+                                            }
+                                        });
+                                },1000)
                             } else if (result != null && result.code != 0) {
                                 document.getElementById("waiting").style.display = 'none';
                                 var err = document.getElementById('WdsEnError');
@@ -589,7 +612,7 @@
                             var text = err.getElementsByTagName('span')[0];
                             text.innerText = '<%:successfully set%>';
                             err.style.visibility = 'visible';
-                            location.href = 'http://'+result.ip;
+                            location.href = document.location.protocol+'//'+result.ip;
                             document.getElementById('guide-open').style.display = 'none';
                             document.getElementById('guide-wds').style.display = '';
                         },3000);
@@ -618,7 +641,7 @@
                     toIp = result.ip;
                     /*document.getElementById('wds-infos').style.display = 'none';
                     document.getElementById('guide-wds').style.display = '';*/
-                    /*location.href = 'http://'+result.ip;*/
+                    /*location.href = document.location.protocol+'//'+result.ip;*/
                     document.getElementById("waitTipNote").innerText = "<%:Disconnecting...%>";
                     document.getElementById('waiting').style.display = '';
                     var interval = setInterval(function () {
@@ -627,7 +650,7 @@
                                 if (result.msg == 'welcome to sf-system') {
                                     clearInterval(interval);
                                     setTimeout(function(){
-                                        location.href = 'http://'+toIp;
+                                        location.href = document.location.protocol+'//'+toIp;
                                     },5000);
                                 }
                             });
@@ -635,7 +658,7 @@
                     //for ie compatible
                     setTimeout(function(){
                         console.log("35s time out");
-                        location.href = 'http://'+toIp;
+                        location.href = document.location.protocol+'//'+toIp;
                     },35000);
                 } else {
                     var err = document.getElementById('Error');

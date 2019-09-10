@@ -68,7 +68,15 @@
 			<i class="altIcon"></i>
 			<span class="detail"><%:LAN set confirm%></span>
 			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeLanTip(1)">
-			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeLanTip(2)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeLanTip(3)">
+		</div>
+	</div>
+	<div id="isSureTip2" style="visibility: hidden;">
+		<div id="lanTip2" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:alter need input address confirm%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeLanTip(2)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeLanTip(3)">
 		</div>
 	</div>
 </fieldset>
@@ -162,7 +170,15 @@
 	}
 	function closeLanTip(i) {
         document.getElementById('isSureTip').style.visibility = 'hidden';
-		if (i==1){
+        document.getElementById('isSureTip2').style.visibility = 'hidden';
+        if (i==1){
+            if (document.location.protocol == "http:") {
+                i++;
+            }else{
+                document.getElementById('isSureTip2').style.visibility = 'visible';
+            }
+        }
+        if (i==2){
             document.getElementById("saveTip").style.display='';
             document.getElementById("saveTipSucess").style.display='none';
             console.log(lanParams);
@@ -180,12 +196,14 @@
                         setTimeout(function () {
                             document.getElementById("saveTipSucess").style.display='none';
                         },"2000");
-                        document.getElementById('waiting').style.display='';
-                        setTimeout(function () {
-                            setInterval(function () {
-                                pageRedirect("http://"+lanParams.address);
-                            },3000)
-                        },"2000");
+                        if (document.location.protocol == "http:") {
+                            document.getElementById('waiting').style.display='';
+                            setTimeout(function () {
+                                setInterval(function () {
+                                    pageRedirect(document.location.protocol+"//"+lanParams.address);
+                                },3000)
+                            },"2000");
+                        }
                     }else {
                         var err = document.getElementById('Error');
                         var text = err.getElementsByTagName('span')[0];

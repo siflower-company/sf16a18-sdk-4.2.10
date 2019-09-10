@@ -1337,6 +1337,24 @@ function disable_guide()
 	_uci_real:set("basic_setting", "guide", "enable", 0)
 	_uci_real:save("basic_setting")
 	_uci_real:commit("basic_setting")
+	local auto_to_web = _uci_real:get("basic_setting", "auto_to_web", "enable")
+	if auto_to_web and auto_to_web == '1' then
+		_uci_real:foreach("dhcp","dnsmasq",
+		function(s)
+			if(s["address"] ~= nil) then
+				_uci_real:delete("dhcp",s[".name"],"address")
+			end
+		end)
+		_uci_real:save("dhcp")
+		_uci_real:commit("dhcp")
+		sysutil.fork_exec("/etc/init.d/dnsmasq restart")
+
+		_uci_real:set("uhttpd", "main", "index_page", "cgi-bin/luci")
+		_uci_real:save("uhttpd")
+		_uci_real:commit("uhttpd")
+
+		luci.util.exec("rm -f /www/cgi-bin/first.lua")
+	end
 	local result = {
 		code = 0,
 		msg = "OK"

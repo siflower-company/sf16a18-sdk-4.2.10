@@ -12,7 +12,7 @@
 
 &ethernet {
 	shutdown-portlist = "wllll";
-        led-on-off-time = /bits/ 16 <0xff 0x1ff>;
+        led-on-off-time = /bits/ 16 <0xff 0x2ff>;
 	status = "okay";
 };
 
@@ -34,6 +34,17 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 	/include/	"sf16a18_pmu.dtsi"
+};
+
+&gpio_keys {
+	status = "okay";
+	reset-btn@60 {
+		label = "reset-btn";
+		linux,code = <0x198>;
+		gpios = <&gpio 60 1>;
+		poll-interval = <10>;
+		debounce-interval = <20>;
+	};
 };
 
 &leds {

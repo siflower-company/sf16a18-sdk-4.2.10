@@ -1,0 +1,7 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+. /lib/functions/system.sh
+start_time=`date +%s`
+uci set system.ntp.start=$start_time
+uci commit
+exit 0

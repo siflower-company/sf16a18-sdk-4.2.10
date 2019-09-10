@@ -1,5 +1,25 @@
 #!/bin/sh
 
+#set default value of rps_cpus & xps_cpus in wireless
+wireless_set_rps_xps_cpus() {
+	local cnt=0
+	local radio
+	local rps_cpus
+	until [ "$?" = 1 ]
+	do
+		radio=`uci -q get wireless.@wifi-iface[$cnt].device`
+		if [ "$radio" == "radio0" ]; then
+			rps_cpus=2
+		elif [ "$radio" == "radio1" ]; then
+			rps_cpus=3
+		fi
+		uci -q get wireless.@wifi-iface[$cnt].rps_cpus
+		[ "$?" = 1 ] && uci -q set wireless.@wifi-iface[$cnt].rps_cpus="$rps_cpus"
+		let "cnt ++"
+		uci -q get wireless.@wifi-iface[$cnt]
+	done
+}
+
 [ -d "/etc/board.d/" -a ! -f "/etc/board.json" ] && {
 	for a in `ls /etc/board.d/*`; do
 		[ -x $a ] || continue;
@@ -10,6 +30,29 @@
 [ -f "/bin/config_check.sh" -a -f /etc/config/network ] && {
 	/bin/config_check.sh
 }
+[ -f /etc/config/wireless ] && {
+	sed -i "s/ifname 'rai/ifname 'sfi/g" /etc/config/wireless
+	wireless_set_rps_xps_cpus
+}
+[ -f /etc/config/network  ] && {
+	sed -i "s/ifname 'rai/ifname 'sfi/g" /etc/config/network
+	#set rps_cpus & xps_cpus in network if eth0 or eth1 are exist.
+	uci -q get network.lan
+	[ "$?" = 0 ] && {
+		uci -q get network.lan.rps_cpus
+		[ "$?" = 1 ] && uci -q set network.lan.rps_cpus='2'
+		uci -q get network.lan.xps_cpus
+		[ "$?" = 1 ] && uci -q set network.lan.xps_cpus='2'
+	}
+	uci -q get network.wan
+	[ "$?" = 0 ] && {
+		uci -q get network.wan.rps_cpus
+		[ "$?" = 1 ] && uci -q set network.wan.rps_cpus='1'
+		uci -q get network.wan.xps_cpus
+		[ "$?" = 1 ] && uci -q set network.wan.xps_cpus='0'
+	}
+}
+uci commit
 [ -f "/etc/board.json" ] || return 1
 [ -f "/etc/config/network" ] || {
 	touch /etc/config/network

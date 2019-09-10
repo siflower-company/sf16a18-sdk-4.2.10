@@ -14,8 +14,8 @@ ts_init(){
 	do
 		uci_mac=${i//:/_}
 		dev=$(uci get ${cfg}.${uci_mac}.dev 2>/dev/null)
+		tscript add $i
 		if [ "x$dev" = "x${dev/lease/}" ]; then
-			tscript add $i
 			type_en=$(uci get ${cfg}.${uci_mac}.restrictenable 2>/dev/null)
 			if [ "x$type_en" = "x1" ];then
 				game=$(uci get ${cfg}.${uci_mac}.game)

@@ -12,6 +12,7 @@ local nixio = require "nixio"
 local json = require "luci.json"
 local sferr = require "luci.siwifi.sf_error"
 local sysutil = require "luci.siwifi.sf_sysutil"
+local bit = require "bit"
 local DEVICE_STATUS_OK = 1
 
 function index()
@@ -54,13 +55,10 @@ function excute_with_return(params)
 	error_num[19] = sferr.ERROR_NO_DEVICE_NOT_FOUND
 	error_num[22] = sferr.ERROR_INPUT_PARAM_ERROR
 	error_num[35] = sferr.ERROR_NO_AP_VERSION_NOT_NEWEST
-	local t = io.popen(tostring(params)..("; echo $?"))
-	local a
-	for cnt in t:lines() do
-		a = cnt
-	end
-	t:close()
-	a = error_num[tonumber(a)]
+	error_num[65] = sferr.ERROR_AP_NO_RESPONSE
+	local ret = os.execute(tostring(params))
+	ret = bit.band(ret, 0xff00)
+	local a = error_num[math.floor(ret / 256)]
 	if (a == nil) then
 		a = sferr.ERROR_NO_UNKNOWN_ERROR
 	end
@@ -83,6 +81,7 @@ function get_ifaces(s)
 		iface_2G["encryption"] = s["2G_encryption"]
 		iface_2G["password"] = s["2G_password"]
 		iface_2G["channel"] = s["2G_channel"]
+		iface_2G["bandwidth"] = s["2G_bandwidth"]
 		iface_2G["enable_prevent"] = s["2G_prohibit_sta_signal_enable"]
 		iface_2G["sta_min_dbm"] = s["2G_prohibit_sta_signal"]
 		iface_2G["enable_kick"] = s["2G_weak_sta_signal_enable"]
@@ -101,6 +100,7 @@ function get_ifaces(s)
 		iface_5G["encryption"] = s["5G_encryption"]
 		iface_5G["password"] = s["5G_password"]
 		iface_5G["channel"] = s["5G_channel"]
+		iface_5G["bandwidth"] = s["5G_bandwidth"]
 		iface_5G["enable_prevent"] = s["5G_prohibit_sta_signal_enable"]
 		iface_5G["sta_min_dbm"] = s["5G_prohibit_sta_signal"]
 		iface_5G["enable_kick"] = s["5G_weak_sta_signal_enable"]
@@ -254,7 +254,9 @@ function set_ap_group_impl(arg_list_table)
 				if (arg_list_table["ifaces"][i]["channel"] ) then
 					_uci_real:set("ap_groups", s_name, "2G_channel", arg_list_table["ifaces"][i]["channel"])
 				end
-
+				if (arg_list_table["ifaces"][i]["bandwidth"] ) then
+					_uci_real:set("ap_groups", s_name, "2G_bandwidth", arg_list_table["ifaces"][i]["bandwidth"])
+				end
 				if (arg_list_table["ifaces"][i]["enable_prevent"] ) then
 					_uci_real:set("ap_groups", s_name, "2G_prohibit_sta_signal_enable", arg_list_table["ifaces"][i]["enable_prevent"])
 				end
@@ -302,7 +304,9 @@ function set_ap_group_impl(arg_list_table)
 				if (arg_list_table["ifaces"][i]["channel"] ) then
 					_uci_real:set("ap_groups", s_name, "5G_channel", arg_list_table["ifaces"][i]["channel"])
 				end
-
+				if (arg_list_table["ifaces"][i]["bandwidth"] ) then
+					_uci_real:set("ap_groups", s_name, "5G_bandwidth", arg_list_table["ifaces"][i]["bandwidth"])
+				end
 				if (arg_list_table["ifaces"][i]["enable_prevent"] ) then
 					_uci_real:set("ap_groups", s_name, "5G_prohibit_sta_signal_enable", arg_list_table["ifaces"][i]["enable_prevent"])
 				end
@@ -359,17 +363,13 @@ function set_ap_group_impl(arg_list_table)
 			_uci_real:commit("ap_groups")
 		end
 
-		local devices = groups[index]["devices"]
-		for i = 1, #devices do
-			local json_params = {}
-			json_params["command"] = "set_device_to_group"
-			json_params["device"] = devices[i]["mac"]
-			json_params["name_of_group"] = s_name
-			local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
-			if ( tonumber(excute_ret) ~= 0) then
-				nixio.syslog("crit", "set device to ap groups :"..myprint(excute_ret))
-				return tonumber(excute_ret)
-			end
+		local json_params = {}
+		json_params["command"] = "ap_group_change"
+		json_params["name_of_group"] = s_name
+		local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
+		if ( tonumber(excute_ret) ~= 0) then
+			nixio.syslog("crit", "set device to ap groups :"..myprint(excute_ret))
+			return tonumber(excute_ret)
 		end
 	else
 		_uci_real:save("ap_groups")
@@ -402,16 +402,12 @@ function remove_ap_group_impl(arg_list_table)
 
 		for j = 1, #index_list do
 			_uci_real:delete("ap_groups", groups[tonumber(index_list[j])]["name"])
-			local devices = groups[tonumber(index_list[j])]["devices"]
-			for i = 1, #devices do
-				local json_params = {}
-				json_params["command"] = "set_device_to_group"
-				json_params["device"] = devices[i]["mac"]
-				json_params["name_of_group"] = "default"
-				local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
-				if ( excute_ret ~= 0) then
-					return  excute_ret
-				end
+			local json_params = {}
+			json_params["command"] = "ap_group_delete"
+			json_params["name_of_group"] = groups[tonumber(index_list[j])]["name"]
+			local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
+			if ( excute_ret ~= 0) then
+				return  excute_ret
 			end
 		end
 	end
@@ -450,10 +446,12 @@ function import_ap_group_config()
 	end
 	)
 	local upload = luci.http.formvalue("archive")
-	local code = 0
 	--TODO: check ap_groups here
-	luci.util.exec("tar -zxvf /tmp/ap_capwap.tar.gz -C /etc/config/")
-	luci.util.exec("/etc/init.d/ac_server restart")
+	local err = luci.util.exec("sh /usr/sbin/ac_import.sh")
+	local code = tonumber(err)
+	if code ~= 0 then
+		code = sferr.ERROR_ILLEGAL_FILE
+	end
 	sysutil.set_easy_return(code, nil)
 end
 
@@ -493,181 +491,122 @@ function set_ap_impl(arg_list_table)
 	local devices = get_devices()
 	local groups = get_groups(1)
 
-	if (arg_list_table["macs"]) then
-		local macs = arg_list_table["macs"]
-		for i = 1, #macs do
-			for j = 1, #devices do
-				if(devices[j]["mac"] == macs[i]) then
-					local json_params = {}
-					json_params["device"] = macs[i]
-					if (arg_list_table["ap_group_index"]) then
-						--_uci_real:set("capwap_devices", macs[i], "group", groups[tonumber(arg_list_table["ap_group_index"])]["name"])
-						json_params["command"] = "set_device_to_group"
-						json_params["name_of_group"] = groups[tonumber(arg_list_table["ap_group_index"])]["name"]
-						local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
-						if ( excute_ret ~= 0) then
-							return excute_ret
-						end
-					else
-						json_params["command"] = "set_device_config"
-						json_params["dev_config"] = {}
-						if (arg_list_table["name"]) then
-							--_uci_real:set("capwap_devices", macs[i], "name", arg_list_table["name"])
-							json_params["dev_config"]["name"] = arg_list_table["name"]
-						end
-						if (arg_list_table["ap_alive_time"]) then
-							--_uci_real:set("capwap_devices", macs[i], "ap_alive_time", arg_list_table["ap_alive_time"])
-							json_params["dev_config"]["ap_alive_time"] = arg_list_table["ap_alive_time"]
-						end
-						if (arg_list_table["client_idle_time"]) then
-							--_uci_real:set("capwap_devices", macs[i], "client_idle_time", arg_list_table["client_idle_time"])
-							json_params["dev_config"]["client_idle_time"] = arg_list_table["client_idle_time"]
-						end
-						if (arg_list_table["client_idle_time"]) then
-							--_uci_real:set("capwap_devices", macs[i], "client_idle_time", arg_list_table["client_idle_time"])
-							json_params["dev_config"]["client_idle_time"] = arg_list_table["client_idle_time"]
-						end
-						if (arg_list_table["led"]) then
-							--_uci_real:set("capwap_devices", macs[i], "led", arg_list_table["led"])
-							json_params["dev_config"]["led"] = arg_list_table["led"]
-						end
-						if (arg_list_table["ifaces"]) then
-							json_params["wifi_2g_config"] = {}
-							json_params["wifi_5g_config"] = {}
-							--_uci_real:set("capwap_devices", macs[i], "custom_wifi", 1)
-							for k = 1, #arg_list_table["ifaces"] do
-								if (tonumber(arg_list_table["ifaces"][k]["band"]) == 0) then
-									if(arg_list_table["ifaces"][k]["enable"]) then
-										json_params["wifi_2g_config"]["enabled"] = arg_list_table["ifaces"][k]["enable"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_enabled", arg_list_table["ifaces"][k]["enable"])
-									end
-									if(arg_list_table["ifaces"][k]["ssid"]) then
-										json_params["wifi_2g_config"]["ssid"] = arg_list_table["ifaces"][k]["ssid"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_ssid", arg_list_table["ifaces"][k]["ssid"])
-									end
-									if(arg_list_table["ifaces"][k]["hide"]) then
-										json_params["wifi_2g_config"]["hide"] = arg_list_table["ifaces"][k]["hide"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_hide", arg_list_table["ifaces"][k]["hide"])
-									end
-									if(arg_list_table["ifaces"][k]["isolation"]) then
-										json_params["wifi_2g_config"]["isolation"] = arg_list_table["ifaces"][k]["isolation"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_isolation", arg_list_table["ifaces"][k]["isolation"])
-									end
-									if(arg_list_table["ifaces"][k]["encryption"]) then
-										--_uci_real:set("capwap_devices", macs[i], "2G_encryption", arg_list_table["ifaces"][k]["encryption"])
-										json_params["wifi_2g_config"]["encryption"] = arg_list_table["ifaces"][k]["encryption"]
-									end
-									if(arg_list_table["ifaces"][k]["password"]) then
-										json_params["wifi_2g_config"]["password"] = arg_list_table["ifaces"][k]["password"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_password", arg_list_table["ifaces"][k]["password"])
-									end
-									if(arg_list_table["ifaces"][k]["channel"]) then
-										json_params["wifi_2g_config"]["channel"] = arg_list_table["ifaces"][k]["channel"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
+	if (arg_list_table["macs"] == nil) then
+		return 0
+	end
+	local macs = arg_list_table["macs"]
+	for i = 1, #macs do
+		if (_uci_real:get("capwap_devices", macs[i], "status") == nil) then
+			return 0
+		end
+		local json_params = {}
+		json_params["device"] = macs[i]
+		if (arg_list_table["ap_group_index"]) then
+			--_uci_real:set("capwap_devices", macs[i], "group", groups[tonumber(arg_list_table["ap_group_index"])]["name"])
+			json_params["command"] = "set_device_to_group"
+			json_params["name_of_group"] = groups[tonumber(arg_list_table["ap_group_index"])]["name"]
+		else
+			json_params["command"] = "set_device_config"
+			json_params["dev_config"] = {}
+			if (arg_list_table["name"]) then
+				--_uci_real:set("capwap_devices", macs[i], "name", arg_list_table["name"])
+				json_params["dev_config"]["name"] = arg_list_table["name"]
+			end
+			if (arg_list_table["ap_alive_time"]) then
+				--_uci_real:set("capwap_devices", macs[i], "ap_alive_time", arg_list_table["ap_alive_time"])
+				json_params["dev_config"]["ap_alive_time"] = arg_list_table["ap_alive_time"]
+			end
+			if (arg_list_table["client_idle_time"]) then
+				--_uci_real:set("capwap_devices", macs[i], "client_idle_time", arg_list_table["client_idle_time"])
+				json_params["dev_config"]["client_idle_time"] = arg_list_table["client_idle_time"]
+			end
+			if (arg_list_table["client_idle_time"]) then
+				--_uci_real:set("capwap_devices", macs[i], "client_idle_time", arg_list_table["client_idle_time"])
+				json_params["dev_config"]["client_idle_time"] = arg_list_table["client_idle_time"]
+			end
+			if (arg_list_table["led"]) then
+				--_uci_real:set("capwap_devices", macs[i], "led", arg_list_table["led"])
+				json_params["dev_config"]["led"] = arg_list_table["led"]
+			end
+			if (arg_list_table["ifaces"]) then
+				local wifi_config = {}
+				wifi_config[0] = "wifi_2g_config"
+				wifi_config[1] = "wifi_5g_config"
+				--_uci_real:set("capwap_devices", macs[i], "custom_wifi", 1)
+				for k = 1, #arg_list_table["ifaces"] do
+					local band = arg_list_table["ifaces"][k]["band"]
+					local wifi_json = {}
+					if(arg_list_table["ifaces"][k]["enable"]) then
+						wifi_json["enabled"] = arg_list_table["ifaces"][k]["enable"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_enabled", arg_list_table["ifaces"][k]["enable"])
+					end
+					if(arg_list_table["ifaces"][k]["ssid"]) then
+						wifi_json["ssid"] = arg_list_table["ifaces"][k]["ssid"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_ssid", arg_list_table["ifaces"][k]["ssid"])
+					end
+					if(arg_list_table["ifaces"][k]["hide"]) then
+						wifi_json["hide"] = arg_list_table["ifaces"][k]["hide"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_hide", arg_list_table["ifaces"][k]["hide"])
+					end
+					if(arg_list_table["ifaces"][k]["isolation"]) then
+						wifi_json["isolation"] = arg_list_table["ifaces"][k]["isolation"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_isolation", arg_list_table["ifaces"][k]["isolation"])
+					end
+					if(arg_list_table["ifaces"][k]["encryption"]) then
+						--_uci_real:set("capwap_devices", macs[i], "2G_encryption", arg_list_table["ifaces"][k]["encryption"])
+						wifi_json["encryption"] = arg_list_table["ifaces"][k]["encryption"]
+					end
+					if(arg_list_table["ifaces"][k]["password"]) then
+						wifi_json["password"] = arg_list_table["ifaces"][k]["password"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_password", arg_list_table["ifaces"][k]["password"])
+					end
+					if(arg_list_table["ifaces"][k]["channel"]) then
+						wifi_json["channel"] = arg_list_table["ifaces"][k]["channel"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
+					end
+					if(arg_list_table["ifaces"][k]["bandwidth"]) then
+						wifi_json["bandwidth"] = arg_list_table["ifaces"][k]["bandwidth"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth", arg_list_table["ifaces"][k]["bandwidth"])
+					end
 
-									if(arg_list_table["ifaces"][k]["enable_prevent"]) then
-										json_params["wifi_2g_config"]["prohibit_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_prevent"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["sta_min_dbm"]) then
-										json_params["wifi_2g_config"]["prohibit_sta_signal"] = arg_list_table["ifaces"][k]["sta_min_dbm"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["enable_kick"]) then
-										json_params["wifi_2g_config"]["weak_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_kick"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["weak_sta_signal"]) then
-										json_params["wifi_2g_config"]["weak_sta_signal"] = arg_list_table["ifaces"][k]["weak_sta_signal"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
+					if(arg_list_table["ifaces"][k]["enable_prevent"]) then
+						wifi_json["prohibit_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_prevent"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
+					end
+					if(arg_list_table["ifaces"][k]["sta_min_dbm"]) then
+						wifi_json["prohibit_sta_signal"] = arg_list_table["ifaces"][k]["sta_min_dbm"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
+					end
+					if(arg_list_table["ifaces"][k]["enable_kick"]) then
+						wifi_json["weak_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_kick"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
+					end
+					if(arg_list_table["ifaces"][k]["weak_sta_signal"]) then
+						wifi_json["weak_sta_signal"] = arg_list_table["ifaces"][k]["weak_sta_signal"]
+						--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
+					end
 
-									if (arg_list_table["ifaces"][k]["band_width_limit"]) then
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["enable"]) then
-											json_params["wifi_2g_config"]["bandwidth_limit"] = arg_list_table["ifaces"][k]["band_width_limit"]["enable"]
-											--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_limit", arg_list_table["ifaces"][k]["band_width_limit"]["enable"])
-										end
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["upload"]) then
-											json_params["wifi_2g_config"]["bandwidth_upload"] = arg_list_table["ifaces"][k]["band_width_limit"]["upload"]
-											--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_upload", arg_list_table["ifaces"][k]["band_width_limit"]["upload"])
-										end
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["download"]) then
-											json_params["wifi_2g_config"]["bandwidth_download"] = arg_list_table["ifaces"][k]["band_width_limit"]["download"]
-											--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_download", arg_list_table["ifaces"][k]["band_width_limit"]["download"])
-										end
-									end
-								else
-									if(arg_list_table["ifaces"][k]["enable"]) then
-										json_params["wifi_5g_config"]["enabled"] = arg_list_table["ifaces"][k]["enable"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_enabled", arg_list_table["ifaces"][k]["enable"])
-									end
-									if(arg_list_table["ifaces"][k]["ssid"]) then
-										json_params["wifi_5g_config"]["ssid"] = arg_list_table["ifaces"][k]["ssid"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_ssid", arg_list_table["ifaces"][k]["ssid"])
-									end
-									if(arg_list_table["ifaces"][k]["hide"]) then
-										json_params["wifi_5g_config"]["hide"] = arg_list_table["ifaces"][k]["hide"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_hide", arg_list_table["ifaces"][k]["hide"])
-									end
-									if(arg_list_table["ifaces"][k]["isolation"]) then
-										json_params["wifi_5g_config"]["isolation"] = arg_list_table["ifaces"][k]["isolation"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_isolation", arg_list_table["ifaces"][k]["isolation"])
-									end
-									if(arg_list_table["ifaces"][k]["encryption"]) then
-										json_params["wifi_5g_config"]["encryption"] = arg_list_table["ifaces"][k]["encryption"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_encryption", arg_list_table["ifaces"][k]["encryption"])
-									end
-									if(arg_list_table["ifaces"][k]["password"]) then
-										json_params["wifi_5g_config"]["password"] = arg_list_table["ifaces"][k]["password"]
-										--_uci_real:set("capwap_devices", macs[i], "5G_password", arg_list_table["ifaces"][k]["password"])
-									end
-									if(arg_list_table["ifaces"][k]["channel"]) then
-										json_params["wifi_5g_config"]["channel"] = arg_list_table["ifaces"][k]["channel"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-
-									if(arg_list_table["ifaces"][k]["enable_prevent"]) then
-										json_params["wifi_5g_config"]["prohibit_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_prevent"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["sta_min_dbm"]) then
-										json_params["wifi_5g_config"]["prohibit_sta_signal"] = arg_list_table["ifaces"][k]["sta_min_dbm"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["enable_kick"]) then
-										json_params["wifi_5g_config"]["weak_sta_signal_enable"] = arg_list_table["ifaces"][k]["enable_kick"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-									if(arg_list_table["ifaces"][k]["weak_sta_signal"]) then
-										json_params["wifi_5g_config"]["weak_sta_signal"] = arg_list_table["ifaces"][k]["weak_sta_signal"]
-										--_uci_real:set("capwap_devices", macs[i], "2G_channel", arg_list_table["ifaces"][k]["channel"])
-									end
-
-									if (arg_list_table["ifaces"][k]["band_width_limit"]) then
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["enable"]) then
-											json_params["wifi_5g_config"]["bandwidth_limit"] = arg_list_table["ifaces"][k]["band_width_limit"]["enable"]
-											--_uci_real:set("capwap_devices", macs[i], "5G_bandwidth_limit", arg_list_table["ifaces"][k]["band_width_limit"]["enable"])
-										end
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["upload"]) then
-											json_params["wifi_5g_config"]["bandwidth_upload"] = arg_list_table["ifaces"][k]["band_width_limit"]["upload"]
-											--_uci_real:set("capwap_devices", macs[i], "5G_bandwidth_upload", arg_list_table["ifaces"][k]["band_width_limit"]["upload"])
-										end
-										if(arg_list_table["ifaces"][k]["band_width_limit"]["download"]) then
-											json_params["wifi_5g_config"]["bandwidth_download"] = arg_list_table["ifaces"][k]["band_width_limit"]["download"]
-											--_uci_real:set("capwap_devices", macs[i], "5G_bandwidth_download", arg_list_table["ifaces"][k]["band_width_limit"]["download"])
-										end
-									end
-								end
-							end
+					if (arg_list_table["ifaces"][k]["band_width_limit"]) then
+						if(arg_list_table["ifaces"][k]["band_width_limit"]["enable"]) then
+							wifi_json["bandwidth_limit"] = arg_list_table["ifaces"][k]["band_width_limit"]["enable"]
+							--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_limit", arg_list_table["ifaces"][k]["band_width_limit"]["enable"])
 						end
-						local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
-						if ( excute_ret ~= 0) then
-							return excute_ret
+						if(arg_list_table["ifaces"][k]["band_width_limit"]["upload"]) then
+							wifi_json["bandwidth_upload"] = arg_list_table["ifaces"][k]["band_width_limit"]["upload"]
+							--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_upload", arg_list_table["ifaces"][k]["band_width_limit"]["upload"])
+						end
+						if(arg_list_table["ifaces"][k]["band_width_limit"]["download"]) then
+							wifi_json["bandwidth_download"] = arg_list_table["ifaces"][k]["band_width_limit"]["download"]
+							--_uci_real:set("capwap_devices", macs[i], "2G_bandwidth_download", arg_list_table["ifaces"][k]["band_width_limit"]["download"])
 						end
 					end
+					json_params[wifi_config[band]] = wifi_json
 				end
 			end
+		end
+		local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
+		if ( excute_ret ~= 0) then
+			return excute_ret
 		end
 	end
 	return 0
@@ -702,22 +641,17 @@ end
 
 --当前的定义：可以删除离线的device
 function delete_ap_impl(arg_list_table)
-	local devices = get_devices()
-
 	if (arg_list_table["macs"]) then
 		local macs = arg_list_table["macs"]
-		for i = 1, #devices do
-			for j =1, #macs do
-				if (devices[i]["mac"] == macs[j]) then
-					if(devices[i]["status"] ~= DEVICE_STATUS_OK) then
-						local json_params = {}
-						json_params["command"] = "delete_device"
-						json_params["device"] = macs[j]
-						local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
-						if ( excute_ret ~= 0) then
-							return excute_ret
-						end
-					end
+		for j =1, #macs do
+			local status = _uci_real:get("capwap_devices", macs[j], "status")
+			if( status ~= nil and status ~= DEVICE_STATUS_OK) then
+				local json_params = {}
+				json_params["command"] = "delete_device"
+				json_params["device"] = macs[j]
+				local excute_ret = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params)})
+				if ( excute_ret ~= 0) then
+					return excute_ret
 				end
 			end
 		end
@@ -793,6 +727,46 @@ function set_ap_freq_inter_impl(arg_list_table)
 				return excute_ret
 			end
 		end
+		_uci_real:foreach("capwap_devices", "device", function(c)
+			local enabled_24g = _uci_real:get("capwap_devices", c[".name"], "5G_enabled")
+			local ssid_24g = _uci_real:get("capwap_devices", c[".name"], "5G_ssid")
+			local encryption_24g = _uci_real:get("capwap_devices", c[".name"], "5G_encryption")
+			local password_24g = _uci_real:get("capwap_devices", c[".name"], "5G_password")
+			local _device = _uci_real:get("capwap_devices", c[".name"], "mac")
+			local custom_wifi = _uci_real:get("capwap_devices", c[".name"], "custom_wifi")
+
+			local json_params_c = {}
+			json_params_c["command"] = "set_device_config"
+			json_params_c["device"] = _device
+			json_params_c["wifi_2g_config"] = {}
+			if custom_wifi == nil then
+				if arg_list_table.enable == 1 then
+					if(enabled_24g) then
+						json_params_c["wifi_2g_config"]["enabled"] = enabled_24g
+					end
+					if(ssid_24g) then
+						json_params_c["wifi_2g_config"]["ssid"] = ssid_24g
+					end
+					if(encryption_24g) then
+						json_params_c["wifi_2g_config"]["encryption"] = encryption_24g
+					end
+					if(password_24g) then
+						json_params_c["wifi_2g_config"]["password"] = password_24g
+					end
+				else
+					if(enabled_24g) then
+						json_params_c["wifi_2g_config"]["ssid"] = ssid_24g.."-2.4G"
+					end
+				end
+				nixio.syslog("crit", "cmd :WUM -c json -j '%s'" %{json.encode(json_params_c)})
+				local excute_ret_c = excute_with_return("WUM -c json -j '%s'" %{json.encode(json_params_c)})
+				if ( excute_ret_c ~= 0) then
+					return excute_ret_c
+				end
+			end
+			return 0
+		end)
+
 	end
 	return 0
 end

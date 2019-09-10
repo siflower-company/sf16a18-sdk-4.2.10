@@ -109,6 +109,9 @@ msgstr "无线密码："
 msgid "The password length error"
 msgstr "密码长度不能少于8位"
 
+msgid "password contain invalid character"
+msgstr "密码包含非法字符"
+
 msgid "password strength"
 msgstr "密码强度"
 
@@ -123,6 +126,21 @@ msgstr "设置失败!"
 
 msgid "Please select your access method"
 msgstr "选择您的上网接入方式"
+
+msgid "Obtained from the old router"
+msgstr "从旧路由器获取"
+
+msgid "pppoe transplant intro"
+msgstr "请将旧路由器连接电源，并将网线的一头插入旧路由器的WAN口，另一头插入矽路由的LAN口。"
+
+msgid "start obtain"
+msgstr "开始获取"
+
+msgid "sync pppoe info from old router timeout"
+msgstr "从旧路由器获取宽带拨号信息超时。"
+
+msgid "failed to get network configuration from old router"
+msgstr "从旧路由器获取网络配置失败。"
 
 msgid "skip the guide"
 msgstr "跳过向导"
@@ -142,11 +160,35 @@ msgstr "无线密码为8-63个字符，最好是数字、字母、符号的组�
 msgid "previous"
 msgstr "上一步"
 
-msgid "Click the “confirm” button"
-msgstr "请点击“确认”按钮"
+msgid "Welcome to sirouter"
+msgstr "欢迎使用矽路由"
 
-msgid "Complete the setup guide"
-msgstr "完成设置向导"
+msgid "I have read and agreed"
+msgstr "我已阅读并同意"
+
+msgid "user license agreement"
+msgstr "最终用户许可协议"
+
+msgid "and"
+msgstr "和"
+
+msgid "statement about siflower smart routers and privacy"
+msgstr "关于智能路由器与隐私的声明"
+
+msgid "join"
+msgstr "加入"
+
+msgid "user experience improvement program"
+msgstr "用户体验改进计划"
+
+msgid "/proto.htm"
+msgstr "/proto_zh.htm"
+
+msgid "/private.htm"
+msgstr "/private_zh.htm"
+
+msgid "/project.htm"
+msgstr "/project_zh.htm"
 
 msgid "Please encrypt your wireless network"
 msgstr "请加密您的无线网络"
@@ -155,7 +197,7 @@ msgid "Do not encrypt"
 msgstr "不加密，并自行承担风险"
 
 msgid "Make sure the account or password is empty"
-msgstr "请确认带宽或密码是否为空"
+msgstr "请确认宽带账号或密码是否为空"
 
 msgid "cancel"
 msgstr "取消"
@@ -610,6 +652,9 @@ msgstr "正在准备，请稍等..."
 msgid "LAN set confirm"
 msgstr "如果您的计算机使用了手动设置的ip地址，请对应修改计算机的IP地址，子网掩码及默认网关"
 
+msgid "alter need input address confirm"
+msgstr "修改后需要手动输入地址才能访问路由器，确认修改？"
+
 msgid "The network segment of IP address is illegal"
 msgstr "IP地址网段非法，请重新输入"
 
@@ -730,6 +775,9 @@ msgstr "数据包MTU"
 msgid "Packet maximum transmission unit"
 msgstr "数据包的最大传输单元，可设置范围为46 ～ 9000"
 
+msgid "Packet maximum transmission unit for pppoe"
+msgstr "数据包的最大传输单元，可设置范围为46 ～ 8992"
+
 msgid "Manually set the DNS server in dhcp"
 msgstr "自动获得IP地址上网方式下运营商会自动分配DNS服务器，如有需要也可以手动设置"
 
@@ -829,8 +877,8 @@ msgstr "WAN口未连接"
 msgid "Long account length"
 msgstr "账号长度过长"
 
-msgid "The password length is not less than 6"
-msgstr "密码长度不小于6"
+msgid "Long password length"
+msgstr "密码长度过长"
 
 msgid "Successful connection!"
 msgstr "连接成功！"
@@ -1750,8 +1798,8 @@ msgstr "路由器没有加密并确认连接。请点击下一步"
 msgid "router connection failure"
 msgstr "路由器连接失败"
 
-msgid "password should be no more than 31 bits long"
-msgstr "密码不应超过31位"
+msgid "password should be no more than 63 bits long"
+msgstr "密码不应超过63位"
 
 msgid "router function"
 msgstr "路由功能"
@@ -1822,6 +1870,12 @@ msgstr "忘记密码"
 msgid "If you forget your password, please resume the factory settings. Recovery: When the device  is powered on, hold down the Reset button until all the lights are on at the same time and release"
 msgstr "如果您忘记了密码，请恢复工厂设置。恢复:当设备接通电源时，按住复位按钮，直到所有的灯同时亮起，再松开"
 
+msgid "scan me to download the app"
+msgstr "扫我下载App"
+
+msgid "experience more features"
+msgstr "体验更多功能"
+
 msgid "parameters"
 msgstr "网络参数"
 
@@ -1839,6 +1893,9 @@ msgstr "软件升级"
 
 msgid "OTA"
 msgstr "OTA在线升级"
+
+msgid "whether auto OTA"
+msgstr "是否自动升级"
 
 msgid "Export"
 msgstr "导出配置"
@@ -2116,6 +2173,12 @@ msgstr "设备离线或不存在"
 msgid "device online, can not be remove"
 msgstr "设备在线无法删除"
 
+msgid "ap no response"
+msgstr "设备没有响应"
+
+msgid "connection reset by peer"
+msgstr "设备正在被其他人设置，请稍后重试"
+
 msgid "protocol version not support"
 msgstr "协议类型不支持"
 
@@ -2313,6 +2376,9 @@ msgstr "OTA 没有运行。"
 
 msgid "frequence intergration"
 msgstr "双频合一"
+
+msgid "confirm to alter wifi"
+msgstr "请确认是否修改主人网络信息，如果修改，连接的无线设备可能断开，需要重新连接。"
 
 msgid "input netmask is illegal"
 msgstr "输入子网掩码不合法"

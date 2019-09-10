@@ -61,7 +61,7 @@ static unsigned long get_target_state(struct thermal_instance *instance,
 	 */
 	cdev->ops->get_cur_state(cdev, &cur_state);
 	next_target = instance->target;
-	dev_dbg(&cdev->device, "cur_state=%ld\n", cur_state);
+	//dev_dbg(&cdev->device, "cur_state=%ld\n", cur_state);
 
 	if (!instance->initialized) {
 		if (throttle) {
@@ -148,8 +148,8 @@ static void thermal_zone_trip_update(struct thermal_zone_device *tz, int trip)
 		trace_thermal_zone_trip(tz, trip, trip_type);
 	}
 
-	dev_dbg(&tz->device, "Trip%d[type=%d,temp=%ld]:trend=%d,throttle=%d\n",
-				trip, trip_type, trip_temp, trend, throttle);
+	//dev_dbg(&tz->device, "Trip%d[type=%d,temp=%ld]:trend=%d,throttle=%d\n",
+	//			trip, trip_type, trip_temp, trend, throttle);
 
 	mutex_lock(&tz->lock);
 
@@ -159,8 +159,8 @@ static void thermal_zone_trip_update(struct thermal_zone_device *tz, int trip)
 
 		old_target = instance->target;
 		instance->target = get_target_state(instance, trend, throttle);
-		dev_dbg(&instance->cdev->device, "old_target=%d, target=%d\n",
-					old_target, (int)instance->target);
+		//dev_dbg(&instance->cdev->device, "old_target=%d, target=%d\n",
+		//			old_target, (int)instance->target);
 
 		if (instance->initialized && old_target == instance->target)
 			continue;

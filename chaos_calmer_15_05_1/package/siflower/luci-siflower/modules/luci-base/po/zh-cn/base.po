@@ -1844,7 +1844,7 @@ msgid "Forget the password"
 msgstr "忘记密码"
 
 msgid "forget password intro"
-msgstr "如果忘记密码，请恢复出厂设置。恢复出厂设置：当设备通电时，按住Reset按钮直到所有指示灯同时亮起后松开"
+msgstr "如果忘记密码，请恢复出厂设置（恢复出厂设置后密码为admin）。恢复出厂设置：当设备通电时，按住Reset按钮直到所有指示灯同时亮起后松开"
 
 msgid "Password authentication"
 msgstr "密码验证"

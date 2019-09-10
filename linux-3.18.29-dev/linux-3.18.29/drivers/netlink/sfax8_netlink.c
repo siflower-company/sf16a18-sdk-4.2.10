@@ -412,8 +412,52 @@ int sf_init_client_socket(void *data, int len)
 }
 EXPORT_SYMBOL(sf_init_client_socket);
 
+#ifdef CONFIG_SEND_ERR
+int ker_err_send(char *type, int module, int code, char *text, char *path, int flag)
+{
+    struct sk_buff *skb = NULL;
+    void *msg_head = NULL;
+    int size;
+    int rc;
+    char msg[40];
+    sprintf(msg,"%s %s %s %d %d %02x", type, text, path, module, code, flag);
 
+    skb = genlmsg_new(MAX_MSG_SIZE, GFP_KERNEL);
+    if(!skb){
+        return -ENOMEM;
+    }
 
+    msg_head = genlmsg_put(skb, 0, 0, &(g_sfnl->generic_family.family), 0, SF_CMD_GENERIC);
+
+    if(!msg_head)
+    {
+        rc = -ENOMEM;
+        goto err_out;
+    }
+
+    rc = nla_put_string(skb, SF_CMD_ATTR_ERR, msg);
+    if(rc != 0){
+        goto err_out;
+    }
+    genlmsg_end(skb, msg_head);
+
+    rc = genlmsg_multicast(&(g_sfnl->generic_family.family), skb, 0, 0, GFP_KERNEL);
+    if(rc != 0&& rc != -ESRCH)
+    {
+        printk("genlmsg_multicast to user failed, return :%d\n",rc);
+        return rc;
+    }
+    printk("genl_multicast to user success\n");
+    return rc;
+
+err_out:
+    if(skb)
+        nlmsg_free(skb);
+    return rc;
+}
+
+EXPORT_SYMBOL(ker_err_send);
+#endif
 
 /*-------------------------------------------------------
  * INIT AREA
@@ -440,6 +484,7 @@ static struct nla_policy sf_genl_policy[SF_CMD_ATTR_MAX + 1] = {
 	[SF_CMD_ATTR_KTHREAD_RUN]	= {.type = NLA_STRING, .len  = MSGLEN},
 	[SF_CMD_ATTR_WIFI]			= {.type = NLA_STRING, .len  = MSGLEN},
 	[SF_CMD_ATTR_APP]			= {.type = NLA_STRING, .len  = MSGLEN},
+    [SF_CMD_ATTR_ERR]           = {.type = NLA_STRING, .len  = MSGLEN},
 };
 
 static const struct genl_ops sf_genl_ops[] = {
@@ -451,7 +496,6 @@ static const struct genl_ops sf_genl_ops[] = {
 		.dumpit		= NULL,
 	},
 };
-
 
 int sf_genl_family_init(sf_nlfamily *sf_family, char *family_name, char *group_name){
 	int ret;
@@ -501,7 +545,7 @@ static int init_sf_genl(void)
 	g_sfnl->genl_debug = debugfs_create_file("genl_debug", 0777, NULL, NULL, &genl_debug_ops);
 #endif
 
-	sf_genl_family_init(&(g_sfnl->generic_family), "COMMON_NL", NULL);
+	sf_genl_family_init(&(g_sfnl->generic_family), "COMMON_NL", "common_nl");
 
 	printk("sf generic netlink module init success,get family id %d!\n",g_sfnl->generic_family.family.id);
 	return 0;

@@ -385,10 +385,15 @@ static int fq_codel_init(struct Qdisc *sch, struct nlattr *opt)
 {
 	struct fq_codel_sched_data *q = qdisc_priv(sch);
 	int i;
-
+#ifdef CONFIG_SF_KERNEL_LITE
+	sch->limit = 256;
+	q->flows_cnt = 256;
+	q->quantum = 300;
+#else
 	sch->limit = 1024;
 	q->flows_cnt = 1024;
 	q->quantum = 300;
+#endif
 	q->perturbation = prandom_u32();
 	INIT_LIST_HEAD(&q->new_flows);
 	INIT_LIST_HEAD(&q->old_flows);

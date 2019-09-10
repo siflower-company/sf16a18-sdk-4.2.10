@@ -157,8 +157,6 @@
 &wifi_rf {
 	status = "okay";
 	gpio-expa = <&gpio 51 0>;
-    /*force hk source to soft timer & ext gpio enable*/
-    force_hk_source = <2>;
 };
 
 &wifi_lb {

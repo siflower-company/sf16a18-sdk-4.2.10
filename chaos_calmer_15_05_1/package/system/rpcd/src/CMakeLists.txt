@@ -58,7 +58,7 @@ ENDIF()
 
 IF (SIWIFI_P2P_API_SUPPORT)
   SET(PLUGINS ${PLUGINS} siwifi_p2p_api_plugin)
-  ADD_LIBRARY(siwifi_p2p_api_plugin MODULE lepton.c p2papi.c p2p.cpp cJSON.c)
+  ADD_LIBRARY(siwifi_p2p_api_plugin MODULE siwifi_p2p.c p2papi.c p2p.cpp cJSON.c)
   TARGET_LINK_LIBRARIES(siwifi_p2p_api_plugin ubox ubus sunloginsdk pthread localhttp curl)
   SET_TARGET_PROPERTIES(siwifi_p2p_api_plugin PROPERTIES OUTPUT_NAME siwifi_p2p_api PREFIX "")
 ENDIF()

@@ -3,26 +3,29 @@ config setting 'qos'
 config setting 'wan_type'
 
 config setting 'guide'
-		option enable 1
+        option enable 1
 
 config setting 'no_wifi'
-		option enable 1
+        option enable 1
 
 config setting 'ac'
-		option enable 1
-		option freq_inter 0
+        option enable 1
+        option freq_inter 0
 
 config setting 'kerHealth'
-		option enable 0
+        option enable 0
 
 config setting 'auto_ota'
-		option enable 1
+        option enable 1
 
 config setting 'ota'
-		option romtype 4
-		option ap_romtype 3
-		option chip 'fullmask'
-		option imagetype 0
+        option romtype 4
+        option ap_romtype 3
+        option chip 'fullmask'
+        option imagetype 0
 
 config setting 'dev_mode'
-		option mode 'ap'
+        option mode 'ap'
+
+config setting 'updateKeyMode'
+        option enable 0

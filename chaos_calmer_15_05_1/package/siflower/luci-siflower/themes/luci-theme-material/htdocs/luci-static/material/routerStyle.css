@@ -184,7 +184,7 @@ input[id=visitorNetWork] {
 /*	background: #fff 0px 0px;*/
 	color: #000;
 	font-size: 14px;
-	width: 196px;
+	width: 18em;
 	height: 32px;
 	margin: 3.2px;
 	border: 0px;
@@ -230,22 +230,13 @@ input[id=visitorNetWork] {
 
 	background: #fff;
 	border-radius: 5px;
+	margin: auto;
 
 }
 
-.lb-pwd {
-
-	width: 5em;
-
-}
 .pwd-tb {
 
 	width: 15em;
-
-}
-
-.text-pwd {
-	border-left: 1px solid #ccc;
 
 }
 
@@ -253,6 +244,10 @@ input[id=visitorNetWork] {
 
 	margin: 8em auto;
 
+}
+
+.sub-td{
+	position: relative;
 }
 
 .cbi-button{
@@ -265,6 +260,8 @@ input[id=visitorNetWork] {
 	margin: 0 1.2em;
 	height: 4em;
 	cursor: pointer;
+	position: absolute;
+	bottom: 0em;
 }
 
 li.loginHelp {
@@ -273,6 +270,7 @@ li.loginHelp {
 	text-align: left;
 	list-style-type: none;
 	font-size: 14px;
+	position: absolute;
 }
 
 i.loginHelp {
@@ -286,6 +284,8 @@ i.loginHelp {
 
 .loginTip {
 	color: #fff;
+	font-size: 21px;
+	margin-bottom: 4px;
 }
 span.loginHelp {
 	color: #fff;
@@ -300,11 +300,12 @@ span.loginHelp {
 	padding-bottom: 3px;
 }
 .loginFeg {
-	width: 27.4em;
+	width: 24.4em;
 /*	height: 42px; for login forget password*/
 	border-radius: 3px;
 	margin-top: 10px;
 	position: relative;
+	left: 0.5em;
 	background: #df0007;
 	visibility: hidden;
 }
@@ -906,25 +907,49 @@ li.wizardTop .NTRight {
 	margin-left: 15px;
 }
 li.wizardBomEnd {
-	height: 250px;
+	height: auto;
 	background: #d7000f;
 	text-align: center;
 	*margin-top: -4px;
 	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .16), 0 0 5px 0 rgba(0, 0, 0, .12);
 }
 li.wizardBomEnd i.wirelessNoChg {
-	width: 132px;
-	height: 141px;
-	margin-top: 5px;
+	width: 100%;
+	height: 297px;
+	margin-top: -55px;
 	display: none;
-	background: url(images/sibasic.png) no-repeat -391px -0px;
+	background: url(images/common.png) no-repeat -0px -0px;
+	background-size: 100%;
+	position: relative;
 }
 li.lgBtnsWzd {
-	font-size: 0;
 	width: 100%;
 	bottom: 20px;
 	text-align: center;
 	padding: 20px;
+}
+
+li.lgBtnsWzd .guideProto input[type="checkbox"]{
+	width: 0;
+	height: 0;
+	margin: 0;
+	display: none;
+}
+li.lgBtnsWzd .guideProto input[type="checkbox"] + label::before{
+	content: "\a0";/*is a space*/
+	display: inline-block;
+	vertical-align: 2px;
+	width: 22px;
+	height: 22px;
+	margin-right: 2px;
+	text-indent: 2px;
+	line-height: 0.65;
+	background-color: #e74a45;
+	background: url(images/sibasic.png) no-repeat -376px -252px;
+}
+li.lgBtnsWzd .guideProto input[type="checkbox"]:checked + label::before{
+	background-color: #e74a45;
+	background: url(images/sibasic.png) no-repeat -401px -252px;
 }
 
 li.lgBtnsWzd span.btnConWzd {
@@ -1032,7 +1057,7 @@ span.confrimInputCancel {
 }
 
 .GuideHTml{
-	min-width: 680px;
+	min-width: 520px;
 }
 
 .Con table{
@@ -1688,7 +1713,6 @@ li.note div.noteCon {
 div.noteCon p.vlM {
 	line-height: 3.32em !important;
 	margin: 0 !important;
-	width: 12em;
 }
 div.noteCon p.pwdError{
 	width: 12em;
@@ -2423,6 +2447,12 @@ div.hsVigWDS {
     margin: 15px;
     padding-top: 0px;
 }
+.apSet .wan-td-right{
+    white-space: normal;
+}
+.apSet .wan-td-left{
+    width: 15.5em;
+}
 #ap-groups-modify {
     top: 200px;
 }
@@ -2780,6 +2810,30 @@ ul.help li.warnning {
 }
 
 @media screen and (max-device-width: 700px) {
+	div.wizardContent {
+		width: 520px;
+	}
+	.c_left {
+		width: 162px;
+	}
+	.guide .WifiErrTip {
+		margin-left: 32em;
+	}
+	ul.wizardIptPos {
+		margin-left: 134px;
+	}
+	ul.inputUl li.note {
+		position: absolute;
+	}
+	div.noteCon p.pwdError{
+		width: 10em;
+	}
+	li.wizardBomEnd i.wirelessNoChg {
+		height: 228px;
+	}
+	div.wizardCon {
+		margin-top: 100px;
+	}
 	div.coverLoad {
 		left: 240px;
 	}
@@ -2917,5 +2971,5 @@ progress{
 	width: 20%;
 	word-break: break-all;
 	word-wrap: break-word;
-	white-space: normal !important;
+	white-space: normal;
 }

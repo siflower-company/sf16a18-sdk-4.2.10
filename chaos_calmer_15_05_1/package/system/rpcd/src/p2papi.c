@@ -214,6 +214,25 @@ clean:
 	return res;
 }
 
+int32_t getUpdateKeyMode(void)
+{
+    struct uci_context *ctx = uci_alloc_context();
+    struct uci_package *p = NULL;
+    int ret = -1;
+    uci_set_confdir(ctx, "/etc/config");
+    if(uci_load(ctx, "basic_setting", &p) == UCI_OK)
+    {
+        struct uci_section *updateKeyMode = uci_lookup_section(ctx, p, "updateKeyMode");
+        //lookup values
+        if(updateKeyMode != NULL){
+            ret = atoi(uci_lookup_option_string(ctx, updateKeyMode, "enable"));
+        }
+        uci_unload(ctx,p);
+    }
+    uci_free_context(ctx);
+    return ret;
+}
+
 void do_cp2p(char *data, char **callback)
 {
 	LOG("[server]%s, args : %s\n",__func__, data ? data : "NULL");
@@ -227,8 +246,12 @@ void do_cp2p(char *data, char **callback)
 	char tmp[256] = "";
 	int32_t ret = p2p_create(oray_id, oray_key, p2p_url, p2p_name, tmp);
 	LOG("ret is %d",ret);
+    int32_t update_key_mode = getUpdateKeyMode();
 	while(ret == -2){
-		update_key();
+        if(update_key_mode == 1)
+        {
+            update_key();
+        }
 		memset(oray_id, 0, sizeof(oray_id));
 		memset(oray_key, 0, sizeof(oray_key));
 		get_oray_info(oray_id, oray_key);

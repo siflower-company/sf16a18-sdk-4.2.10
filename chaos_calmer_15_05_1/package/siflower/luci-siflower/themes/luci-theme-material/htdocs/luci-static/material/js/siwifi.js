@@ -181,6 +181,7 @@ function timestampToTime(timestamp) {
     var Y = date.getUTCFullYear() + '-';
     var M = (date.getUTCMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
     var D = date.getUTCDate();
+    D = D < 10 ? '0' + D : D;
     var h = date.getUTCHours();
     var m = date.getUTCMinutes();
     var s = date.getUTCSeconds();

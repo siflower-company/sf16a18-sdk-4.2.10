@@ -9,8 +9,8 @@ choice
 	config SOC_SF16A18
 		bool "SF16A18"
 
-	config SOC_SF16A28
-		bool "SF16A28"
+	config SOC_SF19A28
+		bool "SF19A28"
 
 endchoice
 
@@ -151,6 +151,14 @@ config DT_SF16A18_FULLMASK_86V
 	  The corresponding DTS file is at
 	  arch/mips/boot/dts/sf16a18_fullmask_86v.dts
 
+config DT_SF16A18_FULLMASK_86V_C2
+	bool "Built-in device tree for sf16a18 86v 2-layer boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_86v_c2.dts
+
 config DT_SF16A18_FULLMASK_REP_V1
 	bool "Built-in device tree for sf16a18 rep_v1 boards"
 	default n
@@ -206,6 +214,16 @@ config DT_SF16A18_FULLMASK_P10_8M
 	  pointer to the kernel.  The corresponding DTS file is at
 	  arch/mips/boot/dts/sf16a18_fullmask_p10_8m.dts
 
+config DT_SF16A18_FULLMASK_EVB_V5
+	bool "Built-in device tree for sf16a18 fullmask evb v5 boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_evb_v5.dts
+
 config DT_SF16A18_FULLMASK_CPE
 	bool "Built-in device tree for sf16a18 full mask 4g-wifi cpe boards"
 	default n
@@ -218,6 +236,35 @@ config DT_SF16A18_FULLMASK_CPE
 endif #SF16A18_FULL_MASK
 
 endif #SOC_SF16A18
+
+if SOC_SF19A28
+
+choice
+	prompt "Siflower SoC_SF19A28 selection"
+	default SF19A28_FULLMASK
+	help
+	  Select FULL_MASK SF19A28 SoC
+
+	config SF19A28_FULLMASK
+		bool "SF19A28_FULLMASK"
+
+endchoice
+
+if SF19A28_FULLMASK
+
+config DT_SF19A28_FULLMASK_FPGA
+	bool "Built-in device tree for sf19a28 fullmask fpga"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf19a28_fullmask_fpga.dts
+
+endif #SF19A28_FULLMASK
+
+endif #SOC_SF19A28
 
 config FIRMWARE_SIZE
 	int "CORE 1 FIRMWARE SIZE (0-8192 KB)"

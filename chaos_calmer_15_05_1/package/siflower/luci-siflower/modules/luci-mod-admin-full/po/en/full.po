@@ -109,6 +109,9 @@ msgstr "Wireless Password:"
 msgid "The password length error"
 msgstr "The password shoud be no less than 8 bits long"
 
+msgid "password contain invalid character"
+msgstr "Password contain invalid character"
+
 msgid "password strength"
 msgstr "password strength"
 
@@ -123,6 +126,21 @@ msgstr "Setting failed!"
 
 msgid "Please select your access method"
 msgstr "Please select your access method"
+
+msgid "Obtained from the old router"
+msgstr "Obtained from the old router"
+
+msgid "pppoe transplant intro"
+msgstr "Connect the old router to the power supply, and insert one end of the network cable into the WAN port of the old router and the other end into the LAN port of the routing."
+
+msgid "start obtain"
+msgstr "Start obtain"
+
+msgid "sync pppoe info from old router timeout"
+msgstr "Get broadband dialing information timeout from old router."
+
+msgid "failed to get network configuration from old router"
+msgstr "Failed to get network configuration from old router!"
 
 msgid "skip the guide"
 msgstr "Skip The Guide"
@@ -142,11 +160,35 @@ msgstr "The wireless password is 8-63 characters，preferalby a combination of a
 msgid "previous"
 msgstr "Previous"
 
-msgid "Click the “confirm” button"
-msgstr "Click the “confirm” button"
+msgid "Welcome to sirouter"
+msgstr "Welcome to sirouter"
 
-msgid "Complete the setup guide"
-msgstr "Complete the setup guide"
+msgid "I have read and agreed"
+msgstr "I have read and agreed "
+
+msgid "user license agreement"
+msgstr "user license agreement "
+
+msgid "and"
+msgstr "and "
+
+msgid "statement about siflower smart routers and privacy"
+msgstr "statement about siflower smart routers and privacy"
+
+msgid "join"
+msgstr "Join "
+
+msgid "user experience improvement program"
+msgstr "user experience improvement program"
+
+msgid "/proto.htm"
+msgstr "/proto_en.htm"
+
+msgid "/private.htm"
+msgstr "/private_en.htm"
+
+msgid "/project.htm"
+msgstr "/project_en.htm"
 
 msgid "Please encrypt your wireless network"
 msgstr "Please encrypt your wireless network"
@@ -610,6 +652,9 @@ msgstr "Just a moment, please..."
 msgid "LAN set confirm"
 msgstr "If your computer uses a manually set IP address, modify the computer's IP address, subnet mask, and default gateway."
 
+msgid "alter need input address confirm"
+msgstr "After the modification, you need to manually enter the address to access the router . Confirm the changes?"
+
 msgid "The network segment of IP address is illegal"
 msgstr "The network segment of IP address is illegal, please input again"
 
@@ -674,10 +719,10 @@ msgid "Broadband dial-up advanced setup"
 msgstr "Broadband Dial-up Advanced Setup"
 
 msgid "default is 1500, please do not modify if not necessary"
-msgstr "default is 1500, please do not modify if not necessary"
+msgstr "default 1500,do not modify if not necessary"
 
 msgid "default is 1480, please do not modify if not necessary"
-msgstr "default is 1480, please do not modify if not necessary"
+msgstr "default 1480,do not modify if not necessary"
 
 msgid "service name"
 msgstr "Service Name"
@@ -728,7 +773,10 @@ msgid "Packet MTU"
 msgstr "Packet MTU"
 
 msgid "Packet maximum transmission unit"
-msgstr "The maximum transmission unit of the packet can be set to a range of 576-1500"
+msgstr "The maximum transmission unit of the packet can be set to a range of 46-9000"
+
+msgid "Packet maximum transmission unit for pppoe"
+msgstr "The maximum transmission unit of the packet can be set to a range of 46-8992"
 
 msgid "Manually set the DNS server in dhcp"
 msgstr "The operator will automatically assign DNS server under the automatic access of IP address. If necessary, it can also be set manually"
@@ -827,10 +875,10 @@ msgid "WAN port is not connected"
 msgstr "WAN Port Is Not Connected"
 
 msgid "Long account length"
-msgstr "Long account length"
+msgstr "Account length is too long"
 
-msgid "The password length is not less than 6"
-msgstr "The password length is not less than 6"
+msgid "Long password length"
+msgstr "Password length is too long"
 
 msgid "Successful connection!"
 msgstr "Successful connection!"
@@ -1750,8 +1798,8 @@ msgstr "The router is not encrypted and confirm the connection. Please click nex
 msgid "router connection failure"
 msgstr "Router connection failure"
 
-msgid "password should be no more than 31 bits long"
-msgstr "password should be no more than 31 bits long"
+msgid "password should be no more than 63 bits long"
+msgstr "password should be no more than 63 bits long"
 
 msgid "router function"
 msgstr "Router Function"
@@ -1822,6 +1870,12 @@ msgstr "Forget the password"
 msgid "If you forget your password, please resume the factory settings. Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
 msgstr "If you forget your password, please resume the factory settings. Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
 
+msgid "scan me to download the app"
+msgstr "Scan me to download the App"
+
+msgid "experience more features"
+msgstr "Experience more features"
+
 msgid "parameters"
 msgstr "parameters"
 
@@ -1839,6 +1893,9 @@ msgstr "Upgrading"
 
 msgid "OTA"
 msgstr "OTA"
+
+msgid "whether auto OTA"
+msgstr "Whether auto OTA"
 
 msgid "Export"
 msgstr "Export"
@@ -2116,6 +2173,12 @@ msgstr "Device not found!"
 msgid "device online, can not be remove"
 msgstr "device online,can not be remove!"
 
+msgid "ap no response"
+msgstr "ap no response"
+
+msgid "connection reset by peer"
+msgstr "Device being set up by others, try again later"
+
 msgid "protocol version not support"
 msgstr "protocol version not support"
 
@@ -2313,6 +2376,9 @@ msgstr "OTA is not running."
 
 msgid "frequence intergration"
 msgstr "Frequence Intergration"
+
+msgid "confirm to alter wifi"
+msgstr "Please confirm whether to modify owner network information.If you modify it, wireless devices may be disconnected and need to reconnect."
 
 msgid "input netmask is illegal"
 msgstr "input netmask is illegal"

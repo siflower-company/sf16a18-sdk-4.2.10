@@ -174,10 +174,10 @@
             }
             upload_servers.push(save_virtual_server);
         } else {
-            for (var i in get_servers_bak) {
+            for (var i in servers) {
                 if (i != editIndex) {
-                    if (get_servers_bak[i].protocaltype != '') {
-                        upload_servers.push(get_servers_bak[i]);
+                    if (servers[i].protocaltype != '') {
+                        upload_servers.push(servers[i]);
                     }
                 } else {
                     upload_servers.push(save_virtual_server);

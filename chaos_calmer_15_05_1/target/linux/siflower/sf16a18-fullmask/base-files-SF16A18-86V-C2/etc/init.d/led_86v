@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+
+START=97
+
+
+start() {
+	echo 1 > /tmp/wifi_onoff_status
+	/bin/led-button -l 25
+	./etc/anomaly_server &
+}
+

@@ -1883,7 +1883,7 @@ msgid "Forget the password"
 msgstr "Forget The Password"
 
 msgid "forget password intro"
-msgstr "If you forget your password, please resume the factory settings. Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
+msgstr "If you forget your password, please resume the factory settings (the password is admin after restoring the factory settings). Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
 
 msgid "Password authentication"
 msgstr "Password authentication"

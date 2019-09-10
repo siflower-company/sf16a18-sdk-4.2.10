@@ -121,6 +121,10 @@ static const struct blobmsg_policy ap_mode_set_data[RPC_AP_MAX] = {
         [RPC_AP_5G_KEY ]   = { .name = "key_5g",  .type = BLOBMSG_TYPE_STRING },
 };
 
+static int set_netisolate(char *sfi_num, char *set_value);
+static int kick_sta_local(void);
+static int set_wireless_disable_local(char* sfi_num, char* disabled);
+
 static int
 rpc_luci2_network_ping(struct ubus_context *ctx, struct ubus_object *obj,
                        struct ubus_request_data *req, const char *method,
@@ -201,14 +205,6 @@ set_wireless_disable(struct ubus_context *ctx, struct ubus_object *obj,
 {
     char *sfi_num;
 
-    struct uci_context *get_ctx = uci_alloc_context();
-    struct uci_context *set_ctx = uci_alloc_context();
-    struct uci_package *pkg = NULL;
-    struct uci_element *e;
-    struct uci_section *s;
-    struct uci_ptr ptr;
-    const char *value = NULL;
-
     struct blob_attr *tb_ping[1];
     blobmsg_parse(set_wireless_disable_data, 1, tb_ping,
                   blob_data(msg), blob_len(msg));
@@ -217,47 +213,8 @@ set_wireless_disable(struct ubus_context *ctx, struct ubus_object *obj,
         return UBUS_STATUS_INVALID_ARGUMENT;
 
     sfi_num= blobmsg_get_string(tb_ping[RPC_UCI_SFI_NUM]);
+    set_wireless_disable_local(sfi_num, "0");
 
-    memset(&ptr , 0, sizeof(struct uci_ptr));
-    uci_set_confdir(get_ctx, "/etc/config");
-    uci_set_confdir(set_ctx, "/etc/config");
-    if(UCI_OK == uci_load(get_ctx, "wireless", &pkg)){
-        uci_foreach_element(&pkg->sections, e)
-        {
-            s = uci_to_section(e);
-            if(!strcmp(s->type, "wifi-iface"))
-            {
-                if (NULL != (value = uci_lookup_option_string(get_ctx, s, "ifname")))
-                {
-                    if (!strcmp(value, sfi_num)){
-                        ptr.package = "wireless";
-                        ptr.section = s->e.name;
-
-                        ptr.option = "key";
-                        ptr.value = "errorkey3131212";
-                        uci_set(set_ctx, &ptr);
-
-                        ptr.option = "ssid";
-                        ptr.value = "SiWiFi-test";
-                        uci_set(set_ctx, &ptr);
-
-                        ptr.option = "disabled";
-                        ptr.value = "0";
-                        uci_set(set_ctx, &ptr);
-
-                        uci_commit(set_ctx, &ptr.p, false);
-                        uci_unload(set_ctx, ptr.p);
-                    }
-                }
-            }
-        }
-        uci_unload(get_ctx, pkg);
-    }
-
-    uci_free_context(get_ctx);
-    uci_free_context(set_ctx);
-    system("uci set network.stabridge.disabled='1'");
-    system("uci commit");
     return 0;
 }
 
@@ -373,7 +330,8 @@ set_wireless(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 //for set ap wifi info
-static int set_wireless_local(char* sfi_num, char* ssid, char* encryption, char* key){
+static int set_wireless_local(char* sfi_num, char* ssid, char* encryption, char* key)
+{
     struct uci_context *get_ctx = uci_alloc_context();
     struct uci_context *set_ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
@@ -523,67 +481,95 @@ rpc_luci2_print_lepton(struct ubus_context *ctx, struct ubus_object *obj,
         return 0;
 }
 
+// reset sfi* pwd ssid.
+static int reset_wds_local()
+{
+    struct uci_context *get_ctx = uci_alloc_context();
+    struct uci_context *set_ctx = uci_alloc_context();
+    struct uci_package *pkg = NULL;
+    struct uci_element *e;
+    struct uci_section *s;
+    struct uci_ptr ptr;
+    const char *value = NULL;
+
+    memset(&ptr , 0, sizeof(struct uci_ptr));
+    uci_set_confdir(get_ctx, "/etc/config");
+    uci_set_confdir(set_ctx, "/etc/config");
+    if(UCI_OK == uci_load(get_ctx, "wireless", &pkg)){
+        uci_foreach_element(&pkg->sections, e)
+        {
+            s = uci_to_section(e);
+            if(!strcmp(s->type, "wifi-iface"))
+            {
+                if (NULL != (value = uci_lookup_option_string(get_ctx, s, "ifname")))
+                {
+                    if (!strcmp(value, "sfi0") || !strcmp(value, "sfi1")){
+                        ptr.package = "wireless";
+                        ptr.section = s->e.name;
+
+                        ptr.option = "ssid";
+                        ptr.value = "SiWiFi-test";
+                        uci_set(set_ctx, &ptr);
+
+                        ptr.option = "encryption";
+                        ptr.value = "psk2+ccmp";
+                        uci_set(set_ctx, &ptr);
+
+                        ptr.option = "key";
+                        ptr.value = "errorkey3131212";
+                        uci_set(set_ctx, &ptr);
+
+                        ptr.option = "bssid";
+                        ptr.value = "A8:5A:F3:00:30:58";
+                        uci_set(set_ctx, &ptr);
+
+                        ptr.option = "disabled";
+                        ptr.value = "0";
+                        uci_set(set_ctx, &ptr);
+                    }
+                }
+            }
+        }
+        uci_commit(set_ctx, &ptr.p, false);
+        uci_unload(set_ctx, ptr.p);
+        uci_unload(get_ctx, pkg);
+    }
+    uci_free_context(get_ctx);
+    uci_free_context(set_ctx);
+    return 0;
+}
 static int
 reset_wds(struct ubus_context *ctx, struct ubus_object *obj,
                          struct ubus_request_data *req, const char *method,
                          struct blob_attr *msg)
 {
-        struct uci_context *get_ctx = uci_alloc_context();
-        struct uci_context *set_ctx = uci_alloc_context();
-        struct uci_package *pkg = NULL;
-        struct uci_element *e;
-        struct uci_section *s;
-        struct uci_ptr ptr;
-        const char *value = NULL;
+    reset_wds_local();
+    return 0;
+}
 
-        memset(&ptr , 0, sizeof(struct uci_ptr));
-        uci_set_confdir(get_ctx, "/etc/config");
-        uci_set_confdir(set_ctx, "/etc/config");
-        if(UCI_OK == uci_load(get_ctx, "wireless", &pkg)){
-            uci_foreach_element(&pkg->sections, e)
-            {
-                s = uci_to_section(e);
-                if(!strcmp(s->type, "wifi-iface"))
-                {
-                    if (NULL != (value = uci_lookup_option_string(get_ctx, s, "ifname")))
-                    {
-                        if (!strcmp(value, "sfi0") || !strcmp(value, "sfi1")){
-                            ptr.package = "wireless";
-                            ptr.section = s->e.name;
+static int
+reset_rep_mode(struct ubus_context *ctx, struct ubus_object *obj,
+                         struct ubus_request_data *req, const char *method,
+                         struct blob_attr *msg)
+{
+    reset_wds_local();
+    // set netisolate
+    set_netisolate("wlan0","1");
+    set_netisolate("wlan1","1");
 
-                            ptr.option = "ssid";
-                            ptr.value = "SiWiFi-test";
-                            uci_set(set_ctx, &ptr);
+    system("uci set basic_setting.dnsmasq.down='0'");
+    system("uci commit basic_setting");
+    system("uci set network.stabridge.disabled='1'");
+    system("uci commit network");
 
-                            ptr.option = "encryption";
-                            ptr.value = "psk2+ccmp";
-                            uci_set(set_ctx, &ptr);
-
-                            ptr.option = "key";
-                            ptr.value = "errorkey3131212";
-                            uci_set(set_ctx, &ptr);
-
-                            ptr.option = "bssid";
-                            ptr.value = "A8:5A:F3:00:30:58";
-                            uci_set(set_ctx, &ptr);
-
-
-                            ptr.option = "disabled";
-                            ptr.value = "0";
-                            uci_set(set_ctx, &ptr);
-                        }
-                    }
-                }
-            }
-            uci_commit(set_ctx, &ptr.p, false);
-            uci_unload(set_ctx, ptr.p);
-            uci_unload(get_ctx, pkg);
-        }
-
-        uci_free_context(get_ctx);
-        uci_free_context(set_ctx);
-
-        return 0;
+    system("/etc/init.d/dnsmasq restart");
+    // this delay_kick will do:
+        // set uhttpd test.lua
+        // restart relayd, if relayd restart ,wan ip can not access
+        // wifi reload
+        // kick all station for get ip .
+    system("delay_kick reset_rep_mode&");
+    return 0;
 }
 
 static int
@@ -604,9 +590,7 @@ dnsmasq_restart(struct ubus_context *ctx, struct ubus_object *obj,
         return 0;
 }
 
-static int kick_sta_local(void);
-
-static int set_netisolate(char *sfi_num){
+static int set_netisolate(char *sfi_num, char *set_value){
     struct uci_context *get_ctx = uci_alloc_context();
     struct uci_context *set_ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
@@ -630,7 +614,7 @@ static int set_netisolate(char *sfi_num){
                         ptr.package = "wireless";
                         ptr.section = s->e.name;
                         ptr.option = "netisolate";
-                        ptr.value = "0";
+                        ptr.value = set_value;
                         uci_set(set_ctx, &ptr);
 
                         uci_commit(set_ctx, &ptr.p, false);
@@ -647,8 +631,6 @@ static int set_netisolate(char *sfi_num){
 
     return 0;
 }
-
-static int set_wireless_disable_local(char* sfi_num);
 
 static int
 set_config_last(struct ubus_context *ctx, struct ubus_object *obj,
@@ -689,22 +671,25 @@ set_config_last(struct ubus_context *ctx, struct ubus_object *obj,
 
     set_wireless_local("wlan0" ,ssid_24g ,encryption_24g ,key_24g);
     set_wireless_local("wlan1" ,ssid_5g,encryption_5g,key_5g);
+
+    set_netisolate("wlan0", "1");
+    set_netisolate("wlan1", "1");
     //set freq
     memset(cmd,0,sizeof cmd);
     sprintf(cmd,"uci set basic_setting.freq.enable='");
     strcat(cmd,freq);
     strcat(cmd,"'");
     system(cmd);
-    system("uci commit");
+    system("uci commit basic_setting");
     //set stabridge
     memset(cmd,0,sizeof cmd);
     sprintf(cmd,"uci set network.stabridge.network='");
     if(!strcmp(band,"24g")){
         strcat(cmd, "lan wwan'");
-        set_wireless_disable_local("sfi1");
+        set_wireless_disable_local("sfi1","1");
     }else if(!strcmp(band,"5g")){
         strcat(cmd, "lan wwwan'");
-        set_wireless_disable_local("sfi0");
+        set_wireless_disable_local("sfi0","1");
     }else{
         blob_buf_init(&buf, 0);
         blobmsg_add_string(&buf, "status", "params error");
@@ -713,10 +698,10 @@ set_config_last(struct ubus_context *ctx, struct ubus_object *obj,
     }
     system(cmd);
     system("uci set network.stabridge.disabled='0'");
-    system("uci commit");
+    system("uci commit network");
     //dnsmasq stop
     system("uci set basic_setting.dnsmasq.down='1'");
-    system("uci commit");
+    system("uci commit basic_setting");
     system("/etc/init.d/dnsmasq restart");
     //bridge
     system("killall relayd");
@@ -724,6 +709,7 @@ set_config_last(struct ubus_context *ctx, struct ubus_object *obj,
     // this delay_kick will do:
         // sleep 2
         // uci set channel
+        // set uhttpd index.htm
         // wifi reload
         // kick all station for get ip .
     memset(cmd,0,sizeof cmd);
@@ -739,6 +725,7 @@ static int kick_sta_local(void)
 {
     system("ubus call hostapd.wlan0 deauth");
     system("ubus call hostapd.wlan1 deauth");
+    system("ifconfig eth0 down; sleep 2;ifconfig eth0 up");
     return 0;
 }
 
@@ -748,7 +735,7 @@ net_restart(struct ubus_context *ctx, struct ubus_object *obj,
                          struct ubus_request_data *req, const char *method,
                          struct blob_attr *msg)
 {
-    char cmd[40] = "uci get network.stabridge.disabled";
+    char cmd[40] = "uci get basic_setting.dnsmasq.down";
     char cmd_buf[2];
     FILE *pp;
     memset(cmd_buf,0,sizeof cmd_buf);
@@ -759,12 +746,11 @@ net_restart(struct ubus_context *ctx, struct ubus_object *obj,
     }
     fgets(cmd_buf, sizeof cmd_buf, pp);
     pclose(pp);
-    if(cmd_buf[0] == '0'){
+    if(cmd_buf[0] == '1'){
         system("killall relayd");
         system("/etc/init.d/relayd restart");
         system("wifi reload");
         kick_sta_local();
-        system("ifconfig eth0 down; sleep 2;ifconfig eth0 up");
     }
     //log
     /*
@@ -804,8 +790,9 @@ get_firmware_version(struct ubus_context *ctx, struct ubus_object *obj,
     ubus_send_reply(ctx, req, buf.head);
     return 0;
 }
-//set disabled = 1
-static int set_wireless_disable_local(char* sfi_num){
+//set disabled
+static int set_wireless_disable_local(char* sfi_num, char* disabled)
+{
     struct uci_context *get_ctx = uci_alloc_context();
     struct uci_context *set_ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
@@ -838,7 +825,7 @@ static int set_wireless_disable_local(char* sfi_num){
                         uci_set(set_ctx, &ptr);
 
                         ptr.option = "disabled";
-                        ptr.value = "1";
+                        ptr.value = disabled;
                         uci_set(set_ctx, &ptr);
 
                         uci_commit(set_ctx, &ptr.p, false);
@@ -852,8 +839,6 @@ static int set_wireless_disable_local(char* sfi_num){
 
     uci_free_context(get_ctx);
     uci_free_context(set_ctx);
-    system("uci set network.stabridge.disabled='1'");
-    system("uci commit");
     return 0;
 }
 
@@ -898,20 +883,21 @@ ap_mode_set(struct ubus_context *ctx, struct ubus_object *obj,
     strcat(cmd,freq);
     strcat(cmd,"'");
     system(cmd);
-    system("uci commit");
+    system("uci set basic_setting.dnsmasq.down='0'");
+    system("uci commit basic_setting");
     //close wds connect
-    set_wireless_disable_local("sfi0");
-    set_wireless_disable_local("sfi1");
-    system("wifi reload");
+    set_wireless_disable_local("sfi0","1");
+    set_wireless_disable_local("sfi1","1");
+    // close relayd
+    system("uci set network.stabridge.disabled='1'");
+    system("uci commit network");
 
     set_wireless_local("wlan0" ,ssid_24g ,encryption_24g ,key_24g);
     set_wireless_local("wlan1" ,ssid_5g,encryption_5g,key_5g);
 
-    set_netisolate("wlan0");
-    set_netisolate("wlan1");
+    set_netisolate("wlan0", "0");
+    set_netisolate("wlan1", "0");
     system("/etc/init.d/dnsmasq stop");
-    system("killall relayd");
-    system("/etc/init.d/relayd restart");
     //led
     memset(cmd,0,sizeof cmd);
     sprintf(cmd,"cat /sys/devices/10000000.palmbus/10000000.ethernet/net/eth0/carrier");
@@ -930,6 +916,8 @@ ap_mode_set(struct ubus_context *ctx, struct ubus_object *obj,
 
     // this delay_kick will do:
         // sleep 2
+        // set uhttpd index.htm
+        // restart relayd, if relayd restart ,wan ip can not access
         // wifi reload
         // kick all station for get ip .
     system("delay_kick ap&");
@@ -988,6 +976,15 @@ get_sta_num(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 static int
+upgrade(struct ubus_context *ctx, struct ubus_object *obj,
+                         struct ubus_request_data *req, const char *method,
+                         struct blob_attr *msg)
+{
+    system("/sbin/sysupgrade -c /tmp/upgrade.bin&");
+    return 0;
+}
+
+static int
 rpc_luci2_api_init(const struct rpc_daemon_ops *o, struct ubus_context *ctx)
 {
         int rv = 0;
@@ -1001,6 +998,8 @@ rpc_luci2_api_init(const struct rpc_daemon_ops *o, struct ubus_context *ctx)
                 UBUS_METHOD_NOARG("get_firmware_version",          get_firmware_version), //no params operation
                 UBUS_METHOD_NOARG("get_sta_num",          get_sta_num), //no params operation
                 UBUS_METHOD_NOARG("reset_wds",      reset_wds), //no params operation
+                UBUS_METHOD_NOARG("reset_rep_mode",      reset_rep_mode), //no params operation
+                UBUS_METHOD_NOARG("upgrade",      upgrade), //no params operation
                 UBUS_METHOD("ap_mode_set",           ap_mode_set,
                                                      ap_mode_set_data), //params operation
                 UBUS_METHOD("ping1",                 rpc_luci2_network_ping, //params operation

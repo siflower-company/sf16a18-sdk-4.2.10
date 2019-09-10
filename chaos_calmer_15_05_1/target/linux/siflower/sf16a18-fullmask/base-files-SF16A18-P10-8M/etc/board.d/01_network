@@ -9,7 +9,7 @@ siflower_setup_interfaces()
 {
 	local board="$1"
 	ucidef_set_interface_loopback
-	ucidef_set_interfaces_lan_wan "eth0" "eth1"
+	ucidef_set_interfaces_lan_wan "eth0" "eth1" "0"
 	ucidef_set_interface_guest guest
 	ucidef_set_interface_lease lease
 }

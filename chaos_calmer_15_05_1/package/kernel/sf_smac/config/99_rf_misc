@@ -4,4 +4,3 @@
 
 boot_hook_add preinit_main load_firmware
 boot_hook_add preinit_main insmod_rf
-boot_hook_add preinit_main insmod_mac80211

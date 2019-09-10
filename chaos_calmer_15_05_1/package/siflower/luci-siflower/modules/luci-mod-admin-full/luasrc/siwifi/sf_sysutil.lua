@@ -371,6 +371,28 @@ function get_software_version()
     return   strlist[3] or ""  --软件版本
 end
 
+function get_romtype_factory()
+    local ret = -1
+    local romTypeFlag = {}
+    local romType = {}
+    local res = io.popen("cat /sys/devices/factory-read/rom_type_flag")
+    if res then
+        romTypeFlag = res:read("*a")
+        res:close()
+    end
+    if string.find(romTypeFlag, "rt") then
+        res = io.popen("cat /sys/devices/factory-read/rom_type")
+        if res then
+            romType = res:read("*a")
+            res:close()
+        end
+        ret = tonumber(string.sub(romType, 3, -1))
+    else
+        return ret
+    end
+    return ret
+end
+
 function getOTAInfo()
 	nixio.syslog("crit","recv buffer:")
 	local xcloud_info = {}
@@ -382,10 +404,13 @@ function getOTAInfo()
 		cloud_code_url = "https://"..serveraddr..sysconfig.LOOKOTAVERSION2
 	else
 		cloud_code_url = "https://192.168.1.12:8090/v1"..sysconfig.LOOKOTAVERSION2
-	end
-    local romtype = _uci_real:get("basic_setting", "ota", "romtype")
-    if romtype == nil then
-        romtype = getRomtype()
+    end
+    local romtype = get_romtype_factory()
+    if romtype == -1 then
+        romtype = _uci_real:get("basic_setting", "ota", "romtype")
+        if romtype == nil then
+            romtype = getRomtype()
+        end
     end
 	local chiptype = getChiptype()
 	local data = {}
@@ -433,9 +458,12 @@ function getApOTAInfo()
 
 	local data = {}
     local ap_version = ""
-    data.romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
-    if data.romtype == nil then
-        data.romtype = 3
+    data.romtype = get_romtype_factory()
+    if data.romtype == -1 then
+        data.romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
+        if data.romtype == nil then
+            data.romtype = 3
+        end
     end
     data.chip=_uci_real:get("basic_setting", "ota", "chip")
     if data.chip == nil then
@@ -509,9 +537,12 @@ function getApOTAInfos()
 	data.data = {}
 	for  i = 1, #ap_version do
 		data.data[#data.data+1] = {}
-        data.data[i].romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
-        if data.data[i].romtype == nil then
-            data.data[i].romtype = 3
+        data.data[i].romtype = get_romtype_factory()
+        if data.data[i].romtype == -1 then
+            data.data[i].romtype = _uci_real:get("basic_setting", "ota", "ap_romtype") --ap
+            if data.data[i].romtype == nil then
+                data.data[i].romtype = 3
+            end
         end
         data.data[i].chip=_uci_real:get("basic_setting", "ota", "chip")
         if data.data[i].chip == nil then

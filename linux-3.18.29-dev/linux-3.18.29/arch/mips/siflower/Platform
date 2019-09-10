@@ -15,8 +15,8 @@ endif
 cflags-$(CONFIG_SOC_SF16A18)	+= -I$(srctree)/arch/mips/include/asm/mach-siflower/sf16a18
 
 #
-# Siflower sf16a28
+# Siflower sf19a28
 #
-cflags-$(CONFIG_SOC_SF16A28)	+= -I$(srctree)/arch/mips/include/asm/mach-siflower/sf16a28
+cflags-$(CONFIG_SOC_SF19A28)	+= -I$(srctree)/arch/mips/include/asm/mach-siflower/sf16a18
 
 all-$(CONFIG_SIFLOWER)	:= $(COMPRESSION_FNAME).bin

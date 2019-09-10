@@ -1,0 +1,16 @@
+#!/bin/sh
+
+[ "$ACTION" = "ifdown" -a "$EVENT" = "dpswan" ] &&  {
+	dhcppid=`cat  /var/run/udhcpc-br-lan.pid`
+	kill -SIGUSR2 $dhcppid
+}
+
+[ "$ACTION" = "ifup" -a "$EVENT" = "dpswan" ] || exit 0
+
+dhcppid=`cat  /var/run/udhcpc-br-lan.pid`
+kill -SIGUSR1 $dhcppid
+logger -t WTP "interface $INTERFACE up, restart WTP"
+wtp=`ps | grep "WTP" | wc -l`
+if [ $wtp != 1 ]; then
+	killall WTP
+fi

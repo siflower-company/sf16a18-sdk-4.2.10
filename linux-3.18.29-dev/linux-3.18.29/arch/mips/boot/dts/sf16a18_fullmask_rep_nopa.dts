@@ -1,7 +1,7 @@
 /dts-v1/;
 
 #include "sf16a18_full_mask.dtsi"
-#include "sf16a18-thermal.dtsi"
+#include "sf16a18-thermal-rep-nopa.dtsi"
 
 
 / {
@@ -124,6 +124,8 @@
 &wifi_rf {
 	status = "okay";
 	gpio-expa = <&gpio 51 0>;
+	/*force hk source to soft timer & ext gpio enable*/
+	force_hk_source = <2>;
 };
 
 &wifi_lb {
@@ -225,19 +227,16 @@
 
 &leds {
 	status = "okay";
-
 	wifi-status {
 		label = "wifi-status";
 		gpios = <&gpio 36 1>;
 		linux,default-trigger = "timer";
 	};
-
 	power {
 		label = "power";
 		gpios = <&gpio 37 1>;
 		linux,default-trigger = "none";
 	};
-
 	repeater {
 		label = "repeater-signal";
 		gpios = <&gpio 58 1>;

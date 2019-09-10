@@ -336,6 +336,11 @@ rpc_iwinfo_scan(struct ubus_context *ctx, struct ubus_object *obj,
 	blob_buf_init(&buf, 0);
 
 	c = blobmsg_open_array(&buf, "results");
+	if(!c) {
+		printf("error : blobmsg_open_array fail!");
+		rpc_iwinfo_close();
+		return -1;
+	}
 
 	if (!iw->scanlist(ifname, res, &len) && (len > 0))
 	{
@@ -343,6 +348,12 @@ rpc_iwinfo_scan(struct ubus_context *ctx, struct ubus_object *obj,
 		{
 			e = (struct iwinfo_scanlist_entry *)&res[i];
 			d = blobmsg_open_table(&buf, NULL);
+			if(!d) {
+				printf("error : blobmsg_open_table fail!");
+				blobmsg_close_array(&buf, c);
+				rpc_iwinfo_close();
+				return -2;
+			}
 
 			if (e->ssid[0])
 				blobmsg_add_string(&buf, "ssid", (const char *)e->ssid);

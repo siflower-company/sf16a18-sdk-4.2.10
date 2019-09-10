@@ -101,10 +101,13 @@ case ${board} in
 		target_board=target/linux/siflower/sf16a18_p10_${chip}_gmac.config
 		;;
 	p20)
-		target_board=target/linux/siflower/sf16a18_p20_${chip}_def.config
+		target_board=target/linux/siflower/sf16a18_evb_v5_${chip}_def.config
 		;;
 	86v)
 		target_board=target/linux/siflower/sf16a18_86v_${chip}_def.config
+		;;
+	86v_c2)
+		target_board=target/linux/siflower/sf16a18_86v_c2_${chip}_def.config
 		;;
 	rep)
 		target_board=target/linux/siflower/sf16a18_rep_${chip}_def.config
@@ -120,6 +123,9 @@ case ${board} in
 		;;
 	p10h)
 		target_board=target/linux/siflower/sf16a18_p10h_${chip}_gmac.config
+		;;
+	evb_v5)
+		target_board=target/linux/siflower/sf16a18_evb_v5_${chip}_def.config
 		;;
 	cpe)
 		target_board=target/linux/siflower/sf16a18_cpe_${chip}_def.config

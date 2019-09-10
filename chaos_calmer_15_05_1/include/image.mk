@@ -465,17 +465,6 @@ define BuildImage
 		$(call Build/Clean)
 
     image_prepare: compile
-		if [ "$(shell echo $(PROFILE) | grep "REP")" != "" ]; then \
-			rm -rf $(TARGET_DIR)/usr/lib/opkg/; \
-			rm  $(TARGET_DIR)/bin/sysupgrade; \
-			rm  $(TARGET_DIR)/etc/uhttpd.crt; \
-			rm  $(TARGET_DIR)/etc/uhttpd.key; \
-			cp  $(PLATFORM_SUBDIR)/base-files-$(PROFILE)/etc/config/dhcp $(TARGET_DIR)/etc/config/dhcp; \
-			cp  $(TOPDIR)/package/network/services/uhttpd/files/index.htm $(TARGET_DIR)/www/; \
-		else \
-			rm -rf $(TARGET_DIR)/www/*.js $(TARGET_DIR)/www/*.css $(TARGET_DIR)/www/img/; \
-		fi
-
 		mkdir -p $(KDIR)/tmp
 		$(call Image/Prepare)
   else

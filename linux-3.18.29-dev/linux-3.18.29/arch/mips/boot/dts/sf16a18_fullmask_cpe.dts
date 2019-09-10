@@ -72,11 +72,13 @@
 	shutdown-portlist = "llll*";
         led-on-off-time = /bits/ 16 <0xff 0x2ff>;
 	status = "okay";
+	smp-affinity = <2>;
 };
 
 &switch{
 	sfax8,port-map = "llll*";
 	status = "okay";
+	smp-affinity = <2>;
 };
 
 &gdma {
@@ -198,6 +200,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 	gpio-leds = <&gpio 36 0>;
+	smp-affinity = <2>;
 };
 
 &wifi_hb {
@@ -206,7 +209,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 	gpio-leds = <&gpio 36 0>;
-
+	smp-affinity = <3>;
 };
 
 &ip6103_vdd18 {

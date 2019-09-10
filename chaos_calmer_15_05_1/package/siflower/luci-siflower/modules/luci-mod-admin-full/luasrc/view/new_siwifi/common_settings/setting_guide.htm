@@ -7,11 +7,13 @@ Licensed to the public under the Apache License 2.0.
 local uci = require "luci.model.uci"
 local _uci_real  = cursor or _uci_real or uci.cursor()
 local systemnew = require "luci.controller.admin.systemnew"
+local wirelessnew = require "luci.controller.admin.wirelessnew"
 -%>
 <!DOCTYPE html>
 <html class="GuideHTml" lang="<%=luci.i18n.context.lang%>">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=520px,initial-scale=0.7">
     <link rel="stylesheet" href="<%=media%>/routerStyle.css">
     <link rel="stylesheet" href="<%=media%>/cascade.css">
     <script src="<%=resource%>/xhr.js"></script>
@@ -71,8 +73,9 @@ local systemnew = require "luci.controller.admin.systemnew"
                     <tr id="pppoe">
                         <td>
                             <table>
-								<tr><td class="c_left"><%:broadband account%></td><td class="c_right"><input id="pppoe-username"  onkeyup="noSpaceWord(this)" maxlength="32"></td></tr>
-								<tr><td class="c_left"><%:broadband password%></td><td class="c_right"><input id="pppoe-password" onkeyup="nStrLimit(this)" maxlength="31"></td></tr>
+								<tr><td class="c_left"><%:broadband account%></td><td class="c_right"><input id="pppoe-username"  onkeyup="noSpaceWord(this)" maxlength="64"></td></tr>
+								<tr><td class="c_left"><%:broadband password%></td><td class="c_right"><input id="pppoe-password" onkeyup="nStrLimit(this)" maxlength="64"></td></tr>
+                                <tr><td class="c_left"></td><td class="c_right"><a id="pppoe-transplant" onclick="changeDiv([1,4]);" style="text-decoration: underline;color: blue;cursor: pointer;"><%:Obtained from the old router%></a></td></tr>
                             </table>
                         </td>
                     </tr>
@@ -133,7 +136,7 @@ local systemnew = require "luci.controller.admin.systemnew"
                             <li id="wzdAntNote" class="note" style="display: inline-block; visibility: hidden;">
                                 <i class="arrowL"></i>
                                 <div class="noteCon">
-									<p class="vlM"><%:Please input the SSID%></p>
+                                    <p class="pwdError vlM"><%:Please input the SSID%></p>
                                 </div>
                             </li>
                         </ul>
@@ -142,7 +145,7 @@ local systemnew = require "luci.controller.admin.systemnew"
                         <ul class="inputUl wizardIptPos overflowH">
                             <li class="inputLi">
 							<label for=""><%:wireless password%></label>
-                                <input id="wzdWirelessPwd" class="imeModeN" maxlength="31"  onkeyup="nStrLimit(this)" onchange="wifiSetCheck()" type="text" style="width: 140px;">
+                                <input id="wzdWirelessPwd" class="imeModeN" maxlength="63"  onkeyup="nStrLimit(this)" onchange="wifiSetCheck()" type="text" style="width: 140px;">
                                 <i class="tip"></i>
                             </li>
                             <li id="wzdPwdNote" class="note" style="display: inline-block; visibility: hidden;">
@@ -170,19 +173,46 @@ local systemnew = require "luci.controller.admin.systemnew"
 			<a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
             </li>
             <li class="wizardBomEnd">
-                <i class="wirelessNoChg" style="display: inline-block;"></i><br><br><br>
-				<span><%:Click the “confirm” button%></span><br><br>
-				<span><%:Complete the setup guide%></span>
+                <i class="wirelessNoChg" style="display: inline-block;"></i>
+                <br><br>
+                <span><%:Welcome to sirouter%></span>
+                <br><br>
             </li>
             <li class="lgBtnsWzd">
 
-			<% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if not disable_switch  then %>
-			<span class="btnConWzd btnConWzdL"><button  onclick="changeDiv([3,2])"><%:previous%></button ></span>
-			<% else %>
-			<span class="btnConWzd btnConWzdL"><button  onclick="changeDiv([2,1])"><%:previous%></button ></span>
-			<% end %>
+            <table class="tb-no-border guideProto" style="margin:auto;width:70% !important;margin-bottom:20px">
+                <tr>
+                    <td><input id="userProto" type="checkbox" checked onchange="agree(this);" /><label for="userProto"></label></td>
+                    <td class="wan-td-right" style="white-space:unset;"><span><%:I have read and agreed%><a href="<%:/proto.htm%>" target="_blank"><%:user license agreement%></a><%:and%><a href="<%:/private.htm%>" target="_blank"><%:statement about siflower smart routers and privacy%></a></span></td>
+                </tr>
+                <tr>
+                    <td><input id="userProject" type="checkbox" /><label for="userProject"></label></td>
+                    <td class="wan-td-right"><span><%:join%><a href="<%:/project.htm%>" target="_blank"><%:user experience improvement program%></a></span></td>
+                </tr>
+            </table>
+            <% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if not disable_switch  then %>
+            <button  onclick="changeDiv([3,2])"><%:previous%></button >
+            <% else %>
+            <button  onclick="changeDiv([2,1])"><%:previous%></button >
+            <% end %>
 
-			<span class="btnConWzd"><button onclick="confirmConfig()"><%:confirm%></button></span>
+            <button id="confirmBtn" onclick="confirmConfig()"><%:confirm%></button>
+            </li>
+        </ul>
+        <ul id="setting-4" style="display: none">
+            <li class="wizardTop">
+                <span class="NTLeft Set-2"><%:Obtained from the old router%></span>
+                <a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
+            </li>
+            <li class="wizardBom">
+                <p style="margin: 10px;"><%:pppoe transplant intro%></p>
+                <br>
+                <br>
+                <p><img src="<%=media%>/images/pppoe.png" alt="old router" style="width: 89%;"/></p>
+            </li>
+            <br>
+            <li class="lgBtns">
+			<button onclick="changeDiv([4,1])"><%:previous%></button><button onclick="pppoeTransplant()"><%:start obtain%></button>
             </li>
         </ul>
     </div>
@@ -355,7 +385,7 @@ local systemnew = require "luci.controller.admin.systemnew"
                 var wantype = 4;
                 var username = document.getElementById('pppoe-username').value;
                 var password = document.getElementById('pppoe-password').value;
-                wan_settings = {'wantype':wantype, 'account':username, 'password':password, 'dns':''};
+                wan_settings = {'wantype':wantype, 'account':username, 'password':password, 'dns':'', 'connect':1 };
                 if(username==""||password==""||username==null||password==null){
                     document.getElementById('isSureTip').style.visibility = 'visible';
                     document.getElementById('Cover').style.visibility = 'visible';
@@ -409,6 +439,12 @@ local systemnew = require "luci.controller.admin.systemnew"
             }
             var err = document.getElementById('Error');
             var text = err.getElementsByTagName('span')[0];
+            if (password != check(password)) {
+                text.innerText = '<%:password contain invalid character%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('name');
+                return;
+            }
             if (name == ''){
 				text.innerText = '<%:Please input the SSID%>';
                 err.style.visibility = 'visible';
@@ -427,17 +463,26 @@ local systemnew = require "luci.controller.admin.systemnew"
                     return;
                 }
             }
+            var freq = <%wirelessnew.get_freq_intergration()%>.enable;
             for (i in ifaces) {
-                if (ifaces[i].band == '2.4G') {
+                if (ifaces[i].band == '2.4G' || freq != 0) {
                     ifaces[i].ssid = name;
                 } else {
-                    ifaces[i].ssid = name+'-5G';
+                    var tail = name.substring( name.length-5).toLowerCase();
+                    if (tail == '-2.4g'){
+                        ifaces[i].ssid = name.substring( 0, name.length-5) + '-5G';
+                    }else if(tail == '_2.4g'){
+                        ifaces[i].ssid = name.substring( 0, name.length-5) + '_5G';
+                    }else{
+                        ifaces[i].ssid = name + '-5G';
+                    }
                 }
                 ifaces[i].key = password;
                 ifaces[i].open = false;
             }
             console.log(ifaces);
             subWifiSet(fromId,toId);
+            getMonitor();
         }else {
             document.getElementById(fromId).style.display = "none";
             document.getElementById(toId).style.display = "";
@@ -448,6 +493,13 @@ local systemnew = require "luci.controller.admin.systemnew"
     function confirmConfig() {
         var params1 = wan_settings;
         document.getElementById('waiting').style.display = '';
+        var enable = document.getElementById('userProject').checked?1:0;
+        var params_enable = {"enable":enable};
+        console.log(params_enable);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_monitor")%>', params_enable,
+            function(x, result){
+                console.log(result);
+            });
         XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params1,
             function(x, result){
                 console.log(result);
@@ -466,12 +518,16 @@ local systemnew = require "luci.controller.admin.systemnew"
                 XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","disable_guide")%>', null,
                     function(x, result){
                         console.log(result);
-                        var params2 = {'ifaces':ifaces};
-                        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params2,
-                            function(x, result){
-                                console.log(result);
+                        <% if not disable_switch  then %>
+                            var params2 = {'ifaces':ifaces};
+                            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params2,
+                                function(x, result){
+                                    console.log(result);
+                                    location.href=location_href;
+                                });
+                        <% else %>
                                 location.href=location_href;
-                            });
+                        <% end %>
                     });
             });
     }
@@ -654,6 +710,57 @@ local systemnew = require "luci.controller.admin.systemnew"
         for (i in ifaces) {
             ifaces[i].open = true ;
         }
+    }
+    function pppoeTransplant() {
+        document.getElementById('waiting').style.display = '';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","sync_pppoe_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                document.getElementById('waiting').style.display = 'none';
+                if (result==null) {
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if (result.code == 0) {
+                    if (!result.username || !result.password || result.username == '' || result.password == ''){
+                        text.innerText = '<%:failed to get network configuration from old router%>';
+                        err.style.visibility = 'visible';
+                        return;
+                    }
+                    document.getElementById('pppoe-username').value = result.username;
+                    document.getElementById('pppoe-password').value = result.password;;
+                    changeDiv([4,1]);
+                }else{
+                    err.style.visibility = 'visible';
+                    text.innerText = result.msg;
+                }
+            });
+    }
+    function agree(e) {
+        if (e.checked) {
+            document.getElementById('confirmBtn').disabled = '';
+        } else {
+            document.getElementById('confirmBtn').disabled = 'disabled';
+        }
+    }
+
+    function getMonitor() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_monitor")%>', null,
+            function(x, result) {
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if (result.code == 0) {
+                    document.getElementById('userProject').checked = !!parseInt(result.enable);
+                }else{
+                    err.style.visibility = 'visible';
+                    text.innerText = result.msg;
+                }
+            });
     }
 
 </script>

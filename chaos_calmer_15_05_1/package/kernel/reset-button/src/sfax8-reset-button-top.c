@@ -36,14 +36,14 @@ static int sfax8_mode_judge(void)
 {
 	int ret = 0;
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 	ret = sfax8_mode_value();
 #endif
 
 	return ret?FAT:FIT;
 }
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#ifdef CONFIG_SF_KERNEL_LITE
 /* Call /etc/rc.button/xxx. */
 static void sfax8_btn_ops(struct sfax8_rb *sfrb, int btn)
 {
@@ -64,7 +64,7 @@ static int sfax8_apac_connect(void)
 	return 0;
 }
 
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#ifdef CONFIG_SF_KERNEL_LITE
 //reboot and get lastest config from AC.
 static void sfax8_update_reboot(struct sfax8_rb *sfrb)
 {
@@ -110,7 +110,7 @@ static void sfax8_rb_work(struct work_struct *work){
 	switch (ret)
 	{
 		case SHORT_PRESS_INT:
-#ifdef CONFIG_DT_SF16A18_FULLMASK_86V
+#if defined(CONFIG_DT_SF16A18_FULLMASK_86V) || defined(CONFIG_DT_SF16A18_FULLMASK_86V_C2)
 			sfax8_update_reboot(sfrb);
 #else
 #ifdef CONFIG_SF_NETWORK_WPS

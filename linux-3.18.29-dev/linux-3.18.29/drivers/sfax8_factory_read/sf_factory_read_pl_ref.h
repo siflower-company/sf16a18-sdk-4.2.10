@@ -40,8 +40,9 @@ struct sfax8_factory_read_context {
 	unsigned char product_key[PRODUCT_KEY_SIZE];
 	unsigned char login_info_flag[LOGIN_INFO_FLAG_SIZE];
 	uint32_t login_info;
+	unsigned char rom_type_flag[ROM_TYPE_FLAG_SIZE];
+	uint32_t rom_type;
 	unsigned char wifi_version[WIFI_VERSION_SIZE];
-	uint16_t xo_config;
 	unsigned char wifi_info[WIFI_INFO_SIZE];
 	unsigned int exist_flag;
 	bool cali_exist;

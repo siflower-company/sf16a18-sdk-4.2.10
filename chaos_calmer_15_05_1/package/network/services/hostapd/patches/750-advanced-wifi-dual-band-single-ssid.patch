@@ -134,7 +134,7 @@ Index: hostapd-2015-03-25/src/ap/ubus.c
  		blobmsg_add_u32(&b, "aid", sta->aid);
 +		if (hapd->conf->conditionally_ignore_bcast_ssid)
 +			if (hostapd_drv_read_sta_data(hapd, &data, sta->addr) == 0)
-+				blobmsg_add_u32(&b, "signal", data.last_rssi - 0x100);
++				blobmsg_add_u32(&b, "signal", data.last_rssi);
  		blobmsg_close_table(&b, c);
  	}
  	blobmsg_close_array(&b, list);

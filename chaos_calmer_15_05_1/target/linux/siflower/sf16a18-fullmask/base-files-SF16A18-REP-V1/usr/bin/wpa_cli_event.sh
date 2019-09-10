@@ -59,18 +59,18 @@ set_channel() {
 
 set_uhttpd() {
 	if [ "$1" = "index" ] ;then
-		uci del_list uhttpd.main.index_page='cgi-bin/test.lua'
+		uci del_list uhttpd.main.index_page='cgi-bin/first.lua'
 		uci del_list uhttpd.main.index_page='index.htm'
 		uci set uhttpd.main.error_page='/index.htm'
 		uci add_list uhttpd.main.index_page='index.htm'
-		uci commit
+		uci commit uhttpd
 		/etc/init.d/uhttpd restart
 	elif [ "$1" = "test" ] ;then
-		uci del_list uhttpd.main.index_page='cgi-bin/test.lua'
+		uci del_list uhttpd.main.index_page='cgi-bin/first.lua'
 		uci del_list uhttpd.main.index_page='index.htm'
-		uci set uhttpd.main.error_page='/cgi-bin/test.lua'
-		uci add_list uhttpd.main.index_page='cgi-bin/test.lua'
-		uci commit
+		uci set uhttpd.main.error_page='/cgi-bin/first.lua'
+		uci add_list uhttpd.main.index_page='cgi-bin/first.lua'
+		uci commit uhttpd
 		/etc/init.d/uhttpd restart
 	else
 		echo "set_uhttpd param error" > /dev/ttyS0
@@ -115,10 +115,22 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		echo "b" > /tmp/wds_sta_status
 
 		/bin/led-button -l 18
-		sta_status=`uci get network.stabridge.disabled`
+		dns_down=`uci get basic_setting.dnsmasq.down`
 		echo "1" > /tmp/wds_connected
-		# sta_status use to judge whether rep has been configured, 0 mean has been configured
-		[ "$sta_status" = "0"  ] && {
+		# dns_down use to judge whether rep has been configured, 1 mean has been configured
+		[ "$dns_down" = "1"  ] && {
+			# enable relayd
+			uci set network.stabridge.disabled='0'
+			if [ "$wds_if" == "sfi0" ]; then
+				uci set network.stabridge.network='lan wwan'
+			elif [ "$wds_if" == "sfi1" ] ;then
+				uci set network.stabridge.network='lan wwwan'
+			else
+				echo "wpa_cli_evt: connected wds_if=$wds_if" > /dev/ttyS0
+			fi
+			uci commit network
+			/etc/init.d/relayd restart
+
 			/etc/init.d/dnsmasq restart
 			set_channel
 			set_uhttpd "index"
@@ -138,6 +150,11 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 		echo "b" > /tmp/wds_sta_status
 		# enable lan dhcp server
 		echo "0" > /tmp/wds_connected
+		# disable relay
+		uci set network.stabridge.disabled='1'
+		uci commit network
+		/etc/init.d/relayd restart
+
 		/etc/init.d/dnsmasq restart
 
 		local dns_status=`ps|grep dnsmasq|grep -vc grep`
@@ -146,10 +163,6 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 			sleep 1
 			dns_status=`ps|grep dnsmasq|grep -vc grep`
 		done
-		# if wds disconnected ,reset disabled for scan normal
-		uci set wireless.@wifi-iface[2].disabled='0'
-		uci set wireless.@wifi-iface[3].disabled='0'
-		uci commit
 
 		set_uhttpd "test"
 		# kick out devices

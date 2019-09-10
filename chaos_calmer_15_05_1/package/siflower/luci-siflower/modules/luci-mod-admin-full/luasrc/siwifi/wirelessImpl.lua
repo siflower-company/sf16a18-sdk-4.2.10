@@ -494,6 +494,7 @@ function wds_enable(arg_list_table)
 			_uci_real:commit("wireless")
 		end
 
+		luci.sys.call("killall relayd")
 		luci.sys.call("/etc/init.d/relayd enable")
 		local channel
 		if arg_list_table.channel then

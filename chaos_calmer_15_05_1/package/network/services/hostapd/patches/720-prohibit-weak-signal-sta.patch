@@ -29,7 +29,7 @@ Index: hostapd-2015-03-25/src/ap/ap_config.c
 +	conf->prohibit_weak_sig_sta_enable = 0;
 +	conf->disassociate_weak_sig_sta_enable = 0;
 +	conf->weak_sta_signal = -75;
- 
+
  	return conf;
  }
 Index: hostapd-2015-03-25/src/ap/ap_config.h
@@ -45,8 +45,8 @@ Index: hostapd-2015-03-25/src/ap/ap_config.h
 +	int disassociate_weak_sig_sta_enable;
 +	int weak_sta_signal;
  };
- 
- 
+
+
 Index: hostapd-2015-03-25/src/ap/ieee802_11.c
 ===================================================================
 --- hostapd-2015-03-25.orig/src/ap/ieee802_11.c	2018-06-14 16:25:26.084416407 +0800
@@ -54,7 +54,7 @@ Index: hostapd-2015-03-25/src/ap/ieee802_11.c
 @@ -1721,6 +1721,10 @@
  		.frame_info = fi,
  	};
- 
+
 +	if(hapd->iconf->prohibit_weak_sig_sta_enable)
 +		if(fi->ssi_signal < hapd->iconf->sta_min_dbm)
 +			return;
@@ -78,7 +78,7 @@ Index: hostapd-2015-03-25/src/ap/sta_info.c
 @@ -321,6 +323,42 @@
  	}
  }
- 
+
 +/**
 + * ap_sta_sig_handle_timer - Per STA timer handler
 + * @eloop_ctx: struct hostapd_data *
@@ -97,7 +97,7 @@ Index: hostapd-2015-03-25/src/ap/sta_info.c
 +	if (hostapd_drv_read_sta_data(hapd, &data, sta->addr) < 0)
 +		return;
 +	//if signal is too weak,deauth sta
-+	if(data.last_rssi < hapd->iconf->weak_sta_signal + 0x100)
++	if (data.last_rssi < hapd->iconf->weak_sta_signal)
 +	{
 +		sta->too_weak_count ++;
 +		if(sta->too_weak_count > 5)
@@ -115,7 +115,7 @@ Index: hostapd-2015-03-25/src/ap/sta_info.c
 +		eloop_register_timeout(5, 0, ap_sta_sig_handle_timer, hapd, sta);
 +	}
 +}
- 
+
  /**
   * ap_handle_timer - Per STA timer handler
 @@ -611,6 +649,9 @@
@@ -126,7 +126,7 @@ Index: hostapd-2015-03-25/src/ap/sta_info.c
 +		if(hapd->iconf->disassociate_weak_sig_sta_enable)
 +			eloop_register_timeout(5, 0, ap_sta_sig_handle_timer, hapd, sta);
  	}
- 
+
  	/* initialize STA info data */
 Index: hostapd-2015-03-25/src/ap/sta_info.h
 ===================================================================
@@ -138,8 +138,8 @@ Index: hostapd-2015-03-25/src/ap/sta_info.h
  	u8 last_subtype;
 +	u8 too_weak_count;
  };
- 
- 
+
+
 @@ -201,6 +202,7 @@
  void ap_sta_ip6addr_del(struct hostapd_data *hapd, struct sta_info *sta);
  void hostapd_free_stas(struct hostapd_data *hapd);
@@ -158,7 +158,7 @@ Index: hostapd-2015-03-25/src/drivers/driver_nl80211.c
  		[NL80211_STA_INFO_TX_FAILED] = { .type = NLA_U32 },
 +		[NL80211_STA_INFO_SIGNAL] = { .type = NLA_U8 },
  	};
- 
+
  	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
 @@ -5309,6 +5310,9 @@
  	if (stats[NL80211_STA_INFO_TX_FAILED])
@@ -166,7 +166,7 @@ Index: hostapd-2015-03-25/src/drivers/driver_nl80211.c
  			nla_get_u32(stats[NL80211_STA_INFO_TX_FAILED]);
 +	if (stats[NL80211_STA_INFO_SIGNAL])
 +		data->last_rssi =
-+			nla_get_u8(stats[NL80211_STA_INFO_SIGNAL]);
- 
++			(s8)nla_get_u8(stats[NL80211_STA_INFO_SIGNAL]);
+
  	return NL_SKIP;
  }

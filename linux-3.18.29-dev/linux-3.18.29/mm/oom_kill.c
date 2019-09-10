@@ -1,6 +1,6 @@
 /*
  *  linux/mm/oom_kill.c
- * 
+ *
  *  Copyright (C)  1998,2000  Rik van Riel
  *	Thanks go out to Claus Fischer for some serious inspiration and
  *	for goading me into coding this file...
@@ -39,6 +39,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/oom.h>
 
+#ifdef CONFIG_SEND_ERR
+extern int ker_err_send(char *type, int module, int code, char *text, char *path, int flag);
+#endif
 int sysctl_panic_on_oom;
 int sysctl_oom_kill_allocating_task;
 int sysctl_oom_dump_tasks = 1;
@@ -455,6 +458,9 @@ void oom_kill_process(struct task_struct *p, gfp_t gfp_mask, int order,
 	task_lock(p);
 	pr_err("%s: Kill process %d (%s) score %d or sacrifice child\n",
 		message, task_pid_nr(p), p->comm, points);
+#ifdef CONFIG_SEND_ERR
+	ker_err_send("WARNING", 1, 1, "OOM-KILL", NULL, 0x3);
+#endif
 	task_unlock(p);
 
 	/*

@@ -3251,7 +3251,7 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	struct module *mod;
 	long err;
 	char *after_dashes;
-    char *force_name;
+	char *force_name, *args;
 
 	err = module_sig_check(info);
 	if (err)
@@ -3268,17 +3268,24 @@ static int load_module(struct load_info *info, const char __user *uargs,
 		goto free_copy;
 	}
 
-    /* Will we use another force name by user,
-     * This is used for storage space optimization,a single module file could be loaded as different modules
-     * The driver will handle the different usage internally
-     * */
-    if (uargs && (force_name = strstr(uargs, "force_mod_name"))) {
-        err = parse_force_name(force_name, mod->name, MODULE_NAME_LEN);
-        if (err) {
-            printk("parse_force_name failed, err : %ld\n", err);
-            goto free_module;
-        }
-    }
+	/* Will we use another force name by user,
+	 * This is used for storage space optimization,a single module file could be loaded as different modules
+	 * The driver will handle the different usage internally
+	 * */
+	args = strndup_user(uargs, ~0UL >> 1);
+	if (IS_ERR(args)) {
+		err = PTR_ERR(args);
+		goto free_module;
+	}
+	if (force_name = strstr(args, "force_mod_name")) {
+		err = parse_force_name(force_name, mod->name, MODULE_NAME_LEN);
+		if (err) {
+			printk("parse_force_name failed, err : %ld\n", err);
+			kfree(args);
+			goto free_module;
+		}
+	}
+	kfree(args);
 
 	/* Reserve our place in the list. */
 	err = add_unformed_module(mod);

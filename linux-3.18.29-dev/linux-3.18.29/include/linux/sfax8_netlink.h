@@ -34,6 +34,7 @@ enum {
     SF_CMD_ATTR_KTHREAD_STOP,    /* use for stop kthread */
     SF_CMD_ATTR_WIFI,            /* reserve for wifi */
     SF_CMD_ATTR_APP,             /* reserve for app */
+    SF_CMD_ATTR_ERR,
     __SF_CMD_ATTR_MAX,
 };
 #define SF_CMD_ATTR_MAX (__SF_CMD_ATTR_MAX - 1)

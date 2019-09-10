@@ -82,7 +82,7 @@ static int of_mdiobus_register_phy(struct mii_bus *mdio, struct device_node *chi
 		return 1;
 	}
 
-	dev_dbg(&mdio->dev, "registered phy %s at address %i\n",
+	dev_info(&mdio->dev, "registered phy %s at address %i\n",
 		child->name, addr);
 
 	return 0;

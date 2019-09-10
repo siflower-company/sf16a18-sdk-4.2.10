@@ -88,7 +88,7 @@
                             </ul>
                         </td>
                         <td style="padding-top:0;">
-                            <table id="weekTb" class="tableWeek">
+                            <table id="weekTb" class="tableWeek" style="width: 400px !important;">
                             </table>
                         </td>
                     </tr>
@@ -420,6 +420,12 @@
                             errTipDoc = document.getElementById('key');
                             return;
                         }
+                        if (ifaces[i].key != check(ifaces[i].key)) {
+                            text.innerText = '<%:password contain invalid character%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key');
+                            return;
+                        }
                     }
                     var localaccessSelect = document.getElementById('localaccess');
                     if (localaccessSelect[localaccessSelect.selectedIndex].value == 'true') {
@@ -427,6 +433,8 @@
                     } else {
                         ifaces[i].localaccess = false;
                     }
+                    numLimit(document.getElementById('limitupload'));
+                    numLimit(document.getElementById('limitdownload'));
                     ifaces[i].limitupload = document.getElementById('limitupload').value;
                     ifaces[i].limitdownload = document.getElementById('limitdownload').value;
                     var limittimeSelect = document.getElementById('limittime');
@@ -527,6 +535,12 @@
                             errTipDoc = document.getElementById('key-5');
                             return;
                         }
+                        if (ifaces[i].key != check(ifaces[i].key)) {
+                            text.innerText = '<%:password contain invalid character%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }
                     }
                     var localaccessSelect = document.getElementById('localaccess-5');
                     if (localaccessSelect[localaccessSelect.selectedIndex].value == 'true') {
@@ -534,6 +548,8 @@
                     } else {
                         ifaces[i].localaccess = false;
                     }
+                    numLimit(document.getElementById('limitupload-5'));
+                    numLimit(document.getElementById('limitdownload-5'));
                     ifaces[i].limitupload = document.getElementById('limitupload-5').value;
                     ifaces[i].limitdownload = document.getElementById('limitdownload-5').value;
                     var limittimeSelect = document.getElementById('limittime-5');

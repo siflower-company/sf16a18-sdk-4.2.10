@@ -29,8 +29,8 @@
 			<table class="tb-no-border">
 				<tr><td colspan="2">
 						<table class="tb-no-border">
-							<tr><td class="wan-td-left"><%:broadband account%></td><td class="wan-td-right"><input id="pppoe-account" type="text" maxlength="32" onkeyup="noSpaceWord(this)"></td></tr>
-							<tr><td class="wan-td-left"><%:broadband password%></td><td class="wan-td-right"><input id="pppoe-password" type="text" onkeyup="nStrLimit(this)" maxlength="31"></td></tr>
+							<tr><td class="wan-td-left"><%:broadband account%></td><td class="wan-td-right"><input id="pppoe-account" type="text" maxlength="64" onkeyup="noSpaceWord(this)"></td></tr>
+							<tr><td class="wan-td-left"><%:broadband password%></td><td class="wan-td-right"><input id="pppoe-password" type="text" onkeyup="nStrLimit(this)" maxlength="64"></td></tr>
 							<tr><td class="wan-td-left"><%:WAN port speed setting%></td><td class="wan-td-right">
 									<select  id="pppoe-wanspeed-type">
 										<option value="auto"><%:auto negotiation%></option>
@@ -165,7 +165,7 @@
 		<p class="helpTop"><span class="helpDes"><%:help%></span><i class="helpClose" onclick="clickHelphc(1)"></i></p>
 		<div class="helpDetailhc"><ul id="PPPoEAdvHelp" class="help">
 				<li class="title"><%:Packet MTU%></li>
-				<li class="content"><%:Packet maximum transmission unit%></li>
+				<li class="content"><%:Packet maximum transmission unit for pppoe%></li>
 				<li class="title"><%:Service name/server name%></li>
 				<li class="content"><%:Service name/server name intro%></li>
 				<li class="title"><%:Use operators to specify IP addresses%></li>
@@ -196,6 +196,7 @@
     var saveDhcpFlag = false;
     var wanTimer;
     var lan;
+    var wan_in_setting = 0;
     // page load functions
     document.getElementById('update').disabled = 'disabled';
     getWan();
@@ -562,6 +563,12 @@
             text.innerText = '<%:MTU can not be empty%>';
             return;
         }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('dhcp-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 9000%>';
+            return;
+        }
         if (hostname!=""&&!hostNameLimit(hostname)){
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('dhcp-hostname');
@@ -670,6 +677,12 @@
             errTipDoc = document.getElementById('static-packageMTU');
             return;
         }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 9000%>';
+            return;
+        }
         var staticWanspeedType = document.getElementById('static-wanspeed-type');
         var index = staticWanspeedType.selectedIndex;
         var wanspeed = staticWanspeedType[index].value;
@@ -749,6 +762,12 @@
             text.innerText = '<%:MTU can not be empty%>'
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('pppoe-packageMTU');
+            return;
+        }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 8992%>';
             return;
         }
         if (packageMTU>8992||packageMTU<46){
@@ -831,10 +850,15 @@
         document.getElementById('linking').style.display = '';
 		document.getElementById('netStatus').innerText = '<%:Connecting...%>';
         document.getElementById('update').disabled = 'disabled';
+        wan_in_setting = 1;
+        document.getElementById('waiting').style.display = '';
         XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
             function(x, result){
                 console.log(result);
+                wan_in_setting = 0;
                 if (result==null) {
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('waiting').style.display = 'none';
                     var err = document.getElementById('Error');
                     var text = err.getElementsByTagName('span')[0];
                     err.style.visibility = 'visible';
@@ -845,6 +869,7 @@
                     getWan();
                 }else {
                     document.getElementById('update').disabled = '';
+                    document.getElementById('waiting').style.display = 'none';
                     var err = document.getElementById('Error');
                     var text = err.getElementsByTagName('span')[0];
                     text.innerText = result.msg;
@@ -910,19 +935,24 @@
         var wanspeed = pppoeWanspeedType[index].value;
         var err = document.getElementById('Error');
         var text = err.getElementsByTagName('span')[0];
-        if (strlen(account)<2){
-			text.innerText = '<%:The length of the account is not less than 2!%>';
+        if (account==null||account==""){
+            text.innerText = '<%:Make sure the account or password is empty%>';
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('pppoe-account');
             return;
-        }else if (strlen(account)>32){
+        }else if (strlen(account)>64){
 			text.innerText = '<%:Long account length%>';
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('pppoe-account');
             return;
 		}
-        if (strlen(password)<6) {
-			text.innerText = '<%:The password length is not less than 6%>';
+        if (password==null||password=="") {
+            text.innerText = '<%:Make sure the account or password is empty%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-password');
+            return;
+        }else if (strlen(password)>64){
+            text.innerText = '<%:Long password length%>';
             err.style.visibility = 'visible';
             errTipDoc = document.getElementById('pppoe-password');
             return;
@@ -1041,34 +1071,36 @@
 
     // page functions
     function setLinkStatus(flag,wantype) {
-        if (flag == 1) {
-            document.getElementById('break').style.display = 'none';
-            document.getElementById('linking').style.display = 'none';
-            document.getElementById('linked').style.display = '';
-			document.getElementById('netStatus').innerText = '<%:connected%>';
-            if (wantype==1) {
-                document.getElementById('update').disabled = 'disabled';
-                document.getElementById('release').disabled = '';
-			}
-        } else if (flag == 0) {
-            document.getElementById('linked').style.display = 'none';
-            document.getElementById('linking').style.display = 'none';
-            document.getElementById('break').style.display = '';
-			document.getElementById('netStatus').innerText = '<%:disconnected%>';
-            if (wantype == 1){
-                document.getElementById('update').disabled = '';
-                document.getElementById('release').disabled = 'disabled';
-			}
-        } else {
-            document.getElementById('linked').style.display = 'none';
-            document.getElementById('linking').style.display = 'none';
-            document.getElementById('break').style.display = '';
-			document.getElementById('netStatus').innerText = '<%:Disconnected not connected%>';
-            if (wantype==1){
-                document.getElementById('update').disabled = '';
-                document.getElementById('release').disabled = 'disabled';
-			}
-		}
+        if (!wan_in_setting) {
+            if (flag == 1) {
+                document.getElementById('break').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('linked').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:connected%>';
+                if (wantype==1) {
+                    document.getElementById('update').disabled = 'disabled';
+                    document.getElementById('release').disabled = '';
+                }
+            } else if (flag == 0) {
+                document.getElementById('linked').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('break').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:disconnected%>';
+                if (wantype == 1){
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('release').disabled = 'disabled';
+                }
+            } else {
+                document.getElementById('linked').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('break').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:Disconnected not connected%>';
+                if (wantype==1){
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('release').disabled = 'disabled';
+                }
+            }
+        }
     }
 
     function connectmodeChange() {

@@ -16,6 +16,9 @@
 #ifdef CONFIG_SOC_SF16A18
 #include <sf16a18.h>
 #include "include/sf_mmap.h"
+#elif defined CONFIG_SOC_SF19A28
+#include <sf16a18.h>
+#include "include/sf_mmap.h"
 #endif
 
 #define LATENCY					1

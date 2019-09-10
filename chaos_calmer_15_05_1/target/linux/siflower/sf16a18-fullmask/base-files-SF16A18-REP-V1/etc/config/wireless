@@ -29,6 +29,7 @@ config wifi-iface
 	option disable_input '0'
 	option ssid 'SiWiFi-repeater'
 	option key '12345678'
+	option rps_cpus '2'
 
 config wifi-device 'radio1'
 	option type 'mac80211'
@@ -60,6 +61,7 @@ config wifi-iface
 	option disable_input '0'
 	option ssid 'SiWiFi-repeater-5G'
 	option key '12345678'
+	option rps_cpus '3'
 
 config wifi-iface
 	option key '88886666jkllkj'
@@ -70,6 +72,7 @@ config wifi-iface
 	option mode 'sta'
 	option bssid 'A8:5A:F3:00:30:54'
 	option ssid 'SiWiFi-test'
+	option rps_cpus '2'
 	option disabled '0'
 
 config wifi-iface
@@ -81,4 +84,5 @@ config wifi-iface
 	option mode 'sta'
 	option bssid 'A8:5A:F3:00:30:58'
 	option ssid 'SiWiFi-test-5G'
+	option rps_cpus '3'
 	option disabled '0'

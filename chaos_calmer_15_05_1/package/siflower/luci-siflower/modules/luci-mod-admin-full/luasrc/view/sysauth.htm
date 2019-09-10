@@ -21,6 +21,7 @@ end
 <head>
     <meta charset="utf-8">
     <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=500px,initial-scale=0.7">
 <% if checkFileExist("/www/luci-static/material/routerStyle.css") == 1 then%>
 	<link rel="stylesheet" href="<%=media%>/routerStyle.css">
 <% end %>
@@ -66,15 +67,8 @@ end
 					</tr>
 					<tr><td>
 						<table class="login-tb">
-							<tr>
-								<td class="lb-pwd"><label class="cbi-value-title"><%:Password%></label></td>
-								<td>
-									<table class="pwd-tb">
-										<tr>
-											<td class="text-pwd"><input class="cbi-input-password" type="password" name="password" /></td>
-										</tr>
-									</table>
-								</td>
+							<tr style="width: 16em;">
+								<td><input class="cbi-input-password" type="password" name="password" maxlength="31" /></td>
 							</tr>
 						</table>
 					</td>
@@ -88,9 +82,15 @@ end
 							<span class="loginHelp"><%:Forget the password%></span>
 							<div id="loginFeg" class="loginFeg" style="visibility: hidden;">
 								<i class=""></i>
-								<p class=""><%:forget password intro%></p>
+								<p class="" style="margin-bottom:0px;"><%:forget password intro%></p>
 							</div>
 						</li>
+					</td></tr>
+					<tr><td colspan="3">
+						<div style="margin:auto;">
+							<img src="<%=media%>/images/QRcode.png" style="width:18em;margin:auto;margin-top:8em;"></img>
+							<p class="loginTip" style="margin:auto;margin-top:0px;"><%:scan me to download the app%><br><%:experience more features%></p>
+						</div>
 					</td></tr>
 				</table>
 

@@ -74,14 +74,14 @@ struct sf_ts_dev * check_dev_in_hlist(u8 *mac){
 
 	key = sf_mac_hash(mac);
 
-	ts_dbg("mac is %2x:%2x:%2x:%2x:%2x:%2x,key is %d\n",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],key);
+	//ts_dbg("mac is %2x:%2x:%2x:%2x:%2x:%2x,key is %d\n",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],key);
 	hlist_for_each_entry(dev, &ts.hash_index[key], snode){
 		if(ether_addr_equal(mac, dev->mac)){
 			rdev = dev;
 			break;
 		}
 	}
-	ts_dbg("have is %d\n", rdev != NULL ? 1 : 0);
+	//ts_dbg("have is %d\n", rdev != NULL ? 1 : 0);
 
 	return rdev;
 }
@@ -114,7 +114,7 @@ static ssize_t sf_ts_write(struct file *file, const char __user *input,
 		ts_dbg("CMD param error\n");
 		goto done;
 	}
-	ts_dbg("cmd is %d, data is %lld\n", cmd, u_data);
+	//ts_dbg("cmd is %d, data is %lld\n", cmd, u_data);
 	u_pri = (u32)u_data;
 	switch(cmd){
 		case CMD_ADD_MAC:

@@ -60,7 +60,7 @@
                 }else if (result!=null&&result.code==0){
                     setTimeout(function () {
                         setInterval(function () {
-                            pageRedirect("http://siwifi.cn");
+                            pageRedirect(document.location.protocol+"//siwifi.cn");
                         },3000)
                     },10000)
                 } else {

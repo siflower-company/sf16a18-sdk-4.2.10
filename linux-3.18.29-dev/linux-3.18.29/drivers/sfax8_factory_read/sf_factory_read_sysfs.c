@@ -120,9 +120,6 @@ static const struct file_operations sf_factory_read_dbgfs_##name##_ops = { \
 #define HW_FEATURE_HDR "Hardware feature : %#x\n"
 #define HW_FEATURE_HDR_MAX_LEN (sizeof(HW_FEATURE_HDR) + 16)
 
-#define XO_HDR "XO value : %4x\n"
-#define XO_HDR_MAX_LEN (sizeof(XO_HDR) + 16)
-
 #define EXIST_HDR "Exist flag : %8x\n"
 #define EXIST_HDR_MAX_LEN (sizeof(EXIST_HDR) + 16)
 
@@ -137,12 +134,12 @@ static ssize_t sf_factory_read_dbgfs_stats_read(struct file *file,
 	char *buf;
 	int res;
 	ssize_t read;
-	size_t bufsz = (MACADDR_HDR_MAX_LEN + SN_HDR_MAX_LEN +
-			SN_FLAG_HDR_MAX_LEN + COUNTRYID_HDR_MAX_LEN +
-			XO_HDR_MAX_LEN + EXIST_HDR_MAX_LEN +
-			HW_VER_HDR_MAX_LEN + HW_FEATURE_HDR_MAX_LEN);
+        size_t bufsz = (MACADDR_HDR_MAX_LEN + SN_HDR_MAX_LEN +
+                        SN_FLAG_HDR_MAX_LEN + COUNTRYID_HDR_MAX_LEN +
+                        EXIST_HDR_MAX_LEN +
+                        HW_VER_HDR_MAX_LEN + HW_FEATURE_HDR_MAX_LEN);
 
-	/*everything is read out in one go*/
+        /*everything is read out in one go*/
 	if (*ppos)
 		return 0;
 	if (!fr_ctx)
@@ -156,7 +153,7 @@ static ssize_t sf_factory_read_dbgfs_stats_read(struct file *file,
 	bufsz--;
 
 	res = scnprintf(buf, bufsz, MACADDR_HDR SN_HDR COUNTRYID_HDR HW_VER_HDR
-						    HW_FEATURE_HDR XO_HDR "\n",
+						    HW_FEATURE_HDR "\n",
 			fr_ctx->macaddr[0], fr_ctx->macaddr[1],
 			fr_ctx->macaddr[2], fr_ctx->macaddr[3],
 			fr_ctx->macaddr[4], fr_ctx->macaddr[5], fr_ctx->sn[0],
@@ -165,8 +162,7 @@ static ssize_t sf_factory_read_dbgfs_stats_read(struct file *file,
 			fr_ctx->sn[7], fr_ctx->sn[8], fr_ctx->sn[9],
 			fr_ctx->sn[10], fr_ctx->sn[11], fr_ctx->sn[12],
 			fr_ctx->sn[13], fr_ctx->sn[14], fr_ctx->sn[15],
-			fr_ctx->countryID, fr_ctx->hw_ver, fr_ctx->hw_feature,
-			fr_ctx->xo_config);
+			fr_ctx->countryID, fr_ctx->hw_ver, fr_ctx->hw_feature);
 
 	read = simple_read_from_buffer(user_buf, count, ppos, buf, res);
 	kfree(buf);
@@ -470,6 +466,26 @@ static ssize_t sf_factory_read_login_info_flag_show(struct device *dev, struct d
 	return sprintf(buf, "%.2s\n", fr_ctx->login_info_flag);
 }
 
+static ssize_t sf_factory_read_rom_type_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct sfax8_factory_read_context *fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(to_platform_device(dev));
+	if (!fr_ctx) {
+		printk("fr_ctx is null!!!\n");
+		return 0;
+	}
+	return sprintf(buf, "%#x\n", fr_ctx->rom_type);
+}
+
+static ssize_t sf_factory_read_rom_type_flag_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct sfax8_factory_read_context *fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(to_platform_device(dev));
+	if (!fr_ctx) {
+		printk("fr_ctx is null!!!\n");
+		return 0;
+	}
+	return sprintf(buf, "%.2s\n", fr_ctx->rom_type_flag);
+}
+
 static ssize_t sf_factory_read_product_key_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct sfax8_factory_read_context *fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(to_platform_device(dev));
@@ -508,6 +524,8 @@ static DEVICE_ATTR(product_key_flag, S_IRUSR, sf_factory_read_product_key_flag_s
 static DEVICE_ATTR(product_key, S_IRUSR, sf_factory_read_product_key_show, NULL);
 static DEVICE_ATTR(login_info_flag, S_IRUSR, sf_factory_read_login_info_flag_show, NULL);
 static DEVICE_ATTR(login_info, S_IRUSR, sf_factory_read_login_info_show, NULL);
+static DEVICE_ATTR(rom_type_flag, S_IRUSR, sf_factory_read_rom_type_flag_show, NULL);
+static DEVICE_ATTR(rom_type, S_IRUSR, sf_factory_read_rom_type_show, NULL);
 
 static struct attribute *factory_read_attr[] = {
 	&dev_attr_countryid.attr,
@@ -529,6 +547,8 @@ static struct attribute *factory_read_attr[] = {
 	&dev_attr_product_key.attr,
 	&dev_attr_login_info_flag.attr,
 	&dev_attr_login_info.attr,
+	&dev_attr_rom_type_flag.attr,
+	&dev_attr_rom_type.attr,
 	NULL,
 };
 
@@ -538,49 +558,53 @@ static const struct attribute_group factory_read_attribute_group = {
 
 int sf_factory_read_sysfs_register(struct platform_device *pdev, char *parent)
 {
-    struct sfax8_factory_read_context *fr_ctx;
-    struct dentry *dir_drv;
+	struct sfax8_factory_read_context *fr_ctx;
+	struct dentry *dir_drv;
 
-    fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(pdev);
-	//1.register debugfs
-    printk("%s, parent :%s\n", __func__, (parent == NULL) ? "NULL": parent);
-    if(!parent)
-        dir_drv = debugfs_create_dir("sfax8_factory_read", NULL);
-    else
-        dir_drv = debugfs_create_dir(parent, NULL);
-    if(!dir_drv){
-        printk("debug fs create directory failed!\n");
-        goto err;
-    }
-    fr_ctx->debugfs = dir_drv;
+	fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(
+			pdev);
+	// 1.register debugfs
+	printk("%s, parent :%s\n", __func__,
+			(parent == NULL) ? "NULL" : parent);
+	if (!parent)
+		dir_drv = debugfs_create_dir("sfax8_factory_read", NULL);
+	else
+		dir_drv = debugfs_create_dir(parent, NULL);
+	if (!dir_drv) {
+		printk("debug fs create directory failed!\n");
+		goto err;
+	}
+	fr_ctx->debugfs = dir_drv;
 
-    DEBUGFS_ADD_FILE(stats,  dir_drv, S_IRUSR);
-    DEBUGFS_ADD_FILE(memory,  dir_drv, S_IRUSR);
-    DEBUGFS_ADD_FILE(start_len,  dir_drv, S_IWUSR | S_IRUSR);
-    //2.register sysfs
-    return sysfs_create_group(&(pdev->dev.kobj), &factory_read_attribute_group);
+	DEBUGFS_ADD_FILE(stats, dir_drv, S_IRUSR);
+	DEBUGFS_ADD_FILE(memory, dir_drv, S_IRUSR);
+	DEBUGFS_ADD_FILE(start_len, dir_drv, S_IWUSR | S_IRUSR);
+	// 2.register sysfs
+	return sysfs_create_group(
+			&(pdev->dev.kobj), &factory_read_attribute_group);
 
 err:
-    if(dir_drv)
-        debugfs_remove_recursive(dir_drv);
-    fr_ctx->debugfs = NULL;
-    return -1;
+	if (dir_drv)
+		debugfs_remove_recursive(dir_drv);
+	fr_ctx->debugfs = NULL;
+	return -1;
 }
 
 int sf_factory_read_sysfs_unregister(struct platform_device *pdev)
 {
-    struct sfax8_factory_read_context *fr_ctx = (struct sfax8_factory_read_context *)platform_get_drvdata(pdev);
-    printk("%s\n", __func__);
-    if(fr_ctx == NULL){
-        printk("invalid platform driver private data!\n");
-        return -1;
-    }
-    if(!fr_ctx->debugfs){
-        printk("already removed!\n");
-        return -2;
-    }
-    debugfs_remove_recursive(fr_ctx->debugfs);
+	struct sfax8_factory_read_context *fr_ctx =
+			(struct sfax8_factory_read_context *)
+					platform_get_drvdata(pdev);
+	if (fr_ctx == NULL) {
+		printk("invalid platform driver private data!\n");
+		return -1;
+	}
+	if (!fr_ctx->debugfs) {
+		printk("already removed!\n");
+		return -2;
+	}
+	debugfs_remove_recursive(fr_ctx->debugfs);
 
 	sysfs_remove_group(&(pdev->dev.kobj), &factory_read_attribute_group);
-    return 0;
+	return 0;
 }

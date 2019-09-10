@@ -27,7 +27,7 @@
 	thermal-zones {
 		rf_zone: rf_zone {
 			polling-delay-passive = <2000>; /* milliseconds */
-			polling-delay = <3000>; /* milliseconds */
+			polling-delay = <4000>; /* milliseconds */
 
 					/* sensor	ID */
 		        thermal-sensors = <&wifi_rf	0>;
@@ -40,17 +40,17 @@
 		                /*        type = "passive";
 						}; */
 						rf_alert0: rf-alert0 {
-								temperature = <125000>; /* millicelsius */
+								temperature = <115000>; /* millicelsius */
 								hysteresis = <1000>; /* millicelsius */
 								type = "passive";
 						};
 						rf_alert1: rf-alert1 {
-								temperature = <140000>; /* millicelsius */
+								temperature = <125000>; /* millicelsius */
 								hysteresis = <1000>; /* millicelsius */
 								type = "passive";
 						};
 						rf_crit: rf-crit {
-								temperature = <155000>; /* millicelsius */
+								temperature = <140000>; /* millicelsius */
 								hysteresis = <1000>; /* millicelsius */
 								type = "passive";
 						};

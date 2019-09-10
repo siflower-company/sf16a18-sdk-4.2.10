@@ -45,6 +45,9 @@
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/spi.h>
+#ifdef CONFIG_SEND_ERR
+extern int ker_err_send(char *type, int module, int code, char *text, char *path, int flag);
+#endif
 
 static void spidev_release(struct device *dev)
 {
@@ -826,6 +829,9 @@ retry:
 			if (ms == 0) {
 				dev_err(&msg->spi->dev,
 					"SPI transfer timed out\n");
+#ifdef CONFIG_SEND_ERR
+				ker_err_send("ERROR", 2, 101, "spi transfer timeout", NULL, 0x1);
+#endif
 				msg->status = -ETIMEDOUT;
 			}
 		} else {
@@ -2436,4 +2442,3 @@ err0:
  * include needing to have boardinfo data structures be much more public.
  */
 postcore_initcall(spi_init);
-

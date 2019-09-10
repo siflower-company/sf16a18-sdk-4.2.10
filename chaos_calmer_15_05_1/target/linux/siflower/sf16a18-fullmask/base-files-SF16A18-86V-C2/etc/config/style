@@ -1,0 +1,72 @@
+config setting 'font'
+# all title
+    option panel_title '#404040'
+# all text
+    option table_td '#000'
+# all table_th
+    option table_th '#000'
+# all button
+    option button 'white'
+# all input_radio except wireless-param
+    option input_radio '#000000'
+# all select,all input
+    option select '#000'
+# input disable
+    option input_disabled '#ACA899'
+# Navigation bar unchecked
+    option li_slide_a '#999'
+# all help text
+    option helpWord 'white'
+# log list
+    option div_pageListDiv_span '#df0007'
+# logout
+    option ul_headFunc_li_label 'white'
+# Navigation bar selection
+    option li_slide_a_current '#fff'
+# Software version
+    option footer '#aaa'
+# Navigation bar selection area
+    option li_slide_a_hover '#fff'
+# login help
+    option loginHelp '#fff'
+# login input password
+   option lb_pwd '#000'
+
+config  setting 'background'
+# html_body
+    option html_body '#353535'
+# Navigation bar
+    option header 'linear-gradient(red,#9b1b1b)'
+# all content body
+    option main_right_maincontent 'white'
+# Navigation bar selection
+    option li_slide_a_current '#00000040'
+# input disabled
+    option input_disabled  '#F5F5F5'
+# help
+    option helpWord  '#df0007'
+# all button except 'Delete' button
+    option button '#df0007'
+# 'Delete' button
+    option button_disabled '#bebebe'
+# log list
+    option div_pageListDiv_span 'white'
+# login button
+    option cbi_button_cbi_button_apply '#df0007'
+# Window frame
+    option div_hsVignette '#fff'
+# login input
+    option login_tb '#fff'
+# login input password
+    option input_password '#fef7e0'
+# login background
+    option bg '#353535'
+
+
+config setting 'border'
+# all forms
+    option panel_title '#eee'
+# all input frame
+    option input  '#f4f4f4'
+# Window frame
+    option div_hsVignette  '#d0d0d0'

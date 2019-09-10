@@ -109,13 +109,14 @@ static void inc_sf_mac_addr(char *mac, int inc)
 	//the first 3 char is reserved
 }
 
-
+/*
 static int is_valid_sf_address(const unsigned char * mac)
 {
 	//10:16:88 or A8:5A:F3
 	return ((mac[0] == 0x10) && (mac[1] == 0x16) && (mac[2] == 0x88)) ||
 		((mac[0] == 0xA8) && (mac[1] == 0x5A) && (mac[2] == 0xF3));
 }
+*/
 
 static int set_sf_address(char * mac)
 {
@@ -191,7 +192,7 @@ static void handle_macaddr_internal(struct device_node *np,struct sfax8_factory_
 	unsigned int inc_lb = (SUPPORT_WIFI_VIF_CNT - (last_char % SUPPORT_WIFI_VIF_CNT)) % SUPPORT_WIFI_VIF_CNT;
 	int rc = 0;
 
-	if (!is_valid_ether_addr(priv->macaddr) || !is_valid_sf_address(priv->macaddr)) {
+	if (!is_valid_ether_addr(priv->macaddr)) {
 		//10:16:88
 		eth_random_addr(priv->macaddr);
 		set_sf_address(priv->macaddr);
@@ -239,6 +240,7 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 	}
 	priv->exist_flag |= (1 << READ_MAC_ADDRESS);
 	printk("macaddr is %x %x %x %x %x %x\n",priv->macaddr[0],priv->macaddr[1],priv->macaddr[2],priv->macaddr[3],priv->macaddr[4],priv->macaddr[5]);
+
 	// get sn number
 	if ((ret = get_value_through_mtd(
 			     np, "mtd-sn-number", 0, SN_SIZE, priv->sn)))
@@ -254,11 +256,13 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 		printk("get sn flag through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_SN_FLAG);
 	printk("sn_flag is 0x%x\n", priv->sn_flag);
+
 	// get pcba boot mark
 	if ((ret = get_value_through_mtd(np, "mtd-pcba-boot", 0, PCBA_BOOT_SIZE,
 			     priv->pcba_boot)))
 		printk("get pcba boot mark through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_PCBA_BOOT);
+
 	// get hardware version flag
 	if ((ret = get_value_through_mtd(np, "mtd-hardware-ver-flag", 0,
 			     HARDWARE_VER_FLAG_SIZE, priv->hw_ver_flag)))
@@ -273,12 +277,13 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 				ret);
 	priv->exist_flag |= (1 << READ_HARDWARE_VER);
 	printk("hardware version is %.32s\n", priv->hw_ver);
+
 	// get model version flag
 	if ((ret = get_value_through_mtd(np, "mtd-model-ver-flag", 0,
-			     HARDWARE_VER_FLAG_SIZE, priv->model_ver_flag)))
+			     MODEL_VER_FLAG_SIZE, priv->model_ver_flag)))
 		printk("get model version flag through mtd failed! ret %d\n",
 				ret);
-	priv->exist_flag |= (1 << READ_HARDWARE_VER_FLAG);
+	priv->exist_flag |= (1 << READ_MODEL_VER_FLAG);
 	printk("model version flag is %.2s\n", priv->model_ver_flag);
 	// get model version
 	if ((ret = get_value_through_mtd(np, "mtd-model-ver", 0, MODEL_VER_SIZE,
@@ -286,6 +291,7 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 		printk("get model version through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_MODEL_VER);
 	printk("model version is %.32s\n", priv->model_ver);
+
 	// get counrty id
 	if ((ret = get_value_through_mtd(np, "mtd-country-id", 0,
 			     COUNTRYID_SIZE, priv->countryID)))
@@ -302,6 +308,7 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 		priv->countryID[1] = 'N';
 	}
 	printk("countryID is %.2s\n", priv->countryID);
+
 	// get HW feature
 	buffer = kmalloc(sizeof(char) * HW_FEATURE_SIZE, GFP_KERNEL);
 	if ((ret = get_value_through_mtd(
@@ -312,6 +319,7 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 	priv->exist_flag |= (1 << READ_HW_FEATURE);
 	printk("HW feature is %#x\n", priv->hw_feature);
 	kfree(buffer);
+
 	// get vender flag
 	if ((ret = get_value_through_mtd(np, "mtd-vender-flag", 0,
 			     VENDER_FLAG_SIZE, priv->vender_flag)))
@@ -325,6 +333,7 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 		printk("get vender through mtd failed! ret %d\n", ret);
 	priv->exist_flag |= (1 << READ_VENDER);
 	printk("vender is %.16s\n", priv->vender);
+
 	// get product key flag
 	if ((ret = get_value_through_mtd(np, "mtd-product-key-flag", 0,
 			     PRODUCT_KEY_FLAG_SIZE, priv->product_key_flag)))
@@ -353,14 +362,27 @@ static int save_value_from_factory_to_host(struct platform_device *pdev,
 	priv->exist_flag |= (1 << READ_LOGIN_INFO);
 	printk("login info is %#x\n", priv->login_info);
 
+	// get rom type flag
+	if ((ret = get_value_through_mtd(np, "mtd-rom-type-flag", 0,
+			     ROM_TYPE_FLAG_SIZE, priv->rom_type_flag)))
+		printk("get rom type flag through mtd failed! ret %d\n",
+				ret);
+	priv->exist_flag |= (1 << READ_ROM_TYPE_FLAG);
+	printk("rom type flag is %.2s\n", priv->rom_type_flag);
+	// get rom type
+	if ((ret = get_value_through_mtd(np, "mtd-rom-type", 0, ROM_TYPE_SIZE,
+			     (unsigned char *)&priv->rom_type)))
+		printk("get rom type through mtd failed! ret %d\n", ret);
+	priv->exist_flag |= (1 << READ_ROM_TYPE);
+	printk("rom type is %#x\n", priv->rom_type);
+
 	// get wifi version
 	if ((ret = get_value_through_mtd(np, "mtd-wifi-version", 0,
 			     WIFI_VERSION_SIZE, priv->wifi_version)))
 		printk("get wifi version failed! ret %d\n", ret);
 	//check if some value have been saved in flash through a mark value "XO" or "V2"
 	if ((priv->wifi_version[0] == 'X' && priv->wifi_version[1] == 'O') ||
-			(priv->wifi_version[0] == 'V' &&
-					priv->wifi_version[1] == '2')) {
+			(priv->wifi_version[0] == 'V')) {
 		priv->exist_flag |= 1 << READ_WIFI_VERSION;
 		printk("get wifi version %.2s\n", priv->wifi_version);
 	} else {
@@ -519,7 +541,7 @@ int sf_get_value_from_factory(enum sfax8_factory_read_action action,
 			length = COUNTRYID_SIZE;
 			printk("Your length is larger than max %d\n", length);
 		}
-		memcpy(buffer, f_read_ctx->countryID, COUNTRYID_SIZE);
+		memcpy(buffer, f_read_ctx->countryID, length);
 		break;
 	case READ_HW_FEATURE:
 		if (!(f_read_ctx->exist_flag & (1 << READ_HW_FEATURE))) {
@@ -597,6 +619,28 @@ int sf_get_value_from_factory(enum sfax8_factory_read_action action,
 			printk("Your length is larger than max %d\n", length);
 		}
 		memcpy(buffer, &f_read_ctx->login_info, length);
+		break;
+	case READ_ROM_TYPE_FLAG:
+		if (!(f_read_ctx->exist_flag & (1 << READ_ROM_TYPE_FLAG))) {
+			printk("Can not find rom type flag!\n");
+			return -2;
+		}
+		if (len > ROM_TYPE_FLAG_SIZE) {
+			length = ROM_TYPE_FLAG_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, f_read_ctx->rom_type_flag, length);
+		break;
+	case READ_ROM_TYPE:
+		if (!(f_read_ctx->exist_flag & (1 << READ_ROM_TYPE))) {
+			printk("Can not find rom type!\n");
+			return -2;
+		}
+		if (len > ROM_TYPE_SIZE) {
+			length = ROM_TYPE_SIZE;
+			printk("Your length is larger than max %d\n", length);
+		}
+		memcpy(buffer, &f_read_ctx->rom_type, length);
 		break;
 	case READ_WIFI_VERSION:
 		if (!(f_read_ctx->exist_flag & (1 << READ_WIFI_VERSION))) {

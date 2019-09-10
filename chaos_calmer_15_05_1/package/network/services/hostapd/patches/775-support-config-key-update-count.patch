@@ -1,0 +1,166 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2019-08-29 12:40:46.769572769 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2019-08-29 12:46:02.241582070 +0800
+@@ -2416,6 +2416,17 @@
+ 		bss->wpa_gmk_rekey = atoi(pos);
+ 	} else if (os_strcmp(buf, "wpa_ptk_rekey") == 0) {
+ 		bss->wpa_ptk_rekey = atoi(pos);
++	} else if (os_strcmp(buf, "wpa_group_update_count") == 0) {
++		char *endp;
++		unsigned long val = strtoul(pos, &endp, 0);
++
++		if (*endp || val < 1 || val > (u32) -1) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: Invalid wpa_group_update_count=%lu; allowed range 1..4294967295",
++				   line, val);
++			return 1;
++		}
++		bss->wpa_group_update_count = (u32) val;
+ 	} else if (os_strcmp(buf, "wpa_passphrase") == 0) {
+ 		int len = os_strlen(pos);
+ 		if (len < 8 || len > 63) {
+Index: hostapd-2015-03-25/hostapd/hostapd.conf
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/hostapd.conf	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/hostapd/hostapd.conf	2019-08-29 12:46:14.893582443 +0800
+@@ -1114,6 +1114,8 @@
+ # seconds. (dot11RSNAConfigGroupRekeyTime)
+ #wpa_group_rekey=600
+ 
++#wpa_group_update_count=4
++
+ # Rekey GTK when any STA that possesses the current GTK is leaving the BSS.
+ # (dot11RSNAConfigGroupRekeyStrict)
+ #wpa_strict_rekey=1
+Index: hostapd-2015-03-25/src/ap/ap_config.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.c	2019-08-29 12:40:46.685572766 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.c	2019-08-29 12:46:27.325582809 +0800
+@@ -53,6 +53,7 @@
+ 
+ 	bss->wpa_group_rekey = 600;
+ 	bss->wpa_gmk_rekey = 86400;
++	bss->wpa_group_update_count = 4;
+ 	bss->wpa_key_mgmt = WPA_KEY_MGMT_PSK;
+ 	bss->wpa_pairwise = WPA_CIPHER_TKIP;
+ 	bss->wpa_group = WPA_CIPHER_TKIP;
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2019-08-29 12:40:46.769572769 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2019-08-29 12:46:32.513582962 +0800
+@@ -301,6 +301,7 @@
+ 	int wpa_pairwise;
+ 	int wpa_group;
+ 	int wpa_group_rekey;
++	u32 wpa_group_update_count;
+ 	int wpa_strict_rekey;
+ 	int wpa_gmk_rekey;
+ 	int wpa_ptk_rekey;
+Index: hostapd-2015-03-25/src/ap/wpa_auth.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/wpa_auth.c	2019-08-29 12:40:46.793572770 +0800
++++ hostapd-2015-03-25/src/ap/wpa_auth.c	2019-08-29 12:46:39.933583181 +0800
+@@ -46,7 +46,6 @@
+ static int wpa_derive_ptk(struct wpa_state_machine *sm, const u8 *snonce,
+ 			  const u8 *pmk, struct wpa_ptk *ptk);
+ 
+-static const u32 dot11RSNAConfigGroupUpdateCount = 4;
+ static const u32 dot11RSNAConfigPairwiseUpdateCount = 4;
+ static const u32 eapol_key_timeout_first = 100; /* ms */
+ static const u32 eapol_key_timeout_subseq = 1000; /* ms */
+@@ -2521,7 +2520,7 @@
+ 	SM_ENTRY_MA(WPA_PTK_GROUP, REKEYNEGOTIATING, wpa_ptk_group);
+ 
+ 	sm->GTimeoutCtr++;
+-	if (sm->GTimeoutCtr > (int) dot11RSNAConfigGroupUpdateCount) {
++	if (sm->GTimeoutCtr > sm->wpa_auth->conf.wpa_group_update_count) {
+ 		/* No point in sending the EAPOL-Key - we will disconnect
+ 		 * immediately following this. */
+ 		return;
+@@ -2599,6 +2598,10 @@
+ 		sm->group->GKeyDoneStations--;
+ 	sm->GUpdateStationKeys = FALSE;
+ 	sm->Disconnect = TRUE;
++	wpa_auth_vlogger(sm->wpa_auth, sm->addr, LOGGER_INFO,
++			 "group key handshake failed (%s) after %u tries",
++			 sm->wpa == WPA_VERSION_WPA ? "WPA" : "RSN",
++			 sm->wpa_auth->conf.wpa_group_update_count);
+ }
+ 
+ 
+@@ -2618,7 +2621,7 @@
+ 		    !sm->EAPOLKeyPairwise && sm->MICVerified)
+ 			SM_ENTER(WPA_PTK_GROUP, REKEYESTABLISHED);
+ 		else if (sm->GTimeoutCtr >
+-			 (int) dot11RSNAConfigGroupUpdateCount)
++			 sm->wpa_auth->conf.wpa_group_update_count)
+ 			SM_ENTER(WPA_PTK_GROUP, KEYERROR);
+ 		else if (sm->TimeoutEvt)
+ 			SM_ENTER(WPA_PTK_GROUP, REKEYNEGOTIATING);
+@@ -3079,7 +3082,7 @@
+ 		"dot11RSNAConfigNumberOfGTKSAReplayCounters=0\n",
+ 		RSN_VERSION,
+ 		!!wpa_auth->conf.wpa_strict_rekey,
+-		dot11RSNAConfigGroupUpdateCount,
++		wpa_auth->conf.wpa_group_update_count,
+ 		dot11RSNAConfigPairwiseUpdateCount,
+ 		wpa_cipher_key_len(wpa_auth->conf.wpa_group) * 8,
+ 		dot11RSNAConfigPMKLifetime,
+Index: hostapd-2015-03-25/src/ap/wpa_auth.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/wpa_auth.h	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/wpa_auth.h	2019-08-29 12:46:43.681583292 +0800
+@@ -132,6 +132,7 @@
+ 	int wpa_strict_rekey;
+ 	int wpa_gmk_rekey;
+ 	int wpa_ptk_rekey;
++	u32 wpa_group_update_count;
+ 	int rsn_pairwise;
+ 	int rsn_preauth;
+ 	int eapol_version;
+@@ -233,7 +234,7 @@
+ 	WPA_MGMT_FRAME_PROTECTION_VIOLATION, WPA_INVALID_MGMT_GROUP_CIPHER,
+ 	WPA_INVALID_MDIE, WPA_INVALID_PROTO
+ };
+-	
++
+ int wpa_validate_wpa_ie(struct wpa_authenticator *wpa_auth,
+ 			struct wpa_state_machine *sm,
+ 			const u8 *wpa_ie, size_t wpa_ie_len,
+Index: hostapd-2015-03-25/src/ap/wpa_auth_glue.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/wpa_auth_glue.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/wpa_auth_glue.c	2019-08-29 12:47:22.445584435 +0800
+@@ -40,6 +40,7 @@
+ 	wconf->wpa_strict_rekey = conf->wpa_strict_rekey;
+ 	wconf->wpa_gmk_rekey = conf->wpa_gmk_rekey;
+ 	wconf->wpa_ptk_rekey = conf->wpa_ptk_rekey;
++	wconf->wpa_group_update_count = conf->wpa_group_update_count;
+ 	wconf->rsn_pairwise = conf->rsn_pairwise;
+ 	wconf->rsn_preauth = conf->rsn_preauth;
+ 	wconf->eapol_version = conf->eapol_version;
+Index: hostapd-2015-03-25/wpa_supplicant/ibss_rsn.c
+===================================================================
+--- hostapd-2015-03-25.orig/wpa_supplicant/ibss_rsn.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/wpa_supplicant/ibss_rsn.c	2019-08-29 12:46:54.841583621 +0800
+@@ -419,6 +419,7 @@
+ 	conf.wpa_group = WPA_CIPHER_CCMP;
+ 	conf.eapol_version = 2;
+ 	conf.wpa_group_rekey = 600;
++	conf.wpa_group_update_count = 4;
+ 
+ 	os_memset(&cb, 0, sizeof(cb));
+ 	cb.ctx = ibss_rsn;
+Index: hostapd-2015-03-25/wpa_supplicant/mesh_rsn.c
+===================================================================
+--- hostapd-2015-03-25.orig/wpa_supplicant/mesh_rsn.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/wpa_supplicant/mesh_rsn.c	2019-08-29 12:47:05.681583940 +0800
+@@ -155,6 +155,7 @@
+ 	conf.wpa_group = WPA_CIPHER_CCMP;
+ 	conf.eapol_version = 0;
+ 	conf.wpa_group_rekey = -1;
++	conf.wpa_group_update_count = 4;
+ 
+ 	os_memset(&cb, 0, sizeof(cb));
+ 	cb.ctx = rsn;

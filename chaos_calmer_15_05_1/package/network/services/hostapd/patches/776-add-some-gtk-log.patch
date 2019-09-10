@@ -1,0 +1,22 @@
+Index: hostapd-2015-03-25/src/ap/wpa_auth.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/wpa_auth.c	2019-08-05 17:27:54.116945062 +0800
++++ hostapd-2015-03-25/src/ap/wpa_auth.c	2019-08-05 17:29:28.116947833 +0800
+@@ -1377,7 +1377,7 @@
+ 	struct wpa_state_machine *sm = timeout_ctx;
+ 
+ 	sm->pending_1_of_4_timeout = 0;
+-	wpa_auth_logger(wpa_auth, sm->addr, LOGGER_DEBUG, "EAPOL-Key timeout");
++	wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO, "EAPOL-Key timeout");
+ 	sm->TimeoutEvt = TRUE;
+ 	wpa_sm_step(sm);
+ }
+@@ -2523,6 +2523,8 @@
+ 	if (sm->GTimeoutCtr > sm->wpa_auth->conf.wpa_group_update_count) {
+ 		/* No point in sending the EAPOL-Key - we will disconnect
+ 		 * immediately following this. */
++		wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_INFO,
++			"Group key Handshake time out too much times");
+ 		return;
+ 	}
+ 

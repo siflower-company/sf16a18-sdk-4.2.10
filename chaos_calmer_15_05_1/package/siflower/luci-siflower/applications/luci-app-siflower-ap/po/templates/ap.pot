@@ -22,6 +22,9 @@ msgstr ""
 msgid "encryption(WPA2-PSK)"
 msgstr ""
 
+msgid "LED"
+msgstr ""
+
 msgid "return group"
 msgstr ""
 
@@ -73,13 +76,19 @@ msgstr ""
 msgid "this group name is already exist"
 msgstr ""
 
+msgid "group name contain invalid character"
+msgstr ""
+
 msgid "The AP name cannot be more than 45 characters!"
 msgstr ""
 
 msgid "The ap_alive_time limit is 20-80 seconds!"
 msgstr ""
 
-msgid "AP number '+（i+1）+' is abnomal，cannot join bulk edit!"
+msgid "AP number"
+msgstr ""
+
+msgid "is abnormal,cannot join bulk edit!"
 msgstr ""
 
 msgid "bulk edit"
