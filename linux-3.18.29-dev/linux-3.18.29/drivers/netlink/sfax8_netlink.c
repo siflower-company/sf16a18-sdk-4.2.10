@@ -413,13 +413,20 @@ int sf_init_client_socket(void *data, int len)
 EXPORT_SYMBOL(sf_init_client_socket);
 
 #ifdef CONFIG_SEND_ERR
+#define MAX_KERR_MSG_LEN  256
 int ker_err_send(char *type, int module, int code, char *text, char *path, int flag)
 {
     struct sk_buff *skb = NULL;
     void *msg_head = NULL;
     int size;
     int rc;
-    char msg[40];
+    char msg[MAX_KERR_MSG_LEN];
+    if(!type || !text || !path) {
+        return -ENXIO;
+    }
+    if((strlen(type) + strlen(text) + strlen(path)) > (MAX_KERR_MSG_LEN - 20)){
+        return -E2BIG;
+    }
     sprintf(msg,"%s %s %s %d %d %02x", type, text, path, module, code, flag);
 
     skb = genlmsg_new(MAX_MSG_SIZE, GFP_KERNEL);
