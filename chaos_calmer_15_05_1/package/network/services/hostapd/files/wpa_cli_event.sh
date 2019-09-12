@@ -70,7 +70,7 @@ if [[ "$wds_if" == "sfi0" || "$wds_if" == "sfi1" ]]; then
 
 	if [ "$2" == "WPS-SUCCESS" ]; then
 		[ "$wps_status" == 0 ] && {
-			#echo "$wds_if" > /tmp/wps_status
+			echo "$wds_if" > /tmp/wps_status
 			#echo "wps~select~$wds_if~" > /dev/ttyS0
 		}
 		#TODO  LED control should spilt in func.
