@@ -59,7 +59,10 @@ ifdef small
 CFLAGS +=-DCONFIG_SFA18_UBOOT_LITE
 endif
 
-ifdef rgmii
+ifdef rmii
+CFLAGS +=-DRMII
+else
+# set RGMII as default
 CFLAGS +=-DRGMII
 endif
 

@@ -160,36 +160,30 @@ case $prj in
 		DEFCONFIG="sfa18_"$ver"_p10m"
 		[[ "$prj" == *hy ]] && ddr2=hy5ps1g1631c
 		[ -z $ddr2 ] && ddr2=em68b16cwqh
-		add_sfbl_flag rgmii=1
 		;;
 	x10)
 		DEFCONFIG="sfa18_"$ver"_x10"
 		[ -z $ddr2 ] && ddr2=hy5ps1g1631c
-		add_sfbl_flag rgmii=1
 		;;
 	p10h)
 		DEFCONFIG="sfa18_"$ver"_p10h"
 		[ -z $ddr2 ] && ddr2=nt5tu32m16eg
-		add_sfbl_flag rgmii=1
 		;;
 	a28)
 		DEFCONFIG="sfa28"
 		;;
 	ac)
 		DEFCONFIG="sfa18_"$ver"_ac"
-		add_sfbl_flag rgmii=1
 		add_sfbl_flag poe=1
 		[ -z $ddr3 ] && ddr3=em6gd16ewbh
 		;;
 	evb_v5)
 		DEFCONFIG="sfa18_"$ver"_p20b"
-		add_sfbl_flag rgmii=1
 		[ -z $ddr3 ] && ddr3=m15t1g1664a
 		;;
 	ott_router)
 		DEFCONFIG="sfa18_"$ver"_p10h"
 		[ -z $ddr2 ] && ddr2=m14d5121632a
-		add_sfbl_flag rgmii=1
 		;;
 	air001)
 		DEFCONFIG="sfa18_"$ver"_air001"

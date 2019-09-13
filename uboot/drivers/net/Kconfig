@@ -171,7 +171,6 @@ config SFA18_MAC
 	  This driver supports sfa18 series ethernet switch mac
 
 config SFA18_GMAC
-	depends on SFA18_RGMII_GMAC || SFA18_RMII_GMAC
 	select PHYLIB
 	bool "SFA18  ethernet gmac driver"
 	help
