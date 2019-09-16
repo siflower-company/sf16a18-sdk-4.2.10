@@ -57,16 +57,12 @@ ifneq ($(findstring 86V,$(PROFILE)),)
 SFAX8_KO_NAME="86v_V5_sfax8eth.ko"
 endif
 
+ifneq ($(findstring 86V-C2,$(PROFILE)),)
+SFAX8_KO_NAME="86v_c2_sfax8eth.ko"
+endif
+
 ifneq ($(findstring REP,$(PROFILE)),)
 SFAX8_KO_NAME="rep_V1_sfax8eth.ko"
-endif
-
-ifneq ($(findstring GMAC,$(PROFILE)),)
-SFAX8_KO_NAME="p10m_sfax8eth.ko"
-endif
-
-ifneq ($(findstring P10H,$(PROFILE)),)
-SFAX8_KO_NAME="p10m_sfax8eth.ko"
 endif
 
 ifdef CONFIG_SFAX8_SWITCH_DPS
