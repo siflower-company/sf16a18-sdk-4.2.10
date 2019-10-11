@@ -66,6 +66,7 @@ define Package/qcapwap_ac/install
 ifneq ($(CONFIG_PACKAGE_qcapwap_wtp),y)
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_FILES_AC)/ac_server.sh $(1)/etc/init.d/ac_server
+	$(INSTALL_BIN) $(PKG_FILES_AC)/ac_import.sh $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) $(PKG_FILES_AC)/acserver.hotplug $(1)/etc/hotplug.d/iface/96-acserver
 endif
