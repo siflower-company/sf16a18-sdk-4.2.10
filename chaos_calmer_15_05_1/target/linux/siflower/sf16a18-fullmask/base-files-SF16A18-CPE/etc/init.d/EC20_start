@@ -18,6 +18,6 @@ start_service() {
 }
 
 stop_service() {
-	echo "stoping quectel-CM..." > /dev/ttyS0
+	echo "stoping  quectel-CM..." > /dev/ttyS0
 	killall quectel-CM
 }
