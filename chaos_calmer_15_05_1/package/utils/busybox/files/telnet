@@ -26,10 +26,28 @@ has_ssh_pubkey() {
 	( /etc/init.d/sshd enabled 2> /dev/null && grep -qs "^ssh-" "$(get_root_home /etc/passwd)"/.ssh/authorized_keys )
 }
 
+check_telnetd() {
+	local login_info_flag=$(cat /sys/devices/factory-read/login_info_flag)
+	let login_info=$(cat /sys/devices/factory-read/login_info)
+	# if the flag is wrong, we do not set up telnetd as default.
+	if [ "$login_info_flag" = "li" ];
+	then
+		# check bit 0, 0 means set up telnetd, 1 means not.
+		if [ `expr $login_info % 2` -eq 0 ];
+		then
+			return 0;
+		fi
+	fi
+	return 1;
+}
+
 start_service() {
-	if ( ! has_ssh_pubkey && \
-	     ! has_root_pwd /etc/passwd && ! has_root_pwd /etc/shadow ) || \
-	   ( ! /etc/init.d/dropbear enabled 2> /dev/null && ! /etc/init.d/sshd enabled 2> /dev/null );
+#	if ( ! has_ssh_pubkey && \
+#	     ! has_root_pwd /etc/passwd && ! has_root_pwd /etc/shadow ) || \
+#	   ( ! /etc/init.d/dropbear enabled 2> /dev/null && ! /etc/init.d/sshd enabled 2> /dev/null );
+
+	# austin: now we test the flag in factory blk to determine whether set up telnetd or not.
+	if (check_telnetd);
 	then
 		procd_open_instance
 		procd_set_param command "$PROG" -F -l /bin/login.sh
