@@ -132,6 +132,22 @@ ucidef_add_switch_attr() {
 	json_select ..
 }
 
+ucidef_add_switch_port_pvid() {
+	local name=$1
+	local port=$2
+	local pvid=$3
+
+	json_select_object switch
+	json_select_object $name
+	json_select_object pvids
+
+	json_add_int port$2 $pvid
+
+	json_select ..
+	json_select ..
+	json_select ..
+}
+
 ucidef_add_switch_vlan() {
 	local name=$1
 	local vlan=$2

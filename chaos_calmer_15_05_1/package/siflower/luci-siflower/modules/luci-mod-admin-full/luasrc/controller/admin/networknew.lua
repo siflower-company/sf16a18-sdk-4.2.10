@@ -397,7 +397,7 @@ function get_wan()
 		linkstatus = t:read("*all")
 		t:close()
 	else
-		local t = io.popen("cat /sys/kernel/debug/npu_debug |grep phy4 |awk '{print $3}' |tr -d '\n'")
+		local t = io.popen("wanLinkStatus |tr -d '\n'")
 		linkstatus = t:read("*all")
 		t:close()
 	end
@@ -705,7 +705,7 @@ function set_wan(params)
 			linkstatus = t:read("*all")
 			t:close()
 		else
-			local t = io.popen("cat /sys/kernel/debug/npu_debug |grep phy4 |awk '{print $3}' |tr -d '\n'")
+			local t = io.popen("wanLinkStatus |tr -d '\n'")
 			linkstatus = t:read("*all")
 			t:close()
 		end

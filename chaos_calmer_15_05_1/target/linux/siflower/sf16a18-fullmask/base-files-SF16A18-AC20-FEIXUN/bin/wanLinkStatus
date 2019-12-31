@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat /sys/kernel/debug/npu_debug |grep phy1 |awk '{print $3}'

@@ -124,6 +124,18 @@ case ${board} in
 	p10h)
 		target_board=target/linux/siflower/sf16a18_p10h_${chip}_gmac.config
 		;;
+	ac20_realtek)
+		target_board=target/linux/siflower/sf16a18_ac20_${chip}_gmac_realtek.config
+		;;
+	ac20_sjby)
+		target_board=target/linux/siflower/sf16a18_ac20_${chip}_gmac_sjby.config
+		;;
+	ac20_intel)
+		target_board=target/linux/siflower/sf16a18_ac20_${chip}_gmac_intel.config
+		;;
+	ac20_feixun)
+		target_board=target/linux/siflower/sf16a18_ac20_${chip}_gmac_feixun.config
+		;;
 	evb_v5)
 		target_board=target/linux/siflower/sf16a18_evb_v5_${chip}_def.config
 		;;

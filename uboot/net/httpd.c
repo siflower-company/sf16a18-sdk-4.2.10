@@ -292,9 +292,17 @@ void NetSendHttpd(void){
 
 void NetReceiveHttpd(volatile uchar * inpkt, int len){
 
-	memcpy(uip_buf, (const void *)inpkt, len);
-	uip_len = len;
+	if (!strncmp((const char *)inpkt + 12, "8100", 4)) {
+		/* remove vlan tag if exist */
+		memcpy(uip_buf, (const void *)inpkt, 12);
+		memcpy(uip_buf + 12, (const void *)(inpkt + 16), len - 16);
+		uip_len = len - 4;
+	} else {
+		memcpy(uip_buf, (const void *)inpkt, len);
+		uip_len = len;
+	}
 	struct uip_eth_hdr * tmp = (struct uip_eth_hdr *)&uip_buf[0];
+
 	if(tmp->type == htons(UIP_ETHTYPE_IP)){
 
 		uip_arp_ipin();
