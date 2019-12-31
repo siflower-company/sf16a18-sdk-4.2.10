@@ -133,6 +133,26 @@ config DT_SF16A18_FULLMASK_P10M
 	  pointer to the kernel.  The corresponding DTS file is at
 	  arch/mips/boot/dts/sf16a18_fullmask_p10m.dts
 
+config DT_SF16A18_FULLMASK_AC20_REALTEK
+	bool "Built-in device tree for sf16a18 fullmask ac20 with realtek switch boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_ac20_realtek.dts
+
+config DT_SF16A18_FULLMASK_AC20_INTEL
+	bool "Built-in device tree for sf16a18 fullmask ac20 with intel switch boards"
+	default n
+	select BUILTIN_DTB
+	help
+	  Add an FDT blob for XLP EVP boards into the kernel.
+	  This DTB will be used if the firmware does not pass in a DTB
+	  pointer to the kernel.  The corresponding DTS file is at
+	  arch/mips/boot/dts/sf16a18_fullmask_ac20_intel.dts
+
 config DT_SF16A18_FULLMASK_P10_FLASH
 	bool "Built-in device tree for sf16a18 p10 boards with flash optimize"
 	default n

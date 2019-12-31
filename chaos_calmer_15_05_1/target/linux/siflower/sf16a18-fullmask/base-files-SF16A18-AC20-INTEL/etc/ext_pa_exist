@@ -1,0 +1,2 @@
+#this file is used to know if ext pa exist on board
+#which is used in /lib/wifi/mac80211.sh

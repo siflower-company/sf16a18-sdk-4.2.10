@@ -600,6 +600,16 @@
 			};
 		};
 
+		gswitch: gswitch@800000 {
+			 compatible = "siflower,sfax8-gswitch";
+
+			 mtd-mac-address = <&factory 0>;
+			 mtd-mac-address-increment = <0>;
+			 max-speed = <1000>;
+			 status = "disabled";
+		 };
+
+
 		gdu: gdu@800000 {
 			compatible = "siflower,sfax8-fb";
 			reg = <0x800000 0x10000>;

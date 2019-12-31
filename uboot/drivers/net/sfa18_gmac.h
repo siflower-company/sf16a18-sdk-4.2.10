@@ -11,6 +11,23 @@
 
 #define GMAC_ADDR_BASE 0xB0800000
 
+//rtk 8367 regs
+#define    RTL8367C_REG_BYPASS_LINE_RATE            0x03f7
+#define    RTL8367C_REG_SDS_MISC                    0x1d11
+#define    RTL8367C_REG_DIGITAL_INTERFACE_SELECT    0x1305
+#define    RTL8367C_REG_REG_TO_ECO4                 0x1d41
+#define    RTL8367C_REG_DIGITAL_INTERFACE0_FORCE    0x1310
+
+#define    RTL8367C_CFG_MAC8_SEL_SGMII_OFFSET       6
+#define    RTL8367C_CFG_MAC8_SEL_HSGMII_OFFSET      11
+#define    RTL8367C_SELECT_GMII_0_MASK              0xF
+#define    RTL8367C_SELECT_GMII_1_OFFSET            4
+#define    RTL8367C_CFG_SGMII_FDUP_OFFSET           10
+#define    RTL8367C_CFG_SGMII_SPD_MASK              0x180
+#define    RTL8367C_CFG_SGMII_LINK_OFFSET           9
+#define    RTL8367C_CFG_SGMII_TXFC_OFFSET           13
+#define    RTL8367C_CFG_SGMII_RXFC_OFFSET           14
+
 //for Register 4 (GMII Address Register)
 ////if GMII Busy
 #define GMII_ADDR_MASK_GB (1 << 0)

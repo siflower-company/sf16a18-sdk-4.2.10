@@ -23,7 +23,7 @@ custom_ddr="0"
 
 show_help() {
 	echo "Usage: $0"
-	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h|evb_v5|air001|cpe|ott_router"
+	echo "    prj=p10[b/m/flash]|p20[b]|wrt|evb|86v|ac|x10|p10h|ac20_realtek|evb_v5|air001|cpe|ott_router"
 	echo "    ver=mpw0|mpw1|fullmask"
 	echo "    mode=r|d"
 	echo "    [cmd=dmake|distclean|clean|make]"
@@ -167,6 +167,10 @@ case $prj in
 		;;
 	p10h)
 		DEFCONFIG="sfa18_"$ver"_p10h"
+		[ -z $ddr2 ] && ddr2=nt5tu32m16eg
+		;;
+	ac20_realtek)
+		DEFCONFIG="sfa18_"$ver"_ac20_realtek"
 		[ -z $ddr2 ] && ddr2=nt5tu32m16eg
 		;;
 	a28)

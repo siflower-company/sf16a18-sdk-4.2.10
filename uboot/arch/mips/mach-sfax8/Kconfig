@@ -43,6 +43,9 @@ config TARGET_SFA18_X10
 config TARGET_SFA18_P10H
 	bool "SFA18 p10h board"
 
+config TARGET_SFA18_AC20_REALTEK
+	bool "SFA18 ac20 realtek switch board"
+
 config TARGET_SFA18_P10B
 	bool "SFA18 p10b board"
 
